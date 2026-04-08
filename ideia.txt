@@ -1,0 +1,261 @@
+PROPOSTA DE PROJETO
+Plataforma de Atendimento Inteligente
+
+Substituição e Evolução do OpaSuite
+
+
+Solução 100% personalizada para Provedor de Internet
+com IA Orquestradora, Integração HubSoft, Discord e ASGP
+
+
+2025
+
+1. Contexto e Motivação
+A empresa utiliza atualmente o OpaSuite como plataforma de atendimento multicanal. Embora funcional para operações básicas, o plano contratado apresenta limitações críticas que travam o crescimento do time de atendimento, vendas e suporte — gerando perda de produtividade, experiência ruim para o cliente e custo crescente sem escalabilidade real.
+
+1.1 Problemas Identificados no OpaSuite Atual
+
+Problema
+Impacto Atual
+Gravidade
+Não é possível iniciar contato ativo com o cliente — só atende quem mandar mensagem primeiro
+Time de vendas não consegue prospectar via WhatsApp pela plataforma
+🔴 CRÍTICO
+Ferramenta de ligações (VoIP) não está disponível no plano atual
+Atendimento de voz descentralizado, sem histórico integrado
+🔴 CRÍTICO
+Relatórios estáticos e limitados — sem filtros dinâmicos ou exportação flexível
+Gestão às cegas, sem dados acionáveis em tempo real
+🟠 ALTO
+Interface antiquada: sem reações, emojis, typing indicator ou design moderno
+Experiência ruim para atendentes e clientes, aumento de erros e lentidão
+🟠 ALTO
+Sem personalização de marca: sem logo, sem paleta de cores da empresa
+Imagem profissional comprometida junto ao cliente
+🟡 MÉDIO
+Robô com IA limitada: sem fine-tuning, sem base de conhecimento real, sem aprendizado com conversas da empresa
+Bot genérico que não representa a empresa, não resolve casos específicos e aumenta o volume de tickets humanos
+🔴 CRÍTICO
+
+
+
+2. A Solução Proposta
+Desenvolver uma plataforma de atendimento inteligente exclusiva para a empresa — construída do zero, com identidade visual própria, IA treinada com dados reais do negócio e integração nativa com os sistemas já utilizados (HubSoft, Discord e ASGP).
+A plataforma substituirá o OpaSuite com vantagens estruturais: sem limite de agentes, sem mensalidade crescente por uso, total controle dos dados e capacidade de evolução contínua conforme a empresa crescer.
+
+2.1 Arquitetura Geral
+
+PAINEL CENTRAL — Com sua marca, cores e logo
+💬  WhatsAppAgente IA
+📸  InstagramAgente IA
+🌐  WebChat do SiteAgente IA
+🤖  IA Orquestradora — RAG + Fine-tuning com dados reais da empresa
+👨‍💼  Atendente Humano — Apenas casos complexos (técnicos, financeiros)
+🔗  HubSoft(CRM + ERP)
+💜  Discord(Comunicação interna)
+📊  ASGP(Ocorrências e assinaturas)
+
+
+
+3. Funcionalidades da Nova Plataforma
+
+3.1 Atendimento Ativo — O que o OpaSuite não faz
+A plataforma permitirá que o time de vendas e suporte inicie conversas com clientes e leads diretamente pelo WhatsApp, sem depender de o cliente contatar primeiro. Isso viabiliza:
+Campanhas de prospecção ativa pelo WhatsApp
+Régua de cobrança e notificações automatizadas
+Follow-up automático de leads captados no HubSoft
+Disparo de mensagens programadas por evento (vencimento, instalação, renovação)
+
+3.2 IA Orquestradora com Múltiplos Agentes
+Diferente do robô genérico do OpaSuite, a plataforma terá uma IA treinada especificamente para a empresa, com três camadas:
+Camada
+O que faz
+Tecnologia
+RAG (Base de Conhecimento)
+Consulta documentos, FAQs, procedimentos e políticas da empresa antes de responder
+LlamaIndex / LangChain
+Fine-tuning
+Treina o modelo com conversas reais de atendimento da empresa, gerando respostas no tom e linguagem da marca
+OpenAI / Claude API
+Orquestrador
+Direciona automaticamente cada conversa para o agente correto (suporte, vendas, financeiro) e decide quando acionar humano
+Agente Supervisor com ferramentas
+
+
+3.3 Interface Moderna
+Reações e emojis nas mensagens (como WhatsApp e Telegram nativos)
+Typing indicator em tempo real
+Histórico completo de conversas com busca inteligente
+Logo e paleta de cores da empresa em toda a interface
+Dark mode e responsividade mobile
+Painel de atendimento com status, filas e SLA visíveis
+
+3.4 VoIP Integrado
+Ligações recebidas e realizadas com histórico vinculado ao cliente
+Gravação e transcrição automática via IA
+Transferência entre departamentos sem perder o contexto
+
+3.5 Relatórios e Dashboards Dinâmicos
+Filtros livres por período, agente, canal, tipo de ocorrência
+Exportação em Excel, PDF e CSV
+Dashboard em tempo real com TMA, TME, CSAT e volume por canal
+Alertas automáticos por SLA estourado ou volume anormal
+
+
+4. Integrações com Sistemas Existentes
+
+4.1 HubSoft (CRM/ERP)
+O HubSoft possui API aberta e documentada, o que torna a integração direta e sem fricção. A plataforma poderá:
+Consultar dados do assinante em tempo real durante o atendimento (plano, status, inadimplência)
+Criar e atualizar ocorrências diretamente do chat
+Registrar leads e oportunidades no CRM automaticamente
+Acionar desbloqueios em confiança e emissão de 2ª via de boleto via bot
+Sincronizar histórico de atendimento com o perfil do cliente no HubSoft
+
+4.2 Discord
+A integração com o Discord permitirá que a equipe interna receba notificações e alertas críticos diretamente nos canais já utilizados:
+Alertas de tickets com SLA próximo do vencimento
+Notificação de cliente VIP ou casos prioritários
+Resumo diário de métricas de atendimento postado automaticamente
+Canal de escalonamento: quando IA não consegue resolver, notifica no Discord
+
+4.3 ASGP
+Via requisições à API do ASGP, a plataforma poderá consultar e exibir em tempo real durante o atendimento:
+Status de ocorrências em aberto do cliente
+Histórico de assinatura e plano contratado
+Situação de pagamentos e débitos
+Dados para qualificação automática de tickets de suporte
+
+
+5. Comparativo: OpaSuite vs. Plataforma Própria
+
+Critério
+OpaSuite (atual)
+Plataforma Própria
+Contato ativo com cliente
+❌ Não disponível
+✅ WhatsApp, SMS, email
+VoIP/Ligações
+❌ Bloqueado no plano
+✅ Integrado nativamente
+Limite de agentes
+❌ Limitado por plano
+✅ Ilimitado
+Relatórios dinâmicos
+❌ Estáticos e rígidos
+✅ Filtros livres + exportação
+Interface moderna
+❌ Design ~2012
+✅ Reações, emojis, dark mode
+Identidade visual
+❌ Sem logo/cores
+✅ 100% da sua marca
+IA com fine-tuning
+❌ Base genérica
+✅ Treinada com dados da empresa
+Múltiplos agentes IA
+❌ Um robô genérico
+✅ Orquestrador por canal
+Integração HubSoft
+❌ Não disponível
+✅ API aberta integrada
+Integração Discord
+❌ Não disponível
+✅ Bot com alertas e resumos
+Integração ASGP
+❌ Não disponível
+✅ Consulta em tempo real
+Controle dos dados
+❌ Nos servidores deles
+✅ Nos seus servidores
+Custo com crescimento
+❌ Mensalidade cresce
+✅ Infraestrutura fixa
+
+
+
+6. Fases do Projeto (Roadmap)
+
+Fase
+Nome
+Entregas
+Prazo Est.
+1
+MVP WhatsApp
+Painel web com identidade visual, envio/recebimento de mensagens WhatsApp, atendente humano + bot básico
+4–6 sem.
+2
+IA + HubSoft
+Agente IA com RAG, fine-tuning com conversas reais, integração HubSoft (consulta de assinante)
+3–4 sem.
+3
+Multicanal + Discord
+Instagram, WebChat do site, bot Discord com alertas e resumos diários
+3–4 sem.
+4
+VoIP + ASGP + Relatórios
+Ligações integradas, consulta ASGP em tempo real, dashboard dinâmico com exportação
+4–5 sem.
+5
+Orquestrador + Escala
+IA orquestradora completa, múltiplos agentes por canal, otimizações de escala e monitoramento
+3–4 sem.
+
+
+O desenvolvimento segue abordagem iterativa — cada fase entrega valor real imediatamente, sem aguardar o projeto completo para começar a usar.
+
+
+7. Benefícios Esperados
+
+7.1 Para o Time de Vendas
+Prospecção ativa via WhatsApp direto da plataforma
+Histórico completo do cliente visível durante a abordagem
+Leads do HubSoft integrados — sem copiar e colar dados entre sistemas
+Bot qualifica leads antes do vendedor assumir, aumentando conversão
+
+7.2 Para o Time de Suporte
+IA resolve automaticamente: 2ª via de boleto, status de sinal, desbloqueios
+Humano atua só em casos que realmente exigem expertise técnica
+Histórico completo do cliente cruzado com dados do ASGP e HubSoft
+Transferência entre departamentos sem o cliente repetir o problema
+
+7.3 Para a Gestão
+Dashboard em tempo real — sem esperar relatório mensal para tomar decisão
+Métricas de SLA, CSAT e volume por canal e por agente
+Controle total dos dados da empresa — sem depender de terceiros
+Custo de infraestrutura previsível, independente do volume de atendimentos
+
+
+8. Próximos Passos
+
+Para iniciar o projeto, são necessárias as seguintes ações por parte da empresa:
+
+#
+Ação
+Responsável
+1
+Aprovar o projeto e definir orçamento de infraestrutura (servidor/nuvem)
+Gestão
+2
+Solicitar credenciais de API do HubSoft ao suporte da plataforma
+TI / Gestor HubSoft
+3
+Solicitar documentação de API do ASGP (endpoints disponíveis)
+TI / Fornecedor ASGP
+4
+Disponibilizar número WhatsApp Business para integração via API Oficial (Meta)
+Gestão / Marketing
+5
+Exportar conversas históricas do OpaSuite para fine-tuning da IA
+TI / Operações
+6
+Iniciar desenvolvimento do MVP (Fase 1 — WhatsApp)
+Time de Desenvolvimento
+
+
+
+Este projeto representa a evolução do atendimento da empresa:
+de uma ferramenta terceirizada e limitada para uma plataforma própria, escalável e inteligente
+que cresce junto com o negócio — sem custos adicionais por volume e sem depender de ninguém.
+
+

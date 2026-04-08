@@ -1,0 +1,106 @@
+.sidebar {
+    width: 240px;
+    height: 100%;
+    background-color: var(--bg-deep);
+    display: flex;
+    flex-direction: column;
+    padding: var(--space-md);
+    border-right: 1px solid var(--border);
+    transition: width 0.3s ease;
+}
+
+.sidebar-header {
+    margin-bottom: var(--space-xl);
+}
+
+.logo-container {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+}
+
+.logo-icon {
+    width: 32px;
+    height: 32px;
+    background-color: var(--accent);
+    border-radius: var(--radius-md);
+    font-family: var(--font-title);
+    font-weight: 700;
+    color: white;
+}
+
+.logo-text {
+    font-family: var(--font-title);
+    font-size: 1.2rem;
+    font-weight: 700;
+    letter-spacing: 1px;
+}
+
+.sidebar-nav {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.nav-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    border-radius: var(--radius-md);
+    color: var(--text-secondary);
+    width: 100%;
+    text-align: left;
+}
+
+.nav-item:hover {
+    background-color: var(--bg-surface-light);
+    color: var(--text-primary);
+}
+
+.nav-item.active {
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    border-left: 2px solid var(--accent);
+}
+
+.nav-label {
+    font-weight: 500;
+    white-space: nowrap;
+}
+
+.sidebar-footer {
+    margin-top: auto;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+    padding-top: var(--space-md);
+    border-top: 1px solid var(--border);
+}
+
+.logout:hover {
+    background-color: rgba(255, 69, 58, 0.1);
+    color: #ff453a;
+}
+
+@media (max-width: 1024px) {
+    .sidebar {
+        width: 68px;
+        padding: var(--space-sm);
+    }
+
+    .nav-label,
+    .logo-text {
+        display: none;
+    }
+
+    .logo-container {
+        justify-content: center;
+    }
+
+    .nav-item {
+        justify-content: center;
+        padding: var(--space-sm);
+    }
+}
