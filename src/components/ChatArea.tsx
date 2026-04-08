@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import {
-    Phone, Video, MoreVertical, Send, Smile, Paperclip,
-    User, CheckCheck, Bot, Zap, Clock, ThumbsUp
-} from 'lucide-react';
+    Phone, Video, DotsThreeVertical, PaperPlaneTilt,
+    Smiley, Paperclip, Checks, Lightning
+} from '@phosphor-icons/react';
 import './ChatArea.css';
 
 const ChatArea: React.FC = () => {
@@ -30,14 +30,14 @@ const ChatArea: React.FC = () => {
 
                 <div className="chat-actions">
                     <button className="action-btn" title="Ligar (VoIP)">
-                        <Phone size={20} />
+                        <Phone size={20} weight="duotone" />
                     </button>
                     <button className="action-btn" title="Video Chamada">
-                        <Video size={20} />
+                        <Video size={20} weight="duotone" />
                     </button>
                     <div className="divider"></div>
                     <button className="action-btn">
-                        <MoreVertical size={20} />
+                        <DotsThreeVertical size={20} weight="bold" />
                     </button>
                 </div>
             </header>
@@ -48,14 +48,14 @@ const ChatArea: React.FC = () => {
                 {mockMessages.map((msg) => (
                     <div key={msg.id} className={`message-wrapper ${msg.isUser ? 'received' : 'sent'} ${msg.isBot ? 'bot' : ''}`}>
                         {!msg.isUser && !msg.isBot && <div className="msg-avatar">J</div>}
-                        {msg.isBot && <div className="msg-avatar bot"><Zap size={14} /></div>}
+                        {msg.isBot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
 
                         <div className="message-content">
                             <div className="message-bubble">
                                 <p>{msg.text}</p>
                                 <div className="message-footer">
                                     <span className="message-time">{msg.time}</span>
-                                    {msg.isUser && <CheckCheck size={14} className="status-icon" />}
+                                    {msg.isUser && <Checks size={14} className="status-icon" weight="bold" />}
                                 </div>
 
                                 <div className="message-reactions">
@@ -77,8 +77,8 @@ const ChatArea: React.FC = () => {
 
             <footer className="chat-input-area">
                 <div className="input-actions">
-                    <button className="input-action-btn"><Smile size={22} /></button>
-                    <button className="input-action-btn"><Paperclip size={22} /></button>
+                    <button className="input-action-btn"><Smiley size={22} weight="duotone" /></button>
+                    <button className="input-action-btn"><Paperclip size={22} weight="duotone" /></button>
                 </div>
 
                 <div className="message-input-container">
@@ -91,7 +91,7 @@ const ChatArea: React.FC = () => {
                 </div>
 
                 <button className="send-btn flex-center" disabled={!message.trim()}>
-                    <Send size={20} />
+                    <PaperPlaneTilt size={20} weight="duotone" />
                 </button>
             </footer>
         </div>
