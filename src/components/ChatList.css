@@ -87,7 +87,7 @@
 
 .chat-card {
     display: flex;
-    padding: 5px var(--space-md);
+    padding: 8px var(--space-md);
     gap: var(--space-sm);
     cursor: pointer;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
@@ -96,6 +96,8 @@
     margin: 0 4px;
     border: 1px solid transparent;
     box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    position: relative;
+    align-items: center;
 }
 
 .chat-card:hover {
@@ -117,15 +119,15 @@
 }
 
 .chat-avatar {
-    width: 32px;
-    height: 32px;
-    background-color: var(--bg-surface-light);
+    width: 36px;
+    height: 36px;
+    background-color: var(--bg-deep);
     border-radius: 50%;
     font-family: var(--font-title);
     font-weight: 700;
     position: relative;
     flex-shrink: 0;
-    font-size: 0.85rem;
+    font-size: 0.9rem;
 }
 
 .platform-badge {
@@ -150,57 +152,55 @@
     background-color: var(--accent);
 }
 
-.chat-info {
+.chat-content {
     flex: 1;
     display: flex;
     flex-direction: column;
     justify-content: center;
-    gap: 4px;
     min-width: 0;
 }
 
-.chat-header {
+.chat-name-row {
     display: flex;
-    justify-content: space-between;
     align-items: center;
+    gap: var(--space-sm);
+    line-height: 1.2;
 }
 
 .chat-name {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.95rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-}
-
-.chat-time {
-    font-size: 0.75rem;
-    color: var(--text-secondary);
-}
-
-.chat-body {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    gap: var(--space-sm);
 }
 
 .last-message {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    margin-top: 2px;
+}
+
+.chat-time {
+    position: absolute;
+    bottom: 8px;
+    right: 12px;
+    font-size: 0.65rem;
+    color: var(--text-secondary);
+    font-weight: 500;
 }
 
 .unread-badge {
     background-color: var(--accent);
     color: white;
-    font-size: 0.7rem;
-    font-weight: 700;
-    min-width: 18px;
-    height: 18px;
-    border-radius: 9px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 8px;
     display: flex;
     align-items: center;
     justify-content: center;
