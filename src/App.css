@@ -4,13 +4,13 @@
   width: 100vw;
   background-color: var(--bg-deep);
   color: var(--text-primary);
+  position: relative;
 }
 
 .main-layout {
   display: flex;
   flex: 1;
   overflow: hidden;
-  border-left: 1px solid var(--border);
 }
 
 @media (max-width: 768px) {
