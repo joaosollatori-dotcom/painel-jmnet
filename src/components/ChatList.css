@@ -79,29 +79,38 @@
 .chats-scroll-area {
     flex: 1;
     overflow-y: auto;
+    padding: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
 }
 
 .chat-card {
     display: flex;
-    padding: var(--space-md);
-    gap: var(--space-md);
+    padding: var(--space-sm) var(--space-md);
+    gap: var(--space-sm);
     cursor: pointer;
-    transition: background-color 0.2s ease;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+    transition: all 0.2s ease;
+    border-radius: var(--radius-md);
+    background-color: transparent;
 }
 
 .chat-card:hover {
     background-color: var(--bg-surface-light);
 }
 
+.chat-card.active {
+    background-color: var(--accent-soft);
+}
+
 .chat-card.unread .chat-name {
-    color: white;
+    color: var(--text-primary);
     font-weight: 700;
 }
 
 .chat-avatar {
-    width: 48px;
-    height: 48px;
+    width: 40px;
+    height: 40px;
     background-color: var(--bg-surface-light);
     border-radius: 50%;
     font-family: var(--font-title);
