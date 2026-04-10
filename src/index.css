@@ -1,5 +1,5 @@
 :root {
-  /* Branding Colors */
+  /* Branding Colors - Default Dark */
   --bg-deep: #0e0e0e;
   --bg-surface: #131313;
   --bg-surface-light: #1c1b1b;
@@ -9,6 +9,14 @@
   --accent-soft: rgba(4, 107, 237, 0.1);
   --border: #222222;
   --border-light: #2c2c2c;
+
+  /* Light Theme Overrides */
+  --bg-deep-light: #f5f7f9;
+  --bg-surface-light-theme: #ffffff;
+  --bg-surface-soft-light: #f0f2f5;
+  --text-primary-light: #1a1a1a;
+  --text-secondary-light: #65676b;
+  --border-light-theme: #e4e6eb;
 
   /* Typography */
   --font-title: 'Space Grotesk', sans-serif;
@@ -27,6 +35,17 @@
   --radius-lg: 12px;
   --glass: blur(10px);
   --shadow: 0 4px 24px rgba(0, 0, 0, 0.4);
+}
+
+[data-theme='light'] {
+  --bg-deep: var(--bg-deep-light);
+  --bg-surface: var(--bg-surface-light-theme);
+  --bg-surface-light: var(--bg-surface-soft-light);
+  --text-primary: var(--text-primary-light);
+  --text-secondary: var(--text-secondary-light);
+  --border: var(--border-light-theme);
+  --border-light: var(--bg-surface-soft-light);
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
 }
 
 * {
@@ -107,7 +126,7 @@ textarea:focus {
 
 /* Helper Classes */
 .glass {
-  background: rgba(19, 19, 19, 0.7);
+  background: color-mix(in srgb, var(--bg-surface), transparent 30%);
   backdrop-filter: var(--glass);
   border: 1px solid var(--border);
 }

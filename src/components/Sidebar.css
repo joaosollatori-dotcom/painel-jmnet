@@ -1,16 +1,27 @@
 .sidebar {
-    width: 240px;
+    width: 72px;
     height: 100%;
     background-color: var(--bg-deep);
     display: flex;
     flex-direction: column;
     padding: var(--space-md);
     border-right: 1px solid var(--border);
-    transition: width 0.3s ease;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    z-index: 1000;
+}
+
+.sidebar.expanded {
+    width: 260px;
+    position: absolute;
+    height: 100vh;
+    box-shadow: 10px 0 30px rgba(0, 0, 0, 0.3);
 }
 
 .sidebar-header {
     margin-bottom: var(--space-xl);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
 }
 
 .logo-container {
@@ -27,6 +38,7 @@
     font-family: var(--font-title);
     font-weight: 700;
     color: white;
+    flex-shrink: 0;
 }
 
 .logo-text {
@@ -34,6 +46,20 @@
     font-size: 1.2rem;
     font-weight: 700;
     letter-spacing: 1px;
+}
+
+.toggle-btn {
+    color: var(--text-secondary);
+    padding: var(--space-xs);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.toggle-btn:hover {
+    background-color: var(--accent-soft);
+    color: var(--accent);
 }
 
 .sidebar-nav {
@@ -47,11 +73,18 @@
     display: flex;
     align-items: center;
     gap: var(--space-md);
-    padding: var(--space-sm) var(--space-md);
+    padding: var(--space-sm);
     border-radius: var(--radius-md);
     color: var(--text-secondary);
     width: 100%;
     text-align: left;
+    height: 48px;
+    justify-content: center;
+}
+
+.sidebar.expanded .nav-item {
+    justify-content: flex-start;
+    padding-left: var(--space-md);
 }
 
 .nav-item:hover {
@@ -62,7 +95,11 @@
 .nav-item.active {
     background-color: var(--accent-soft);
     color: var(--accent);
-    border-left: 2px solid var(--accent);
+    border-left: 3px solid var(--accent);
+}
+
+.nav-icon {
+    flex-shrink: 0;
 }
 
 .nav-label {
@@ -84,23 +121,8 @@
     color: #ff453a;
 }
 
-@media (max-width: 1024px) {
-    .sidebar {
-        width: 68px;
-        padding: var(--space-sm);
-    }
-
-    .nav-label,
-    .logo-text {
-        display: none;
-    }
-
-    .logo-container {
-        justify-content: center;
-    }
-
-    .nav-item {
-        justify-content: center;
-        padding: var(--space-sm);
-    }
+/* Ensure the main content doesn't jump when sidebar is absolute */
+.sidebar-placeholder {
+    width: 72px;
+    flex-shrink: 0;
 }

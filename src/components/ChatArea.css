@@ -14,7 +14,7 @@
     justify-content: space-between;
     align-items: center;
     border-bottom: 1px solid var(--border);
-    background-color: rgba(14, 14, 14, 0.8);
+    background-color: var(--bg-surface-light);
     backdrop-filter: var(--glass);
     z-index: 10;
 }
@@ -189,7 +189,7 @@
 
 .reaction {
     background: var(--bg-surface);
-    border: 1px solid var(--border);
+    border: 1px solid var(--border-light);
     border-radius: 12px;
     padding: 1px 6px;
     font-size: 0.8rem;

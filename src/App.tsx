@@ -6,10 +6,27 @@ import './App.css';
 
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('chats');
+  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [isRetracted, setIsRetracted] = useState(true);
+
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+  }, [theme]);
+
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleSidebar = () => setIsRetracted(prev => !prev);
 
   return (
-    <div className="app-container">
-      <Sidebar activeTab={activeTab} onTabChange={setActiveTab} />
+    <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
+      <div className="sidebar-placeholder" />
+      <Sidebar
+        activeTab={activeTab}
+        onTabChange={setActiveTab}
+        isRetracted={isRetracted}
+        onToggleRetraction={toggleSidebar}
+        theme={theme}
+        onToggleTheme={toggleTheme}
+      />
       <main className="main-layout">
         <ChatList />
         <ChatArea />

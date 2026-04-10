@@ -189,8 +189,11 @@
     flex-shrink: 0;
 }
 
-@media (max-width: 1024px) {
+/* ChatList remains static as requested */
+@media (max-width: 768px) {
     .chat-list-container {
         width: 100%;
+        border-right: none;
+        border-bottom: 1px solid var(--border);
     }
 }
