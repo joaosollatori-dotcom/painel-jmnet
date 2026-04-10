@@ -87,20 +87,28 @@
 
 .chat-card {
     display: flex;
-    padding: var(--space-sm) var(--space-md);
+    padding: 5px var(--space-md);
     gap: var(--space-sm);
     cursor: pointer;
-    transition: all 0.2s ease;
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
     border-radius: var(--radius-md);
-    background-color: transparent;
+    background-color: var(--bg-surface-light);
+    margin: 0 4px;
+    border: 1px solid transparent;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
 }
 
 .chat-card:hover {
-    background-color: var(--bg-surface-light);
+    transform: translateY(-1px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    background-color: var(--bg-surface);
+    border-color: var(--accent-soft);
 }
 
 .chat-card.active {
-    background-color: var(--accent-soft);
+    background-color: var(--bg-surface);
+    border-color: var(--accent);
+    box-shadow: 0 6px 15px rgba(0, 0, 0, 0.3);
 }
 
 .chat-card.unread .chat-name {
@@ -109,24 +117,25 @@
 }
 
 .chat-avatar {
-    width: 40px;
-    height: 40px;
+    width: 32px;
+    height: 32px;
     background-color: var(--bg-surface-light);
     border-radius: 50%;
     font-family: var(--font-title);
     font-weight: 700;
     position: relative;
     flex-shrink: 0;
+    font-size: 0.85rem;
 }
 
 .platform-badge {
     position: absolute;
-    bottom: 0;
-    right: 0;
-    width: 16px;
-    height: 16px;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
     border-radius: 50%;
-    border: 2px solid var(--bg-surface);
+    border: 1.5px solid var(--bg-surface-light);
 }
 
 .platform-badge.whatsapp {
