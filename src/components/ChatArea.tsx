@@ -3,19 +3,36 @@ import {
     Phone, Video, DotsThreeVertical, PaperPlaneTilt,
     Smiley, Paperclip, Checks, Lightning
 } from '@phosphor-icons/react';
+import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import './ChatArea.css';
 
 const ChatArea: React.FC = () => {
     const [message, setMessage] = useState('');
+    const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+    const [messages, setMessages] = useState([
+        { id: '1', sender: 'João Silva', text: 'Bom dia, gostaria de solicitar a 2ª via do boleto de abril.', time: '10:20', isUser: false, reactions: ['👍'] },
+        { id: '2', sender: 'AI Bot', text: 'Olá João! Sou o Titã AI. Vou te ajudar com isso agora mesmo.', time: '10:21', isBot: true, reactions: [] as string[] },
+        { id: '3', sender: 'AI Bot', text: 'Verifiquei aqui que seu boleto venceu no dia 05/04. Deseja que eu gere o PDF ou apenas a linha digitável?', time: '10:21', isBot: true, reactions: [] as string[] },
+        { id: '4', sender: 'João Silva', text: 'Pode ser a linha digitável, por favor.', time: '10:23', isUser: false, reactions: [] as string[] },
+        { id: '5', sender: 'AI Bot', text: 'Com certeza! Aqui está sua linha digitável para o mês de Abril: \n\n00190.00009 02707.123456 78901.234567 8 96780000015000', time: '10:24', isBot: true, reactions: [] as string[] },
+        { id: '6', sender: 'João Silva', text: 'Obrigado!', time: '10:25', isUser: false, reactions: ['❤️'] },
+    ]);
 
-    const mockMessages = [
-        { id: '1', sender: ' João Silva', text: 'Bom dia, gostaria de solicitar a 2ª via do boleto de abril.', time: '10:20', isUser: false },
-        { id: '2', sender: 'AI Bot', text: 'Olá João! Sou o Titã AI. Vou te ajudar com isso agora mesmo.', time: '10:21', isBot: true },
-        { id: '3', sender: 'AI Bot', text: 'Verifiquei aqui que seu boleto venceu no dia 05/04. Deseja que eu gere o PDF ou apenas a linha digitável?', time: '10:21', isBot: true },
-        { id: '4', sender: ' João Silva', text: 'Pode ser a linha digitável, por favor.', time: '10:23', isUser: false },
-        { id: '5', sender: 'AI Bot', text: 'Com certeza! Aqui está sua linha digitável para o mês de Abril: \n\n00190.00009 02707.123456 78901.234567 8 96780000015000', time: '10:24', isBot: true },
-        { id: '6', sender: ' João Silva', text: 'Obrigado!', time: '10:25', isUser: false },
-    ];
+    const handleReaction = (emojiData: any) => {
+        if (!activeMessageId) return;
+
+        setMessages(prev => prev.map(msg => {
+            if (msg.id === activeMessageId) {
+                const reactions = [...msg.reactions];
+                if (!reactions.includes(emojiData.emoji)) {
+                    reactions.push(emojiData.emoji);
+                }
+                return { ...msg, reactions };
+            }
+            return msg;
+        }));
+        setActiveMessageId(null);
+    };
 
     return (
         <div className="chat-area">
@@ -45,9 +62,9 @@ const ChatArea: React.FC = () => {
             <div className="messages-container">
                 <div className="chat-day-separator">Hoje</div>
 
-                {mockMessages.map((msg) => (
-                    <div key={msg.id} className={`message-wrapper ${msg.isUser ? 'received' : 'sent'} ${msg.isBot ? 'bot' : ''}`}>
-                        {!msg.isUser && !msg.isBot && <div className="msg-avatar">J</div>}
+                {messages.map((msg) => (
+                    <div key={msg.id} className={`message-wrapper ${msg.isUser || msg.isBot ? 'sent' : 'received'} ${msg.isBot ? 'bot' : ''}`}>
+                        {!msg.isUser && !msg.isBot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
                         {msg.isBot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
 
                         <div className="message-content">
@@ -55,12 +72,35 @@ const ChatArea: React.FC = () => {
                                 <p>{msg.text}</p>
                                 <div className="message-footer">
                                     <span className="message-time">{msg.time}</span>
-                                    {msg.isUser && <Checks size={14} className="status-icon" weight="bold" />}
+                                    {(msg.isUser || msg.isBot) && <Checks size={14} className="status-icon" weight="bold" />}
                                 </div>
 
                                 <div className="message-reactions">
-                                    <button className="reaction">👍</button>
+                                    {msg.reactions.map((r, i) => (
+                                        <span key={i} className="reaction-badge">{r}</span>
+                                    ))}
+                                    <button
+                                        className="add-reaction-btn"
+                                        onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
+                                    >
+                                        <Smiley size={14} weight="bold" />
+                                    </button>
                                 </div>
+
+                                {activeMessageId === msg.id && (
+                                    <div className="emoji-picker-container">
+                                        <EmojiPicker
+                                            onEmojiClick={handleReaction}
+                                            emojiStyle={EmojiStyle.GOOGLE}
+                                            theme={Theme.DARK}
+                                            lazyLoadEmojis={true}
+                                            searchDisabled={false}
+                                            skinTonesDisabled={true}
+                                            height={350}
+                                            width={300}
+                                        />
+                                    </div>
+                                )}
                             </div>
                             {msg.isBot && <span className="bot-label">Titã AI Orchestrator</span>}
                         </div>
