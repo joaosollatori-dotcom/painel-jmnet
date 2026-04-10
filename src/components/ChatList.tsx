@@ -61,11 +61,13 @@ const ChatList: React.FC = () => {
                         <div className="chat-content">
                             <div className="chat-name-row">
                                 <span className="chat-name">{chat.name}</span>
-                                {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                                <div className="chat-meta">
+                                    <span className="chat-time">{chat.time}</span>
+                                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                                </div>
                             </div>
                             <p className="last-message">{chat.lastMessage}</p>
                         </div>
-                        <span className="chat-time">{chat.time}</span>
                     </div>
                 ))}
             </div>

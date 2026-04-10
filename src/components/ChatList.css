@@ -162,9 +162,17 @@
 
 .chat-name-row {
     display: flex;
+    justify-content: space-between;
     align-items: center;
     gap: var(--space-sm);
     line-height: 1.2;
+}
+
+.chat-meta {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    flex-shrink: 0;
 }
 
 .chat-name {
@@ -173,6 +181,7 @@
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
+    color: var(--text-primary);
 }
 
 .last-message {
@@ -185,10 +194,7 @@
 }
 
 .chat-time {
-    position: absolute;
-    bottom: 8px;
-    right: 12px;
-    font-size: 0.65rem;
+    font-size: 0.7rem;
     color: var(--text-secondary);
     font-weight: 500;
 }
