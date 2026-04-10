@@ -29,13 +29,10 @@ const Sidebar: React.FC<SidebarProps> = ({
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
             <div className="sidebar-header">
-                <div className="logo-container">
-                    <div className="logo-icon flex-center">T</div>
-                    {!isRetracted && <span className="logo-text">TITÃ</span>}
-                </div>
                 <button className="toggle-btn" onClick={onToggleRetraction} title={isRetracted ? "Expandir" : "Recolher"}>
                     {isRetracted ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
                 </button>
+                {!isRetracted && <span className="logo-text">TITÃ</span>}
             </div>
 
             <nav className="sidebar-nav">
