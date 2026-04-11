@@ -3,9 +3,12 @@ import {
     Phone, Video, DotsThreeVertical, PaperPlaneTilt,
     Smiley, Paperclip, Checks, Lightning,
     CaretDown, ClockCounterClockwise, Note, Tag,
-    WarningCircle, CurrencyDollar, Devices, WifiHigh
+    WarningCircle, CurrencyDollar, Devices, WifiHigh,
+    Info, FileText, Image as ImageIcon, Camera, UserList,
+    ArchiveHistory, ShareNetwork, Users, Robot, CheckSquareOffset
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import './ChatArea.css';
 
 const ChatArea: React.FC = () => {
@@ -13,6 +16,11 @@ const ChatArea: React.FC = () => {
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
     const [openAccordion, setOpenAccordion] = useState<string | null>('timeline');
+
+    // New interaction states
+    const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
+    const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
+    const [isInputEmojiOpen, setIsInputEmojiOpen] = useState(false);
 
     const [messages, setMessages] = useState([
         { id: '1', sender: 'João Silva', text: 'Bom dia, gostaria de solicitar a 2ª via do boleto de abril.', time: '10:20', isUser: false, reactions: ['👍'] },
@@ -39,6 +47,10 @@ const ChatArea: React.FC = () => {
         setActiveMessageId(null);
     };
 
+    const handleInputEmoji = (emojiData: any) => {
+        setMessage(prev => prev + emojiData.emoji);
+    };
+
     const toggleAccordion = (id: string) => {
         setOpenAccordion(openAccordion === id ? null : id);
     };
@@ -55,6 +67,11 @@ const ChatArea: React.FC = () => {
                 </div>
 
                 <div className="chat-actions">
+                    <button className="action-btn end-chat-btn" title="Encerrar Chat">
+                        <CheckSquareOffset size={20} weight="bold" />
+                        <span>Encerrar</span>
+                    </button>
+                    <div className="divider"></div>
                     <button className="action-btn" title="Ligar (VoIP)">
                         <Phone size={20} weight="duotone" />
                     </button>
@@ -62,9 +79,45 @@ const ChatArea: React.FC = () => {
                         <Video size={20} weight="duotone" />
                     </button>
                     <div className="divider"></div>
-                    <button className={`action-btn ${isInfoOpen ? 'active' : ''}`} onClick={() => setIsInfoOpen(!isInfoOpen)}>
-                        <DotsThreeVertical size={20} weight="bold" />
+                    <button className={`action-btn ${isInfoOpen ? 'active' : ''}`} onClick={() => setIsInfoOpen(!isInfoOpen)} title="Informações do Cliente">
+                        <Info size={20} weight="bold" />
                     </button>
+                    <div className="relative-container">
+                        <button className={`action-btn ${isHeaderMenuOpen ? 'active' : ''}`} onClick={() => setIsHeaderMenuOpen(!isHeaderMenuOpen)}>
+                            <DotsThreeVertical size={20} weight="bold" />
+                        </button>
+                        <AnimatePresence>
+                            {isHeaderMenuOpen && (
+                                <>
+                                    <div className="menu-backdrop" onClick={() => setIsHeaderMenuOpen(false)}></div>
+                                    <motion.div
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        className="dropdown-menu header-menu"
+                                    >
+                                        <button className="menu-item">
+                                            <ArchiveHistory size={18} />
+                                            Histórico
+                                        </button>
+                                        <button className="menu-item">
+                                            <ShareNetwork size={18} />
+                                            Transferir
+                                        </button>
+                                        <button className="menu-item">
+                                            <Users size={18} />
+                                            Participantes
+                                        </button>
+                                        <div className="menu-divider"></div>
+                                        <button className="menu-item highlight">
+                                            <Robot size={18} />
+                                            Ativar AI
+                                        </button>
+                                    </motion.div>
+                                </>
+                            )}
+                        </AnimatePresence>
+                    </div>
                 </div>
             </header>
 
@@ -128,8 +181,74 @@ const ChatArea: React.FC = () => {
 
                     <footer className="chat-input-area">
                         <div className="input-actions">
-                            <button className="input-action-btn"><Smiley size={22} weight="duotone" /></button>
-                            <button className="input-action-btn"><Paperclip size={22} weight="duotone" /></button>
+                            {/* Emoji Button */}
+                            <div className="relative-container">
+                                <button
+                                    className={`input-action-btn ${isInputEmojiOpen ? 'active' : ''}`}
+                                    onClick={() => { setIsInputEmojiOpen(!isInputEmojiOpen); setIsAttachmentMenuOpen(false); }}
+                                    title="Emoji"
+                                >
+                                    <Smiley size={22} weight="duotone" />
+                                </button>
+                                {isInputEmojiOpen && (
+                                    <>
+                                        <div className="menu-backdrop" onClick={() => setIsInputEmojiOpen(false)}></div>
+                                        <div className="input-emoji-picker">
+                                            <EmojiPicker
+                                                onEmojiClick={handleInputEmoji}
+                                                emojiStyle={EmojiStyle.GOOGLE}
+                                                theme={Theme.DARK}
+                                                lazyLoadEmojis={true}
+                                                searchDisabled={false}
+                                                skinTonesDisabled={true}
+                                                height={380}
+                                                width={320}
+                                            />
+                                        </div>
+                                    </>
+                                )}
+                            </div>
+
+                            {/* Attachment Button */}
+                            <div className="relative-container">
+                                <button
+                                    className={`input-action-btn ${isAttachmentMenuOpen ? 'active' : ''}`}
+                                    onClick={() => { setIsAttachmentMenuOpen(!isAttachmentMenuOpen); setIsInputEmojiOpen(false); }}
+                                    title="Anexar"
+                                >
+                                    <Paperclip size={22} weight="duotone" />
+                                </button>
+                                <AnimatePresence>
+                                    {isAttachmentMenuOpen && (
+                                        <>
+                                            <div className="menu-backdrop" onClick={() => setIsAttachmentMenuOpen(false)}></div>
+                                            <motion.div
+                                                initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                animate={{ opacity: 1, y: 0, scale: 1 }}
+                                                exit={{ opacity: 0, y: 10, scale: 0.95 }}
+                                                className="dropdown-menu attachment-menu"
+                                            >
+                                                <button className="menu-item">
+                                                    <ImageIcon size={18} />
+                                                    Imagem / Vídeo
+                                                </button>
+                                                <button className="menu-item">
+                                                    <FileText size={18} />
+                                                    Documento
+                                                </button>
+                                                <button className="menu-item">
+                                                    <Camera size={18} />
+                                                    Câmera
+                                                </button>
+                                                <button className="menu-item">
+                                                    <UserList size={18} />
+                                                    Contato
+                                                </button>
+                                            </motion.div>
+                                        </>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                         </div>
 
                         <div className="message-input-container">

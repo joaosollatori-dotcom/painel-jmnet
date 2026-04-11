@@ -492,3 +492,112 @@
     background-color: var(--accent-soft);
     color: var(--accent);
 }
+
+/* Encerrar Chat */
+.end-chat-btn {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    border-radius: var(--radius-md) !important;
+    padding: 6px 14px !important;
+    background-color: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+    font-size: 0.85rem;
+    font-weight: 600;
+    border: 1px solid rgba(16, 185, 129, 0.25);
+    transition: all 0.2s;
+}
+
+.end-chat-btn:hover {
+    background-color: rgba(16, 185, 129, 0.2);
+    opacity: 1;
+}
+
+/* Relative container for dropdowns */
+.relative-container {
+    position: relative;
+}
+
+/* Transparent backdrop overlay to close menus */
+.menu-backdrop {
+    position: fixed;
+    inset: 0;
+    z-index: 900;
+}
+
+/* Generic dropdown menu */
+.dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    right: 0;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-md);
+    padding: 6px;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.5);
+    z-index: 1000;
+    min-width: 180px;
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.menu-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 12px;
+    border-radius: var(--radius-sm);
+    font-size: 0.875rem;
+    color: var(--text-primary);
+    text-align: left;
+    width: 100%;
+    transition: background-color 0.15s;
+}
+
+.menu-item:hover {
+    background-color: var(--bg-surface-light);
+    opacity: 1;
+}
+
+.menu-item svg {
+    color: var(--accent);
+    flex-shrink: 0;
+}
+
+.menu-item.highlight {
+    color: #10b981;
+}
+
+.menu-item.highlight svg {
+    color: #10b981;
+}
+
+.menu-divider {
+    height: 1px;
+    background-color: var(--border);
+    margin: 4px 0;
+}
+
+/* Attachment menu - opens upward from footer */
+.attachment-menu {
+    bottom: calc(100% + 8px);
+    top: auto;
+}
+
+/* Input emoji picker - opens upward */
+.input-emoji-picker {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 0;
+    z-index: 1001;
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    box-shadow: var(--shadow);
+    animation: slideIn 0.15s ease-out;
+}
+
+/* Active state for input-action-btn */
+.input-action-btn.active {
+    color: var(--accent);
+}

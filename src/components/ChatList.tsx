@@ -149,11 +149,6 @@ const ChatList: React.FC = () => {
                                 <span className="archived-badge">{archivedCount}</span>
                             </button>
                         )}
-                        <div className="status-filters">
-                            <button className="filter-toggle active">Todos</button>
-                            <button className="filter-toggle">Novos</button>
-                            <button className="filter-toggle">Aguardando</button>
-                        </div>
                     </>
                 ) : (
                     <p className="archived-info">Essas conversas estão arquivadas e silenciadas. Novas mensagens irão desarquivá-las.</p>
