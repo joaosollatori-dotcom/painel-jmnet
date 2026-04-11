@@ -5,7 +5,7 @@ import {
     CaretDown, ClockCounterClockwise, Note, Tag,
     WarningCircle, CurrencyDollar, Devices, WifiHigh,
     Info, FileText, Image as ImageIcon, Camera, UserList,
-    ArchiveHistory, ShareNetwork, Users, Robot, CheckSquareOffset
+    ShareNetwork, Users, Robot, CheckSquareOffset
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -97,7 +97,7 @@ const ChatArea: React.FC = () => {
                                         className="dropdown-menu header-menu"
                                     >
                                         <button className="menu-item">
-                                            <ArchiveHistory size={18} />
+                                            <ClockCounterClockwise size={18} />
                                             Histórico
                                         </button>
                                         <button className="menu-item">
