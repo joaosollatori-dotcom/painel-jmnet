@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, Users, MessageSquare, Clock, TrendingUp, CheckCircle } from 'lucide-react';
+import { Users, MessageSquare, Clock, TrendingUp, CheckCircle } from 'lucide-react';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {

@@ -2,8 +2,8 @@ import React, { useState, useRef, useEffect } from 'react';
 import {
     Phone, Video, DotsThreeVertical, PaperPlaneTilt,
     Smiley, Paperclip, Checks, Lightning,
-    CaretDown, ClockCounterClockwise, Note, Tag,
-    WarningCircle, CurrencyDollar, Devices, WifiHigh,
+    CaretDown, ClockCounterClockwise,
+    CurrencyDollar,
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X
