@@ -6,7 +6,8 @@ import {
     CurrencyDollar,
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
-    Warning, X, PencilSimple, Copy, ChartLineUp
+    Warning, X, PencilSimple, Copy, ChartLineUp,
+    IdentificationCard, Wrench
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +40,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const [isEditingContact, setIsEditingContact] = useState(false);
     const [editContactData, setEditContactData] = useState({ name: '', phone: '', email: '' });
+
+    const [showOSModal, setShowOSModal] = useState(false);
+    const [showCadastroModal, setShowCadastroModal] = useState(false);
+    const [cadastroMode, setCadastroMode] = useState<'rapido' | 'completo'>('rapido');
+    const [conflictMode, setConflictMode] = useState<'add' | 'overwrite'>('add');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -233,7 +239,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const toggleAccordion = (id: string) => setOpenAccordion(openAccordion === id ? null : id);
 
-    if (loading) return <div className="chat-area loading">Carregando conversa...</div>;
+    if (loading) {
+        return (
+            <div className="chat-area loading-skeleton-wrapper">
+                <header className="chat-header skeleton-header">
+                    <div className="skeleton-avatar skeleton-pulse"></div>
+                    <div className="skeleton-info">
+                        <div className="skeleton-line title skeleton-pulse"></div>
+                        <div className="skeleton-line sub skeleton-pulse"></div>
+                    </div>
+                </header>
+                <div className="chat-main-content">
+                    <div className="chat-conversation skeleton-conversation">
+                        <div className="skeleton-msg received skeleton-pulse"></div>
+                        <div className="skeleton-msg sent skeleton-pulse"></div>
+                        <div className="skeleton-msg received skeleton-pulse" style={{ width: '45%' }}></div>
+                    </div>
+                    <footer className="chat-input-area skeleton-footer">
+                        <div className="skeleton-icon skeleton-pulse"></div>
+                        <div className="skeleton-input-box skeleton-pulse"></div>
+                        <div className="skeleton-icon-large skeleton-pulse"></div>
+                    </footer>
+                </div>
+            </div>
+        );
+    }
 
     return (
         <div className="chat-area">
@@ -286,6 +316,13 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                         </button>
                                         <button className="menu-item" onClick={() => { setShowParticipantsModal(true); setIsHeaderMenuOpen(false); }}>
                                             <Users size={18} /> Participantes
+                                        </button>
+                                        <div className="menu-divider" />
+                                        <button className="menu-item" onClick={() => { setShowOSModal(true); setIsHeaderMenuOpen(false); }}>
+                                            <Wrench size={18} /> Ordem de Serviço
+                                        </button>
+                                        <button className="menu-item" onClick={() => { setShowCadastroModal(true); setIsHeaderMenuOpen(false); }}>
+                                            <IdentificationCard size={18} /> Gerenciar Cadastro
                                         </button>
                                         <div className="menu-divider" />
                                         <button
@@ -490,6 +527,74 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             <h3>Histórico de Conversas</h3>
                             <div className="history-list">
                                 <div className="history-item"><span className="history-date">{new Date().toLocaleDateString()}</span><span>Atendimento atual</span></div>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showOSModal && (
+                    <div className="modal-overlay" onClick={() => setShowOSModal(false)}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
+                            <button className="ca-modal-close" onClick={() => setShowOSModal(false)}><X size={18} /></button>
+                            <h3>Nova Ordem de Serviço</h3>
+                            <p style={{ marginBottom: '16px' }}>Criar OS para <strong>{conversation?.contact_name}</strong></p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Tipo de Serviço</label>
+                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
+                                    <option>Instalação</option>
+                                    <option>Manutenção</option>
+                                    <option>Visita Técnica</option>
+                                </select>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Descrição</label>
+                                <textarea placeholder="Detalhes do chamado..." rows={3} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
+                            </div>
+                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                                <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
+                                <button className="ca-confirm" onClick={() => { alert('OS Criada com sucesso!'); setShowOSModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Criar OS</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showCadastroModal && (
+                    <div className="modal-overlay" onClick={() => setShowCadastroModal(false)}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '450px' }}>
+                            <button className="ca-modal-close" onClick={() => setShowCadastroModal(false)}><X size={18} /></button>
+                            <h3>Cadastro do Cliente</h3>
+                            <p style={{ marginBottom: '16px' }}>Atualize as informações do Lead atual.</p>
+
+                            <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
+                                <button onClick={() => setCadastroMode('rapido')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'rapido' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s' }}>Cadastro Rápido</button>
+                                <button onClick={() => setCadastroMode('completo')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'completo' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s' }}>Cadastro Completo</button>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginBottom: '16px' }}>
+                                <input type="text" placeholder="Nome Completo" defaultValue={conversation?.contact_name} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                <input type="text" placeholder="Telefone" defaultValue={conversation?.contact_phone} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                {cadastroMode === 'completo' && (
+                                    <>
+                                        <input type="email" placeholder="E-mail" defaultValue={conversation?.contact_email} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                        <input type="text" placeholder="CPF / CNPJ" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                        <input type="text" placeholder="Endereço Completo" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    </>
+                                )}
+                            </div>
+
+                            <div style={{ textAlign: 'left', marginBottom: '20px', padding: '10px', border: '1px solid #333', borderRadius: '6px', background: 'var(--bg-deep)' }}>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Em caso de informações já existentes:</label>
+                                <div style={{ display: 'flex', gap: '16px', fontSize: '0.9rem', color: '#ddd' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                        <input type="radio" name="conflict" checked={conflictMode === 'add'} onChange={() => setConflictMode('add')} /> Adicionar / Preservar
+                                    </label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
+                                        <input type="radio" name="conflict" checked={conflictMode === 'overwrite'} onChange={() => setConflictMode('overwrite')} /> Sobrescrever Dados
+                                    </label>
+                                </div>
+                            </div>
+
+                            <div className="ca-modal-actions">
+                                <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Cancelar</button>
+                                <button className="ca-confirm" onClick={() => { alert(conflictMode === 'overwrite' ? 'Dados sobrescritos com sucesso!' : 'Novos dados adicionados ao cadastro atual!'); setShowCadastroModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Configurações</button>
                             </div>
                         </motion.div>
                     </div>

@@ -816,3 +816,102 @@
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
+
+/* Skeleton Loading Framework */
+.loading-skeleton-wrapper {
+    background-color: var(--bg-deep);
+}
+
+.skeleton-pulse {
+    background: linear-gradient(90deg, var(--bg-surface-light) 25%, var(--border) 50%, var(--bg-surface-light) 75%);
+    background-size: 200% 100%;
+    animation: skeletonLoading 1.5s infinite linear;
+    border-radius: 4px;
+}
+
+@keyframes skeletonLoading {
+    0% {
+        background-position: 200% 0;
+    }
+
+    100% {
+        background-position: -200% 0;
+    }
+}
+
+.skeleton-header {
+    display: flex;
+    gap: 16px;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.skeleton-avatar {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+}
+
+.skeleton-info {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    flex: 1;
+}
+
+.skeleton-info .title {
+    width: 140px;
+    height: 14px;
+}
+
+.skeleton-info .sub {
+    width: 80px;
+    height: 10px;
+}
+
+.skeleton-conversation {
+    padding: var(--space-lg);
+    gap: var(--space-md);
+}
+
+.skeleton-msg {
+    height: 48px;
+    border-radius: 12px;
+    max-width: 60%;
+}
+
+.skeleton-msg.received {
+    border-bottom-left-radius: 2px;
+    align-self: flex-start;
+    width: 50%;
+}
+
+.skeleton-msg.sent {
+    border-bottom-right-radius: 2px;
+    align-self: flex-end;
+    width: 65%;
+}
+
+.skeleton-footer {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.skeleton-icon {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+}
+
+.skeleton-icon-large {
+    width: 44px;
+    height: 44px;
+    border-radius: 50%;
+}
+
+.skeleton-input-box {
+    flex: 1;
+    height: 44px;
+    border-radius: 12px;
+}
