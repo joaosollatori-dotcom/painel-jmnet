@@ -1,0 +1,32 @@
+# Tests
+
+## Test 1 - App loads and displays welcome screen [sanity]
+Viewport: desktop
+Description: Verifies the app loads correctly and shows the welcome screen.
+
+Steps:
+1. Navigate to the app
+2. Wait for page to fully load
+
+Expected: "Bem-vindo ao TITÃ" is visible.
+
+## Test 2 - Sidebar retracts and expands
+Viewport: desktop
+Description: Test the sidebar toggle functionality.
+
+Steps:
+1. Click the sidebar toggle button
+2. Verify the sidebar width changes
+3. Click again to expand
+
+Expected: Sidebar width should decrease and then increase.
+
+## Test 3 - Select a chat from the list
+Viewport: desktop
+Description: Test selecting a chat to open the chat area.
+
+Steps:
+1. Wait for chat list to load
+2. Click on the first chat card
+
+Expected: ChatArea should load and show messages for that contact.
