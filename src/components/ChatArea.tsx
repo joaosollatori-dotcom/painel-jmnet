@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     Phone, Video, DotsThreeVertical, PaperPlaneTilt,
     Smiley, Paperclip, Checks, Lightning,
@@ -10,9 +10,14 @@ import {
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations, Message, Conversation } from '../services/chatService';
 import './ChatArea.css';
 
-const ChatArea: React.FC = () => {
+interface ChatAreaProps {
+    chatId: string;
+}
+
+const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [message, setMessage] = useState('');
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -20,43 +25,91 @@ const ChatArea: React.FC = () => {
     const [isHeaderMenuOpen, setIsHeaderMenuOpen] = useState(false);
     const [isAttachmentMenuOpen, setIsAttachmentMenuOpen] = useState(false);
     const [isInputEmojiOpen, setIsInputEmojiOpen] = useState(false);
-    const [isAIActive, setIsAIActive] = useState(false);
+    const [conversation, setConversation] = useState<Conversation | null>(null);
+    const [messages, setMessages] = useState<Message[]>([]);
+    const [loading, setLoading] = useState(true);
+
     const [showEndModal, setShowEndModal] = useState(false);
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showParticipantsModal, setShowParticipantsModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
-    const [chatEnded, setChatEnded] = useState(false);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
-    const fileAcceptRef = useRef<string>('*');
+    const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    const [messages, setMessages] = useState([
-        { id: '1', sender: 'João Silva', text: 'Bom dia, gostaria de solicitar a 2ª via do boleto de abril.', time: '10:20', isUser: false, isBot: false, reactions: ['👍'] },
-        { id: '2', sender: 'AI Bot', text: 'Olá João! Sou o Titã AI. Vou te ajudar com isso agora mesmo.', time: '10:21', isUser: false, isBot: true, reactions: [] as string[] },
-        { id: '3', sender: 'AI Bot', text: 'Verifiquei aqui que seu boleto venceu no dia 05/04. Deseja que eu gere o PDF ou apenas a linha digitável?', time: '10:21', isUser: false, isBot: true, reactions: [] as string[] },
-        { id: '4', sender: 'João Silva', text: 'Pode ser a linha digitável, por favor.', time: '10:23', isUser: false, isBot: false, reactions: [] as string[] },
-        { id: '5', sender: 'AI Bot', text: 'Com certeza! Aqui está sua linha digitável para o mês de Abril:\n\n00190.00009 02707.123456 78901.234567 8 96780000015000', time: '10:24', isUser: false, isBot: true, reactions: [] as string[] },
-        { id: '6', sender: 'João Silva', text: 'Obrigado!', time: '10:25', isUser: false, isBot: false, reactions: ['❤️'] },
-    ]);
+    useEffect(() => {
+        loadData();
+        const subscription = subscribeToMessages(chatId, (newMsg) => {
+            setMessages(prev => {
+                if (prev.find(m => m.id === newMsg.id)) return prev;
+                return [...prev, newMsg];
+            });
+        });
 
-    const now = () => new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+        return () => {
+            subscription.unsubscribe();
+        };
+    }, [chatId]);
 
-    const sendMessage = () => {
-        if (!message.trim() || chatEnded) return;
-        setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'Você', text: message.trim(), time: now(), isUser: true, isBot: false, reactions: [] }]);
-        setMessage('');
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const loadData = async () => {
+        try {
+            setLoading(true);
+            const [convs, msgs] = await Promise.all([
+                getConversations(),
+                getMessages(chatId)
+            ]);
+            const current = convs.find(c => c.id === chatId);
+            if (current) {
+                setConversation(current);
+                // Mark as read when opening
+                if (current.unread_count > 0) {
+                    await updateConversation(chatId, { unread_count: 0 });
+                }
+            }
+            setMessages(msgs);
+        } catch (err) {
+            console.error('Error loading chat data:', err);
+        } finally {
+            setLoading(false);
+        }
     };
 
-    const handleReaction = (emojiData: any) => {
+    const handleSendMessage = async () => {
+        if (!message.trim() || !conversation || conversation.is_closed) return;
+        try {
+            const text = message.trim();
+            setMessage('');
+            await sendMessage(chatId, {
+                sender: 'Você',
+                text,
+                is_user: true,
+                is_bot: false
+            });
+        } catch (err) {
+            console.error('Error sending message:', err);
+        }
+    };
+
+    const handleReaction = async (emojiData: any) => {
         if (!activeMessageId) return;
-        setMessages(prev => prev.map(msg => {
-            if (msg.id === activeMessageId) {
-                const reactions = [...msg.reactions];
-                if (!reactions.includes(emojiData.emoji)) reactions.push(emojiData.emoji);
-                return { ...msg, reactions };
-            }
-            return msg;
-        }));
+        try {
+            await addReaction(activeMessageId, emojiData.emoji);
+            setMessages(prev => prev.map(m => {
+                if (m.id === activeMessageId) {
+                    const reactions = m.reactions || [];
+                    if (!reactions.includes(emojiData.emoji)) {
+                        return { ...m, reactions: [...reactions, emojiData.emoji] };
+                    }
+                }
+                return m;
+            }));
+        } catch (err) {
+            console.error('Error adding reaction:', err);
+        }
         setActiveMessageId(null);
     };
 
@@ -65,31 +118,63 @@ const ChatArea: React.FC = () => {
         setIsInputEmojiOpen(false);
     };
 
-    const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
         if (file) {
+            // In a real app, upload to Supabase Storage first
+            // For now, we'll just send a message with the filename
             const icon = file.type.startsWith('image/') ? '📷' : file.type.startsWith('video/') ? '🎥' : '📎';
-            setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'Você', text: `${icon} ${file.name}`, time: now(), isUser: true, isBot: false, reactions: [] }]);
+            await sendMessage(chatId, {
+                sender: 'Você',
+                text: `${icon} ${file.name}`,
+                is_user: true,
+                is_bot: false
+            });
         }
         e.target.value = '';
         setIsAttachmentMenuOpen(false);
     };
 
     const openFilePicker = (accept: string) => {
-        fileAcceptRef.current = accept;
         if (fileInputRef.current) {
             fileInputRef.current.accept = accept;
             fileInputRef.current.click();
         }
     };
 
-    const handleEndChat = () => {
-        setChatEnded(true);
-        setShowEndModal(false);
-        setMessages(prev => [...prev, { id: Date.now().toString(), sender: 'Sistema', text: '🔒 Atendimento encerrado.', time: now(), isUser: true, isBot: false, reactions: [] }]);
+    const toggleAI = async () => {
+        if (!conversation) return;
+        try {
+            const newState = !conversation.ai_active;
+            await updateConversation(chatId, { ai_active: newState });
+            setConversation({ ...conversation, ai_active: newState });
+            setIsHeaderMenuOpen(false);
+        } catch (err) {
+            console.error('Error toggling AI:', err);
+        }
     };
 
+    const handleEndChat = async () => {
+        try {
+            await updateConversation(chatId, { is_closed: true });
+            await sendMessage(chatId, {
+                sender: 'Sistema',
+                text: '🔒 Atendimento encerrado.',
+                is_user: false,
+                is_bot: false
+            });
+            setConversation(prev => prev ? { ...prev, is_closed: true } : null);
+            setShowEndModal(false);
+        } catch (err) {
+            console.error('Error ending chat:', err);
+        }
+    };
+
+    const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+
     const toggleAccordion = (id: string) => setOpenAccordion(openAccordion === id ? null : id);
+
+    if (loading) return <div className="chat-area loading">Carregando conversa...</div>;
 
     return (
         <div className="chat-area">
@@ -97,15 +182,15 @@ const ChatArea: React.FC = () => {
 
             <header className="chat-header">
                 <div className="chat-user-info">
-                    <div className="avatar-small flex-center">J</div>
+                    <div className="avatar-small flex-center">{conversation?.contact_name.charAt(0)}</div>
                     <div className="user-details">
-                        <h3>João Silva</h3>
-                        <span className="user-status">Online • WhatsApp</span>
+                        <h3>{conversation?.contact_name}</h3>
+                        <span className="user-status">Online • {conversation?.platform}</span>
                     </div>
                 </div>
 
                 <div className="chat-actions">
-                    {!chatEnded ? (
+                    {!conversation?.is_closed ? (
                         <button className="action-btn end-chat-btn" onClick={() => setShowEndModal(true)}>
                             <CheckSquareOffset size={20} weight="bold" />
                             <span>Encerrar</span>
@@ -145,10 +230,10 @@ const ChatArea: React.FC = () => {
                                         </button>
                                         <div className="menu-divider" />
                                         <button
-                                            className={`menu-item ${isAIActive ? 'ai-active' : 'highlight'}`}
-                                            onClick={() => { setIsAIActive(!isAIActive); setIsHeaderMenuOpen(false); }}
+                                            className={`menu-item ${conversation?.ai_active ? 'ai-active' : 'highlight'}`}
+                                            onClick={toggleAI}
                                         >
-                                            <Robot size={18} /> {isAIActive ? '✓ IA Ativa' : 'Ativar AI'}
+                                            <Robot size={18} /> {conversation?.ai_active ? '✓ IA Ativa' : 'Ativar AI'}
                                         </button>
                                     </motion.div>
                                 </>
@@ -164,20 +249,20 @@ const ChatArea: React.FC = () => {
                         <div className="chat-day-separator">Hoje</div>
 
                         {messages.map((msg) => (
-                            <div key={msg.id} className={`message-wrapper ${msg.isUser || msg.isBot ? 'sent' : 'received'} ${msg.isBot ? 'bot' : ''}`}>
-                                {!msg.isUser && !msg.isBot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
-                                {msg.isBot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
+                            <div key={msg.id} className={`message-wrapper ${msg.is_user || msg.is_bot ? 'sent' : 'received'} ${msg.is_bot ? 'bot' : ''}`}>
+                                {!msg.is_user && !msg.is_bot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
+                                {msg.is_bot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
 
                                 <div className="message-content">
                                     <div className="message-bubble">
                                         <p>{msg.text}</p>
                                         <div className="message-footer">
-                                            <span className="message-time">{msg.time}</span>
-                                            {(msg.isUser || msg.isBot) && <Checks size={14} className="status-icon" weight="bold" />}
+                                            <span className="message-time">{formatTime(msg.created_at)}</span>
+                                            {(msg.is_user || msg.is_bot) && <Checks size={14} className="status-icon" weight="bold" />}
                                         </div>
 
                                         <div className="message-reactions">
-                                            {msg.reactions.map((r, i) => (
+                                            {(msg.reactions || []).map((r, i) => (
                                                 <span key={i} className="reaction-badge">{r}</span>
                                             ))}
                                             <button className="add-reaction-btn" onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}>
@@ -191,24 +276,17 @@ const ChatArea: React.FC = () => {
                                             </div>
                                         )}
                                     </div>
-                                    {msg.isBot && <span className="bot-label">{isAIActive ? '🤖 Titã AI — Ativo' : 'Titã AI Orchestrator'}</span>}
+                                    {msg.is_bot && <span className="bot-label">{conversation?.ai_active ? '🤖 Titã AI — Ativo' : 'Titã AI Orchestrator'}</span>}
                                 </div>
                             </div>
                         ))}
-
-                        {!chatEnded && (
-                            <div className="typing-indicator">
-                                <span /><span /><span />
-                                <p>João Silva está digitando...</p>
-                            </div>
-                        )}
+                        <div ref={messagesEndRef} />
                     </div>
 
                     <footer className="chat-input-area">
                         <div className="input-actions">
-                            {/* Emoji */}
                             <div className="relative-container">
-                                <button className={`input-action-btn ${isInputEmojiOpen ? 'active' : ''}`} onClick={() => { setIsInputEmojiOpen(!isInputEmojiOpen); setIsAttachmentMenuOpen(false); }} disabled={chatEnded}>
+                                <button className={`input-action-btn ${isInputEmojiOpen ? 'active' : ''}`} onClick={() => { setIsInputEmojiOpen(!isInputEmojiOpen); setIsAttachmentMenuOpen(false); }} disabled={conversation?.is_closed}>
                                     <Smiley size={22} weight="duotone" />
                                 </button>
                                 <AnimatePresence>
@@ -223,9 +301,8 @@ const ChatArea: React.FC = () => {
                                 </AnimatePresence>
                             </div>
 
-                            {/* Attachment */}
                             <div className="relative-container">
-                                <button className={`input-action-btn ${isAttachmentMenuOpen ? 'active' : ''}`} onClick={() => { setIsAttachmentMenuOpen(!isAttachmentMenuOpen); setIsInputEmojiOpen(false); }} disabled={chatEnded}>
+                                <button className={`input-action-btn ${isAttachmentMenuOpen ? 'active' : ''}`} onClick={() => { setIsAttachmentMenuOpen(!isAttachmentMenuOpen); setIsInputEmojiOpen(false); }} disabled={conversation?.is_closed}>
                                     <Paperclip size={22} weight="duotone" />
                                 </button>
                                 <AnimatePresence>
@@ -259,16 +336,16 @@ const ChatArea: React.FC = () => {
 
                         <div className="message-input-container">
                             <textarea
-                                placeholder={chatEnded ? 'Atendimento encerrado.' : 'Digite sua mensagem aqui...'}
+                                placeholder={conversation?.is_closed ? 'Atendimento encerrado.' : 'Digite sua mensagem aqui...'}
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
-                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); sendMessage(); } }}
+                                onKeyDown={(e) => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); handleSendMessage(); } }}
                                 rows={1}
-                                disabled={chatEnded}
+                                disabled={conversation?.is_closed}
                             />
                         </div>
 
-                        <button className="send-btn flex-center" disabled={!message.trim() || chatEnded} onClick={sendMessage}>
+                        <button className="send-btn flex-center" disabled={!message.trim() || conversation?.is_closed} onClick={handleSendMessage}>
                             <PaperPlaneTilt size={20} weight="duotone" />
                         </button>
                     </footer>
@@ -276,19 +353,11 @@ const ChatArea: React.FC = () => {
 
                 {isInfoOpen && (
                     <aside className="chat-info-sidebar">
-                        <div className="sidebar-header-info">
-                            <h4>Detalhes do Cliente</h4>
-                        </div>
-
+                        <div className="sidebar-header-info"><h4>Detalhes do Cliente</h4></div>
                         <div className="accordion-list">
                             {[
-                                { id: 'timeline', icon: <ClockCounterClockwise size={18} weight="duotone" />, label: 'Timeline', content: <><p>Última interação: Hoje às 10:25</p><p>Canal principal: WhatsApp</p></> },
-                                { id: 'motivo', icon: <Note size={18} weight="duotone" />, label: 'Motivo do Atendimento', content: <p>Financeiro - Segunda via de boleto</p> },
-                                { id: 'etiqueta', icon: <Tag size={18} weight="duotone" />, label: 'Etiqueta', content: <div className="tag-list"><span className="tag-item">Vencido</span><span className="tag-item">VIP</span></div> },
-                                { id: 'queixa', icon: <WarningCircle size={18} weight="duotone" />, label: 'Última Queixa', content: <p>Sinal oscilando (há 3 dias)</p> },
-                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Situação Financeira', content: <><p className="status-danger">Débito: R$ 149,90</p><p>Plano: 500MB Fibra</p></> },
-                                { id: 'aparelho', icon: <Devices size={18} weight="duotone" />, label: 'Status do Aparelho', content: <><p>ONU: Huawei HG8245H</p><p>Status: Online (23h 14m)</p></> },
-                                { id: 'optico', icon: <WifiHigh size={18} weight="duotone" />, label: 'Sinal Óptico', content: <><p>RX Power: -21.4 dBm</p><p className="status-success">Nível: Excelente</p></> },
+                                { id: 'timeline', icon: <ClockCounterClockwise size={18} weight="duotone" />, label: 'Timeline', content: <><p>Criado em: {new Date(conversation?.created_at || '').toLocaleDateString()}</p><p>Canal: {conversation?.platform}</p></> },
+                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Nenhum débito encontrado.</p> },
                             ].map(({ id, icon, label, content }) => (
                                 <div key={id} className={`accordion-item ${openAccordion === id ? 'open' : ''}`}>
                                     <button className="accordion-header" onClick={() => toggleAccordion(id)}>
@@ -310,7 +379,7 @@ const ChatArea: React.FC = () => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal">
                             <div className="ca-modal-icon warning"><Warning size={28} weight="duotone" /></div>
                             <h3>Encerrar atendimento?</h3>
-                            <p>O cliente não poderá mais enviar mensagens nesta sessão. Esta ação não pode ser desfeita.</p>
+                            <p>O cliente não poderá mais enviar mensagens nesta sessão.</p>
                             <div className="ca-modal-actions">
                                 <button className="ca-cancel" onClick={() => setShowEndModal(false)}>Cancelar</button>
                                 <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar</button>
@@ -325,43 +394,7 @@ const ChatArea: React.FC = () => {
                             <button className="ca-modal-close" onClick={() => setShowHistoryModal(false)}><X size={18} /></button>
                             <h3>Histórico de Conversas</h3>
                             <div className="history-list">
-                                <div className="history-item"><span className="history-date">08/04/2026</span><span>Solicitação de suporte técnico</span></div>
-                                <div className="history-item"><span className="history-date">02/04/2026</span><span>Segunda via de boleto março</span></div>
-                                <div className="history-item"><span className="history-date">15/03/2026</span><span>Reclamação de oscilação</span></div>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-
-                {showTransferModal && (
-                    <div className="modal-overlay">
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal">
-                            <h3>Transferir Atendimento</h3>
-                            <p>Selecione o agente ou setor para transferir esta conversa:</p>
-                            <div className="transfer-list">
-                                {['Suporte Técnico', 'Financeiro', 'Comercial', 'Agente: Carlos M.', 'Agente: Priya S.'].map(dest => (
-                                    <button key={dest} className="transfer-option" onClick={() => { setShowTransferModal(false); }}>
-                                        <ShareNetwork size={16} /> {dest}
-                                    </button>
-                                ))}
-                            </div>
-                            <div className="ca-modal-actions">
-                                <button className="ca-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-
-                {showParticipantsModal && (
-                    <div className="modal-overlay">
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal">
-                            <h3>Participantes</h3>
-                            <div className="participants-list">
-                                <div className="participant-item"><div className="p-avatar">V</div><div><strong>Você</strong><span>Agente ativo</span></div></div>
-                                <div className="participant-item"><div className="p-avatar bot"><Lightning size={12} weight="fill" /></div><div><strong>Titã AI</strong><span>{isAIActive ? 'Assistindo' : 'Em espera'}</span></div></div>
-                            </div>
-                            <div className="ca-modal-actions">
-                                <button className="ca-cancel" onClick={() => setShowParticipantsModal(false)}>Fechar</button>
+                                <div className="history-item"><span className="history-date">{new Date().toLocaleDateString()}</span><span>Atendimento atual</span></div>
                             </div>
                         </motion.div>
                     </div>
