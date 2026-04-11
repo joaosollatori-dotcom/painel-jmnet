@@ -70,19 +70,23 @@
 .chat-main-content {
     flex: 1;
     display: flex;
-    overflow: hidden;
+    overflow: visible;
+    min-height: 0;
 }
 
 .chat-conversation {
     flex: 1;
     display: flex;
     flex-direction: column;
-    overflow: hidden;
+    overflow: visible;
+    min-height: 0;
 }
 
 .messages-container {
     flex: 1;
     overflow-y: auto;
+    overflow-x: visible;
+    min-height: 0;
     padding: var(--space-lg);
     display: flex;
     flex-direction: column;
@@ -315,6 +319,8 @@
     gap: var(--space-md);
     border-top: 1px solid var(--border);
     background-color: var(--bg-deep);
+    position: relative;
+    z-index: 200;
 }
 
 .input-actions {
@@ -600,4 +606,213 @@
 /* Active state for input-action-btn */
 .input-action-btn.active {
     color: var(--accent);
+}
+
+/* Chat Ended Badge */
+.chat-ended-badge {
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--text-secondary);
+    background-color: var(--bg-surface-light);
+    padding: 6px 14px;
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+/* AI Active menu item */
+.menu-item.ai-active {
+    color: #10b981;
+    background-color: rgba(16, 185, 129, 0.08);
+}
+
+.menu-item.ai-active svg {
+    color: #10b981;
+}
+
+/* Modal overlay */
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.65);
+    backdrop-filter: blur(4px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 9000;
+}
+
+/* ChatArea Modal */
+.ca-modal {
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: 28px 24px 20px;
+    width: 400px;
+    max-width: 90vw;
+    text-align: center;
+    position: relative;
+    box-shadow: 0 24px 48px rgba(0, 0, 0, 0.5);
+}
+
+.ca-modal h3 {
+    margin-bottom: 10px;
+    font-size: 1.1rem;
+}
+
+.ca-modal p {
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    line-height: 1.6;
+    margin-bottom: 20px;
+}
+
+.ca-modal-icon {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+}
+
+.ca-modal-icon.warning {
+    background: rgba(245, 158, 11, 0.15);
+    color: #f59e0b;
+}
+
+.ca-modal-close {
+    position: absolute;
+    top: 14px;
+    right: 14px;
+    color: var(--text-secondary);
+    padding: 4px;
+}
+
+.ca-modal-actions {
+    display: flex;
+    gap: 12px;
+}
+
+.ca-cancel {
+    flex: 1;
+    padding: 11px;
+    background: var(--bg-surface-light);
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+.ca-confirm.danger {
+    flex: 1;
+    padding: 11px;
+    background: #ef4444;
+    color: white;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+}
+
+/* History list */
+.history-list {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-bottom: 20px;
+    text-align: left;
+}
+
+.history-item {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 10px 14px;
+    background: var(--bg-surface-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+}
+
+.history-date {
+    font-size: 0.75rem;
+    color: var(--accent);
+    font-weight: 700;
+    white-space: nowrap;
+}
+
+/* Transfer list */
+.transfer-list {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    margin-bottom: 20px;
+}
+
+.transfer-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--bg-surface-light);
+    border: 1px solid var(--border-light);
+    border-radius: var(--radius-md);
+    font-size: 0.875rem;
+    text-align: left;
+    transition: all 0.15s;
+}
+
+.transfer-option:hover {
+    background: var(--accent-soft);
+    border-color: rgba(4, 107, 237, 0.3);
+    color: var(--accent);
+    opacity: 1;
+}
+
+.transfer-option svg {
+    color: var(--accent);
+}
+
+/* Participants list */
+.participants-list {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    margin-bottom: 20px;
+}
+
+.participant-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 14px;
+    background: var(--bg-surface-light);
+    border-radius: var(--radius-md);
+    text-align: left;
+}
+
+.p-avatar {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    background: var(--bg-deep);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.9rem;
+    flex-shrink: 0;
+}
+
+.p-avatar.bot {
+    background: var(--accent);
+    color: white;
+}
+
+.participant-item div strong {
+    display: block;
+    font-size: 0.875rem;
+}
+
+.participant-item div span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
 }

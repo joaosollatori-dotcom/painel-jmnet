@@ -8,6 +8,7 @@ const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('chats');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isRetracted, setIsRetracted] = useState(true);
+  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -28,8 +29,17 @@ const App: React.FC = () => {
         onToggleTheme={toggleTheme}
       />
       <main className="main-layout">
-        <ChatList />
-        <ChatArea />
+        <ChatList selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
+        {selectedChatId ? (
+          <ChatArea chatId={selectedChatId} />
+        ) : (
+          <div className="welcome-screen">
+            <div className="welcome-content">
+              <h2>Bem-vindo ao TITÃ</h2>
+              <p>Selecione uma conversa para começar a atender seus clientes.</p>
+            </div>
+          </div>
+        )}
       </main>
     </div>
   );
