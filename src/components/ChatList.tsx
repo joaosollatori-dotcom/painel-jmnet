@@ -7,6 +7,7 @@ import {
     Eye, EyeSlash
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
+import './ChatList.css';
 
 interface Chat {
     id: string;
