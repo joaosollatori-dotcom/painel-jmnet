@@ -67,6 +67,19 @@
     margin: 0 var(--space-sm);
 }
 
+.chat-main-content {
+    flex: 1;
+    display: flex;
+    overflow: hidden;
+}
+
+.chat-conversation {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
 .messages-container {
     flex: 1;
     overflow-y: auto;
@@ -342,4 +355,140 @@
 .send-btn:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+}
+
+/* Sidebar Info Styles */
+.chat-info-sidebar {
+    width: 300px;
+    background-color: var(--bg-surface);
+    border-left: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    animation: slideInRight 0.3s ease;
+}
+
+@keyframes slideInRight {
+    from {
+        transform: translateX(100%);
+    }
+
+    to {
+        transform: translateX(0);
+    }
+}
+
+.sidebar-header-info {
+    padding: var(--space-md);
+    border-bottom: 1px solid var(--border);
+}
+
+.sidebar-header-info h4 {
+    font-size: 0.9rem;
+    color: var(--text-secondary);
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.accordion-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: var(--space-sm);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-xs);
+}
+
+.accordion-item {
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    background-color: var(--bg-surface-light);
+    border: 1px solid var(--border-light);
+}
+
+.accordion-header {
+    width: 100%;
+    padding: var(--space-md);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: none;
+    transition: background-color 0.2s;
+}
+
+.accordion-header:hover {
+    background-color: var(--bg-surface);
+    opacity: 1;
+}
+
+.header-left {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    color: var(--text-primary);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.header-left svg {
+    color: var(--accent);
+}
+
+.caret {
+    transition: transform 0.3s ease;
+    color: var(--text-secondary);
+}
+
+.accordion-item.open .caret {
+    transform: rotate(180deg);
+}
+
+.accordion-content {
+    max-height: 0;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    background-color: var(--bg-surface);
+    padding: 0 var(--space-md);
+}
+
+.accordion-item.open .accordion-content {
+    max-height: 200px;
+    padding: var(--space-md);
+    border-top: 1px solid var(--border-light);
+}
+
+.accordion-content p {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+    margin-bottom: var(--space-xs);
+}
+
+.tag-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+}
+
+.tag-item {
+    font-size: 0.7rem;
+    background-color: var(--accent-soft);
+    color: var(--accent);
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 700;
+    border: 1px solid rgba(4, 107, 237, 0.2);
+}
+
+.status-danger {
+    color: #ff4d4f !important;
+    font-weight: 700;
+}
+
+.status-success {
+    color: #52c41a !important;
+    font-weight: 700;
+}
+
+.action-btn.active {
+    background-color: var(--accent-soft);
+    color: var(--accent);
 }

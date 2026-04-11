@@ -10,17 +10,27 @@ interface Chat {
     unread: number;
     status: 'new' | 'waiting' | 'active';
     platform: 'whatsapp' | 'instagram' | 'web';
+    waitingMinutes?: number;
 }
 
 const ChatList: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
 
     const mockChats: Chat[] = [
-        { id: '1', name: 'João Silva', lastMessage: 'Preciso da segunda via do boleto', time: '10:25', unread: 2, status: 'new', platform: 'whatsapp' },
-        { id: '2', name: 'Maria Souza', lastMessage: 'O sinal está oscilando muito hoje', time: '09:40', unread: 0, status: 'active', platform: 'instagram' },
-        { id: '3', name: 'Carlos Antunes', lastMessage: 'Qual o valor do plano de 500mb?', time: '08:15', unread: 0, status: 'waiting', platform: 'whatsapp' },
-        { id: '4', name: 'Ana Oliveira', lastMessage: 'Obrigada pelo atendimento!', time: 'Ontem', unread: 0, status: 'active', platform: 'web' },
+        { id: '1', name: 'João Silva', lastMessage: 'Preciso da segunda via do boleto', time: '10:25', unread: 2, status: 'new', platform: 'whatsapp', waitingMinutes: 8 },
+        { id: '2', name: 'Maria Souza', lastMessage: 'O sinal está oscilando muito hoje', time: '09:40', unread: 5, status: 'active', platform: 'instagram', waitingMinutes: 25 },
+        { id: '3', name: 'Carlos Antunes', lastMessage: 'Qual o valor do plano de 500mb?', time: '08:15', unread: 1, status: 'waiting', platform: 'whatsapp', waitingMinutes: 45 },
+        { id: '4', name: 'Ana Oliveira', lastMessage: 'Obrigada pelo atendimento!', time: '07:30', unread: 3, status: 'active', platform: 'web', waitingMinutes: 90 },
     ];
+
+    const getUrgencyClass = (minutes?: number) => {
+        if (!minutes) return '';
+        if (minutes >= 60) return 'urgency-red';
+        if (minutes >= 30) return 'urgency-orange';
+        if (minutes >= 10) return 'urgency-yellow';
+        if (minutes >= 5) return 'urgency-blue';
+        return '';
+    };
 
     return (
         <div className="chat-list-container">
@@ -63,7 +73,11 @@ const ChatList: React.FC = () => {
                                 <span className="chat-name">{chat.name}</span>
                                 <div className="chat-meta">
                                     <span className="chat-time">{chat.time}</span>
-                                    {chat.unread > 0 && <span className="unread-badge">{chat.unread}</span>}
+                                    {chat.unread > 0 && (
+                                        <span className={`unread-badge ${getUrgencyClass(chat.waitingMinutes)}`}>
+                                            {chat.unread}
+                                        </span>
+                                    )}
                                 </div>
                             </div>
                             <p className="last-message">{chat.lastMessage}</p>

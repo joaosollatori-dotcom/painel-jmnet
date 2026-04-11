@@ -217,6 +217,24 @@
     align-items: center;
     justify-content: center;
     flex-shrink: 0;
+    transition: background-color 0.3s ease;
+}
+
+.unread-badge.urgency-blue {
+    background-color: #046bed;
+}
+
+.unread-badge.urgency-yellow {
+    background-color: #f1c40f;
+    color: #000;
+}
+
+.unread-badge.urgency-orange {
+    background-color: #e67e22;
+}
+
+.unread-badge.urgency-red {
+    background-color: #e74c3c;
 }
 
 /* ChatList remains static as requested */

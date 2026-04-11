@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import {
     Phone, Video, DotsThreeVertical, PaperPlaneTilt,
-    Smiley, Paperclip, Checks, Lightning
+    Smiley, Paperclip, Checks, Lightning,
+    CaretDown, ClockCounterClockwise, Note, Tag,
+    WarningCircle, CurrencyDollar, Devices, WifiHigh
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import './ChatArea.css';
@@ -9,6 +11,9 @@ import './ChatArea.css';
 const ChatArea: React.FC = () => {
     const [message, setMessage] = useState('');
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
+    const [isInfoOpen, setIsInfoOpen] = useState(false);
+    const [openAccordion, setOpenAccordion] = useState<string | null>('timeline');
+
     const [messages, setMessages] = useState([
         { id: '1', sender: 'João Silva', text: 'Bom dia, gostaria de solicitar a 2ª via do boleto de abril.', time: '10:20', isUser: false, reactions: ['👍'] },
         { id: '2', sender: 'AI Bot', text: 'Olá João! Sou o Titã AI. Vou te ajudar com isso agora mesmo.', time: '10:21', isBot: true, reactions: [] as string[] },
@@ -34,6 +39,10 @@ const ChatArea: React.FC = () => {
         setActiveMessageId(null);
     };
 
+    const toggleAccordion = (id: string) => {
+        setOpenAccordion(openAccordion === id ? null : id);
+    };
+
     return (
         <div className="chat-area">
             <header className="chat-header">
@@ -53,87 +62,199 @@ const ChatArea: React.FC = () => {
                         <Video size={20} weight="duotone" />
                     </button>
                     <div className="divider"></div>
-                    <button className="action-btn">
+                    <button className={`action-btn ${isInfoOpen ? 'active' : ''}`} onClick={() => setIsInfoOpen(!isInfoOpen)}>
                         <DotsThreeVertical size={20} weight="bold" />
                     </button>
                 </div>
             </header>
 
-            <div className="messages-container">
-                <div className="chat-day-separator">Hoje</div>
+            <div className="chat-main-content">
+                <div className="chat-conversation">
+                    <div className="messages-container">
+                        <div className="chat-day-separator">Hoje</div>
 
-                {messages.map((msg) => (
-                    <div key={msg.id} className={`message-wrapper ${msg.isUser || msg.isBot ? 'sent' : 'received'} ${msg.isBot ? 'bot' : ''}`}>
-                        {!msg.isUser && !msg.isBot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
-                        {msg.isBot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
+                        {messages.map((msg) => (
+                            <div key={msg.id} className={`message-wrapper ${msg.isUser || msg.isBot ? 'sent' : 'received'} ${msg.isBot ? 'bot' : ''}`}>
+                                {!msg.isUser && !msg.isBot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
+                                {msg.isBot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
 
-                        <div className="message-content">
-                            <div className="message-bubble">
-                                <p>{msg.text}</p>
-                                <div className="message-footer">
-                                    <span className="message-time">{msg.time}</span>
-                                    {(msg.isUser || msg.isBot) && <Checks size={14} className="status-icon" weight="bold" />}
-                                </div>
+                                <div className="message-content">
+                                    <div className="message-bubble">
+                                        <p>{msg.text}</p>
+                                        <div className="message-footer">
+                                            <span className="message-time">{msg.time}</span>
+                                            {(msg.isUser || msg.isBot) && <Checks size={14} className="status-icon" weight="bold" />}
+                                        </div>
 
-                                <div className="message-reactions">
-                                    {msg.reactions.map((r, i) => (
-                                        <span key={i} className="reaction-badge">{r}</span>
-                                    ))}
-                                    <button
-                                        className="add-reaction-btn"
-                                        onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
-                                    >
-                                        <Smiley size={14} weight="bold" />
-                                    </button>
-                                </div>
+                                        <div className="message-reactions">
+                                            {msg.reactions.map((r, i) => (
+                                                <span key={i} className="reaction-badge">{r}</span>
+                                            ))}
+                                            <button
+                                                className="add-reaction-btn"
+                                                onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}
+                                            >
+                                                <Smiley size={14} weight="bold" />
+                                            </button>
+                                        </div>
 
-                                {activeMessageId === msg.id && (
-                                    <div className="emoji-picker-container">
-                                        <EmojiPicker
-                                            onEmojiClick={handleReaction}
-                                            emojiStyle={EmojiStyle.GOOGLE}
-                                            theme={Theme.DARK}
-                                            lazyLoadEmojis={true}
-                                            searchDisabled={false}
-                                            skinTonesDisabled={true}
-                                            height={350}
-                                            width={300}
-                                        />
+                                        {activeMessageId === msg.id && (
+                                            <div className="emoji-picker-container">
+                                                <EmojiPicker
+                                                    onEmojiClick={handleReaction}
+                                                    emojiStyle={EmojiStyle.GOOGLE}
+                                                    theme={Theme.DARK}
+                                                    lazyLoadEmojis={true}
+                                                    searchDisabled={false}
+                                                    skinTonesDisabled={true}
+                                                    height={350}
+                                                    width={300}
+                                                />
+                                            </div>
+                                        )}
                                     </div>
-                                )}
+                                    {msg.isBot && <span className="bot-label">Titã AI Orchestrator</span>}
+                                </div>
                             </div>
-                            {msg.isBot && <span className="bot-label">Titã AI Orchestrator</span>}
+                        ))}
+
+                        <div className="typing-indicator">
+                            <span></span>
+                            <span></span>
+                            <span></span>
+                            <p>João Silva está digitando...</p>
                         </div>
                     </div>
-                ))}
 
-                <div className="typing-indicator">
-                    <span></span>
-                    <span></span>
-                    <span></span>
-                    <p>João Silva está digitando...</p>
+                    <footer className="chat-input-area">
+                        <div className="input-actions">
+                            <button className="input-action-btn"><Smiley size={22} weight="duotone" /></button>
+                            <button className="input-action-btn"><Paperclip size={22} weight="duotone" /></button>
+                        </div>
+
+                        <div className="message-input-container">
+                            <textarea
+                                placeholder="Digite sua mensagem aqui..."
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                rows={1}
+                            />
+                        </div>
+
+                        <button className="send-btn flex-center" disabled={!message.trim()}>
+                            <PaperPlaneTilt size={20} weight="duotone" />
+                        </button>
+                    </footer>
                 </div>
+
+                {isInfoOpen && (
+                    <aside className="chat-info-sidebar">
+                        <div className="sidebar-header-info">
+                            <h4>Detalhes do Cliente</h4>
+                        </div>
+
+                        <div className="accordion-list">
+                            <div className={`accordion-item ${openAccordion === 'timeline' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('timeline')}>
+                                    <div className="header-left">
+                                        <ClockCounterClockwise size={18} weight="duotone" />
+                                        <span>Timeline</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p>Última interação: Hoje às 10:25</p>
+                                    <p>Canal principal: WhatsApp</p>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'motivo' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('motivo')}>
+                                    <div className="header-left">
+                                        <Note size={18} weight="duotone" />
+                                        <span>Motivo do Atendimento</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p>Financeiro - Segunda via de boleto</p>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'etiqueta' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('etiqueta')}>
+                                    <div className="header-left">
+                                        <Tag size={18} weight="duotone" />
+                                        <span>Etiqueta</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <div className="tag-list">
+                                        <span className="tag-item">Vencido</span>
+                                        <span className="tag-item">VIP</span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'queixa' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('queixa')}>
+                                    <div className="header-left">
+                                        <WarningCircle size={18} weight="duotone" />
+                                        <span>Última Queixa</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p>Sinal oscilando (há 3 dias)</p>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'financeiro' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('financeiro')}>
+                                    <div className="header-left">
+                                        <CurrencyDollar size={18} weight="duotone" />
+                                        <span>Situação Financeira</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p className="status-danger">Débito: R$ 149,90</p>
+                                    <p>Plano: 500MB Fibra</p>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'aparelho' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('aparelho')}>
+                                    <div className="header-left">
+                                        <Devices size={18} weight="duotone" />
+                                        <span>Status do Aparelho</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p>ONU: Huawei HG8245H</p>
+                                    <p>Status: Online (23h 14m)</p>
+                                </div>
+                            </div>
+
+                            <div className={`accordion-item ${openAccordion === 'optico' ? 'open' : ''}`}>
+                                <button className="accordion-header" onClick={() => toggleAccordion('optico')}>
+                                    <div className="header-left">
+                                        <WifiHigh size={18} weight="duotone" />
+                                        <span>Sinal Óptico</span>
+                                    </div>
+                                    <CaretDown size={14} className="caret" />
+                                </button>
+                                <div className="accordion-content">
+                                    <p>RX Power: -21.4 dBm</p>
+                                    <p className="status-success">Nível: Excelente</p>
+                                </div>
+                            </div>
+                        </div>
+                    </aside>
+                )}
             </div>
-
-            <footer className="chat-input-area">
-                <div className="input-actions">
-                    <button className="input-action-btn"><Smiley size={22} weight="duotone" /></button>
-                    <button className="input-action-btn"><Paperclip size={22} weight="duotone" /></button>
-                </div>
-
-                <div className="message-input-container">
-                    <textarea
-                        placeholder="Digite sua mensagem aqui..."
-                        value={message}
-                        onChange={(e) => setMessage(e.target.value)}
-                        rows={1}
-                    />
-                </div>
-
-                <button className="send-btn flex-center" disabled={!message.trim()}>
-                    <PaperPlaneTilt size={20} weight="duotone" />
-                </button>
-            </footer>
         </div>
     );
 };
