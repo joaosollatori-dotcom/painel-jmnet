@@ -213,7 +213,7 @@
 }
 
 .unread-badge {
-    background-color: var(--accent);
+    background-color: #25d366;
     color: white;
     font-size: 0.7rem;
     font-weight: 800;

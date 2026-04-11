@@ -1,9 +1,10 @@
 import React, { useState } from 'react';
 import { Search, Plus, Filter } from 'lucide-react';
 import {
-    PushPin, Archive, BellSlash, CheckCircle,
+    PushPin, Archive, BellSlash,
     Trash, Prohibit,
-    X, Warning, Info
+    X, Warning, Info,
+    Eye, EyeSlash
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -65,17 +66,13 @@ const ChatList: React.FC = () => {
                     }
                     return prev.map(c => c.id === chatId ? { ...c, isPinned: !c.isPinned } : c);
                 case 'archive':
-                    return prev.map(c => c.id === chatId ? { ...c, isArchived: !c.isArchived, isPinned: false, isMuted: !c.isArchived ? true : c.isMuted } : c);
-                case 'mute':
-                    return prev.map(c => c.id === chatId ? { ...c, isMuted: !c.isMuted } : c);
+                    return prev.map(c => c.id === chatId ? { ...c, isArchived: !c.isArchived, isPinned: false } : c);
                 case 'read':
                     return prev.map(c => c.id === chatId ? { ...c, unread: c.unread > 0 ? 0 : 1 } : c);
                 case 'clear':
                     return prev.map(c => c.id === chatId ? { ...c, lastMessage: 'Mensagens limpas', unread: 0 } : c);
                 case 'delete':
                     return prev.filter(c => c.id !== chatId);
-                case 'block':
-                    return prev.map(c => c.id === chatId ? { ...c, isBlocked: !c.isBlocked, unread: 0, isMuted: true } : c);
                 default:
                     return prev;
             }
@@ -221,37 +218,38 @@ const ChatList: React.FC = () => {
                                 return (
                                     <>
                                         <button onClick={() => handleAction(chat.id, 'pin')}>
-                                            <PushPin size={18} weight="duotone" />
-                                            {chat.isPinned ? 'Desafixar conversa' : 'Fixar conversa'}
-                                        </button>
-                                        <button onClick={() => handleAction(chat.id, 'archive')}>
-                                            <Archive size={18} weight="duotone" />
-                                            {chat.isArchived ? 'Desarquivar conversa' : 'Arquivar conversa'}
-                                        </button>
-                                        <button 
-                                            onMouseEnter={() => setContextMenu(prev => prev ? { ...prev, sub: 'mute' } : null)}
-                                            onClick={() => handleAction(chat.id, 'mute')}
-                                            className="menu-item-with-sub"
-                                        >
-                                            <div className="item-main">
-                                                <BellSlash size={18} weight="duotone" />
-                                                {chat.isMuted ? 'Dessilenciar' : 'Silenciar'}
-                                            </div>
-                                            {!chat.isMuted && <CaretDown size={14} className="sub-indicator" />}
+                                            <PushPin size={18} weight={chat.isPinned ? "fill" : "duotone"} />
+                                            {chat.isPinned ? 'Desafixar' : 'Fixar'}
                                         </button>
 
-                                        {contextMenu.sub === 'mute' && !chat.isMuted && (
-                                            <div className="sub-menu">
-                                                <button onClick={() => { handleAction(chat.id, 'mute'); showToast('Silenciado por 8 horas'); }}>8 horas</button>
-                                                <button onClick={() => { handleAction(chat.id, 'mute'); showToast('Silenciado por 1 semana'); }}>1 semana</button>
-                                                <button onClick={() => { handleAction(chat.id, 'mute'); showToast('Silenciado para sempre'); }}>Sempre</button>
-                                            </div>
+                                        {!chat.isArchived ? (
+                                            <button onClick={() => handleAction(chat.id, 'archive')}>
+                                                <Archive size={18} weight="duotone" />
+                                                Arquivar
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleAction(chat.id, 'archive')}>
+                                                <Archive size={18} weight="fill" />
+                                                Desarquivar
+                                            </button>
                                         )}
-                                        <button onClick={() => handleAction(chat.id, 'read')}>
-                                            <CheckCircle size={18} weight="duotone" />
-                                            {chat.unread > 0 ? 'Marcar como lida' : 'Marcar como não lida'}
-                                        </button>
+
                                         <div className="menu-divider"></div>
+
+                                        {chat.unread > 0 ? (
+                                            <button onClick={() => handleAction(chat.id, 'read')}>
+                                                <Eye size={18} weight="duotone" />
+                                                Marcar como lida
+                                            </button>
+                                        ) : (
+                                            <button onClick={() => handleAction(chat.id, 'read')}>
+                                                <EyeSlash size={18} weight="duotone" />
+                                                Marcar como não lida
+                                            </button>
+                                        )}
+
+                                        <div className="menu-divider"></div>
+
                                         <button onClick={() => setModal({ type: 'clear', chatId: chat.id })} className="danger">
                                             <Trash size={18} weight="duotone" />
                                             Limpar conversa
@@ -259,10 +257,6 @@ const ChatList: React.FC = () => {
                                         <button onClick={() => setModal({ type: 'delete', chatId: chat.id })} className="danger">
                                             <Trash size={18} weight="fill" />
                                             Apagar conversa
-                                        </button>
-                                        <button onClick={() => setModal({ type: 'block', chatId: chat.id })} className="danger">
-                                            <Prohibit size={18} weight="duotone" />
-                                            {chat.isBlocked ? 'Desbloquear contato' : 'Bloquear contato'}
                                         </button>
                                     </>
                                 );
@@ -285,12 +279,10 @@ const ChatList: React.FC = () => {
                             <h3>
                                 {modal.type === 'clear' && 'Limpar conversa?'}
                                 {modal.type === 'delete' && 'Apagar conversa?'}
-                                {modal.type === 'block' && `Bloquear ${chats.find(c => c.id === modal.chatId)?.name}?`}
                             </h3>
                             <p>
                                 {modal.type === 'clear' && `Deseja limpar todas as mensagens com ${chats.find(c => c.id === modal.chatId)?.name}? Esta ação não pode ser desfeita.`}
                                 {modal.type === 'delete' && `Deseja apagar a conversa com ${chats.find(c => c.id === modal.chatId)?.name}? O histórico será removido permanentemente.`}
-                                {modal.type === 'block' && `Você não receberá mais mensagens desta pessoa.`}
                             </p>
                             <div className="modal-actions">
                                 <button className="cancel-btn" onClick={() => setModal(null)}>Cancelar</button>
