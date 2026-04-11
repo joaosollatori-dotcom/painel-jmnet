@@ -10,7 +10,8 @@ import {
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations, Message, Conversation } from '../services/chatService';
+import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations } from '../services/chatService';
+import type { Message, Conversation } from '../services/chatService';
 import './ChatArea.css';
 
 interface ChatAreaProps {

@@ -7,7 +7,8 @@ import {
     Eye, EyeSlash
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getConversations, updateConversation, deleteConversation, subscribeToConversations, Conversation } from '../services/chatService';
+import { getConversations, updateConversation, deleteConversation, subscribeToConversations } from '../services/chatService';
+import type { Conversation } from '../services/chatService';
 import './ChatList.css';
 
 interface ChatListProps {
