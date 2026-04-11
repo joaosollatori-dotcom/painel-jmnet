@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import Sidebar from './components/Sidebar';
 import ChatList from './components/ChatList';
 import ChatArea from './components/ChatArea';
+import Dashboard from './components/Dashboard';
 import './App.css';
 
 const App: React.FC = () => {
@@ -29,14 +30,27 @@ const App: React.FC = () => {
         onToggleTheme={toggleTheme}
       />
       <main className="main-layout">
-        <ChatList selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
-        {selectedChatId ? (
-          <ChatArea chatId={selectedChatId} />
+        {activeTab === 'chats' ? (
+          <>
+            <ChatList selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
+            {selectedChatId ? (
+              <ChatArea chatId={selectedChatId} />
+            ) : (
+              <div className="welcome-screen">
+                <div className="welcome-content">
+                  <h2>Bem-vindo ao TITÃ</h2>
+                  <p>Selecione uma conversa para começar a atender seus clientes.</p>
+                </div>
+              </div>
+            )}
+          </>
+        ) : activeTab === 'dashboard' ? (
+          <Dashboard />
         ) : (
           <div className="welcome-screen">
             <div className="welcome-content">
-              <h2>Bem-vindo ao TITÃ</h2>
-              <p>Selecione uma conversa para começar a atender seus clientes.</p>
+              <h2>{activeTab === 'agents' ? 'Agentes IA' : activeTab === 'crm' ? 'Clientes' : 'Ajustes'}</h2>
+              <p>Esta seção está sendo preparada para sua empresa.</p>
             </div>
           </div>
         )}
