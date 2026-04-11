@@ -4,8 +4,10 @@ export interface Conversation {
     id: string;
     contact_name: string;
     contact_phone?: string;
+    contact_email?: string;
     platform: 'whatsapp' | 'instagram' | 'web';
     status: 'new' | 'waiting' | 'active';
+    assigned_to?: string;
     is_pinned: boolean;
     is_archived: boolean;
     is_muted: boolean;
@@ -110,6 +112,75 @@ export const sendMessage = async (
         .eq('id', conversationId);
 
     return data;
+};
+
+// ──────────────────────────────
+//   Webhooks & Roteamento (Lógica Interna / Bot)
+// ──────────────────────────────
+
+export const routeIncomingCustomerMessage = async (
+    contactPhone: string,
+    messageText: string,
+    platform: 'whatsapp' | 'instagram' | 'web' = 'whatsapp',
+    contactName: string = 'Cliente'
+) => {
+    // 1. Busca conversas anteriores do cliente
+    const { data: previousConvs } = await supabase
+        .from('conversations')
+        .select('*')
+        .eq('contact_phone', contactPhone)
+        .order('created_at', { ascending: false });
+
+    let assignedAttendant = null;
+    let activeConv = null;
+
+    if (previousConvs && previousConvs.length > 0) {
+        // Encontra o último atendente (Routing rules: "retornar para o atendente que o atendeu a ultima vez")
+        assignedAttendant = previousConvs[0].assigned_to;
+        activeConv = previousConvs.find((c: Conversation) => !c.is_closed && !c.is_archived);
+    }
+
+    let conversationId;
+
+    if (activeConv) {
+        // Já existe uma sessão em aberto, aproveita.
+        conversationId = activeConv.id;
+    } else {
+        // Cliente estava arquivado ou encerrado. Abre uma NOVA conversa redirecionando pro mesmo atendente
+        const newConv = await createConversation({
+            contact_name: previousConvs?.[0]?.contact_name || contactName,
+            contact_phone: contactPhone,
+            platform,
+            status: 'waiting',
+            is_pinned: false,
+            is_archived: false,
+            is_muted: false,
+            is_blocked: false,
+            unread_count: 0,
+            last_message: messageText,
+            last_message_at: new Date().toISOString(),
+            ai_active: false,
+            is_closed: false,
+            assigned_to: assignedAttendant || 'Fila Geral' // <-- Roteamento automático aplicado
+        });
+        conversationId = newConv.id;
+    }
+
+    // Registra a mensagem no banco
+    await supabase.from('messages').insert([{
+        conversation_id: conversationId,
+        sender: previousConvs?.[0]?.contact_name || contactName,
+        text: messageText,
+        is_user: false,
+        is_bot: false
+    }]);
+
+    // Atualiza contadores (trigger de aviso na UI do atendente)
+    await updateConversation(conversationId, {
+        unread_count: activeConv ? (activeConv.unread_count + 1) : 1,
+        last_message: messageText,
+        last_message_at: new Date().toISOString()
+    });
 };
 
 export const addReaction = async (messageId: string, emoji: string): Promise<void> => {

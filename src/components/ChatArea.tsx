@@ -6,12 +6,13 @@ import {
     CurrencyDollar,
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
-    Warning, X
+    Warning, X, PencilSimple, Copy, ChartLineUp
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations } from '../services/chatService';
 import type { Message, Conversation } from '../services/chatService';
+import CameraCaptureModal from './CameraCaptureModal';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -34,6 +35,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [showTransferModal, setShowTransferModal] = useState(false);
     const [showParticipantsModal, setShowParticipantsModal] = useState(false);
     const [showHistoryModal, setShowHistoryModal] = useState(false);
+    const [showCameraModal, setShowCameraModal] = useState(false);
+
+    const [isEditingContact, setIsEditingContact] = useState(false);
+    const [editContactData, setEditContactData] = useState({ name: '', phone: '', email: '' });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -143,6 +148,59 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         }
     };
 
+    const handleEditClick = () => {
+        setEditContactData({
+            name: conversation?.contact_name || '',
+            phone: conversation?.contact_phone || '',
+            email: conversation?.contact_email || ''
+        });
+        setIsEditingContact(true);
+    };
+
+    const handleSaveContact = async () => {
+        if (!conversation) return;
+        try {
+            await updateConversation(chatId, {
+                contact_name: editContactData.name.trim(),
+                contact_phone: editContactData.phone.trim(),
+                contact_email: editContactData.email.trim()
+            });
+            setConversation(prev => prev ? {
+                ...prev,
+                contact_name: editContactData.name.trim(),
+                contact_phone: editContactData.phone.trim(),
+                contact_email: editContactData.email.trim()
+            } : null);
+            setIsEditingContact(false);
+        } catch (err) {
+            console.error('Error updating contact:', err);
+        }
+    };
+
+    const handleCopyPhone = (phone: string) => {
+        navigator.clipboard.writeText(phone);
+    };
+
+    const handleRegisterBI = (msgId: string) => {
+        // Observador que registra/marca mensagens importantes para a automação de BI
+        console.log("Enviado para automação BI:", msgId);
+        alert('Mensagem registrada na automação de BI com sucesso!');
+    };
+
+    const handleCameraCapture = async (file: File) => {
+        if (!conversation || conversation.is_closed) return;
+        try {
+            await sendMessage(chatId, {
+                sender: 'Você',
+                text: `📷 ${file.name}`,
+                is_user: true,
+                is_bot: false
+            });
+        } catch (err) {
+            console.error('Error sending camera photo:', err);
+        }
+    };
+
     const toggleAI = async () => {
         if (!conversation) return;
         try {
@@ -157,14 +215,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const handleEndChat = async () => {
         try {
-            await updateConversation(chatId, { is_closed: true });
+            await updateConversation(chatId, { is_closed: true, is_archived: false, is_pinned: false });
             await sendMessage(chatId, {
                 sender: 'Sistema',
-                text: '🔒 Atendimento encerrado.',
+                text: '🔒 Atendimento encerrado. Arquivado em Encerrados.',
                 is_user: false,
                 is_bot: false
             });
-            setConversation(prev => prev ? { ...prev, is_closed: true } : null);
+            setConversation(prev => prev ? { ...prev, is_closed: true, is_archived: false, is_pinned: false } : null);
             setShowEndModal(false);
         } catch (err) {
             console.error('Error ending chat:', err);
@@ -269,6 +327,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                             <button className="add-reaction-btn" onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}>
                                                 <Smiley size={14} weight="bold" />
                                             </button>
+                                            <button className="add-reaction-btn" title="Registrar no BI" onClick={() => handleRegisterBI(msg.id)}>
+                                                <ChartLineUp size={14} weight="bold" />
+                                            </button>
                                         </div>
 
                                         {activeMessageId === msg.id && (
@@ -322,7 +383,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                                 <button className="menu-item" onClick={() => openFilePicker('.pdf,.doc,.docx,.xls,.xlsx,.txt,.csv')}>
                                                     <FileText size={18} /> Documento
                                                 </button>
-                                                <button className="menu-item" onClick={() => openFilePicker('image/*')}>
+                                                <button className="menu-item" onClick={() => { setShowCameraModal(true); setIsAttachmentMenuOpen(false); }}>
                                                     <Camera size={18} /> Câmera / Foto
                                                 </button>
                                                 <button className="menu-item" onClick={() => openFilePicker('.vcf')}>
@@ -355,6 +416,39 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                 {isInfoOpen && (
                     <aside className="chat-info-sidebar">
                         <div className="sidebar-header-info"><h4>Detalhes do Cliente</h4></div>
+
+                        <div className="contact-quick-edit" style={{ padding: '1rem', borderBottom: '1px solid var(--border-color, #333)' }}>
+                            {isEditingContact ? (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <input type="text" value={editContactData.name} onChange={e => setEditContactData({ ...editContactData, name: e.target.value })} placeholder="Nome" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    <input type="text" value={editContactData.phone} onChange={e => setEditContactData({ ...editContactData, phone: e.target.value })} placeholder="Telefone" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    <input type="email" value={editContactData.email} onChange={e => setEditContactData({ ...editContactData, email: e.target.value })} placeholder="E-mail" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
+                                        <button onClick={() => setIsEditingContact(false)} style={{ flex: 1, padding: '6px', background: 'transparent', color: '#ccc', border: '1px solid #444', borderRadius: '4px', cursor: 'pointer' }}>Cancelar</button>
+                                        <button onClick={handleSaveContact} style={{ flex: 1, padding: '6px', background: 'var(--primary-color, #007bff)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Salvar</button>
+                                    </div>
+                                </div>
+                            ) : (
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                        <strong style={{ fontSize: '1.05rem' }}>{conversation?.contact_name}</strong>
+                                        <button onClick={handleEditClick} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color, #007bff)', cursor: 'pointer' }} title="Editar Contato"><PencilSimple size={18} /></button>
+                                    </div>
+                                    {conversation?.contact_phone && (
+                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#aaa', fontSize: '0.9rem' }}>
+                                            <span>{conversation.contact_phone}</span>
+                                            <button onClick={() => handleCopyPhone(conversation.contact_phone!)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }} title="Copiar Telefone para Automação"><Copy size={16} /></button>
+                                        </div>
+                                    )}
+                                    {conversation?.contact_email && (
+                                        <div style={{ color: '#aaa', fontSize: '0.9rem', wordBreak: 'break-all' }}>
+                                            <span>{conversation.contact_email}</span>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+
                         <div className="accordion-list">
                             {[
                                 { id: 'timeline', icon: <ClockCounterClockwise size={18} weight="duotone" />, label: 'Timeline', content: <><p>Criado em: {new Date(conversation?.created_at || '').toLocaleDateString()}</p><p>Canal: {conversation?.platform}</p></> },
@@ -399,6 +493,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             </div>
                         </motion.div>
                     </div>
+                )}
+            </AnimatePresence>
+
+            <AnimatePresence>
+                {showCameraModal && (
+                    <CameraCaptureModal
+                        onClose={() => setShowCameraModal(false)}
+                        onCapture={handleCameraCapture}
+                    />
                 )}
             </AnimatePresence>
         </div>

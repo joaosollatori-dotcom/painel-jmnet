@@ -1,0 +1,203 @@
+.camera-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    background: rgba(0, 0, 0, 0.7);
+    backdrop-filter: blur(4px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-modal {
+    background: var(--bg-card, #1a1a1a);
+    width: 100%;
+    max-width: 600px;
+    border-radius: 16px;
+    overflow: hidden;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    display: flex;
+    flex-direction: column;
+}
+
+.camera-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 1.5rem;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.camera-modal-header h3 {
+    margin: 0;
+    font-size: 1.1rem;
+    font-weight: 600;
+}
+
+.camera-close-btn {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary, #aaa);
+    cursor: pointer;
+    border-radius: 50%;
+    width: 32px;
+    height: 32px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.camera-close-btn:hover {
+    background: var(--hover-color, #333);
+    color: var(--text-primary, #fff);
+}
+
+.camera-modal-body {
+    padding: 1.5rem;
+    min-height: 400px;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+}
+
+.camera-selection {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.camera-selection p {
+    color: var(--text-primary, #fff);
+    margin: 0;
+    font-weight: 600;
+    font-size: 1.2rem;
+}
+
+.camera-selection-hint {
+    color: var(--text-secondary, #aaa);
+    font-size: 0.9rem;
+    margin-bottom: 0.5rem;
+}
+
+.camera-selection select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: var(--bg-tertiary, #222);
+    border: 1px solid var(--border-color, #444);
+    color: var(--text-primary, #fff);
+    outline: none;
+    font-size: 1rem;
+}
+
+.mt-3 {
+    margin-top: 1.5rem;
+}
+
+.camera-preview-container {
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    position: relative;
+    gap: 1.5rem;
+}
+
+.camera-video-element {
+    width: 100%;
+    max-height: 400px;
+    border-radius: 12px;
+    object-fit: cover;
+    background: #000;
+    transform: scaleX(-1); /* espelhado para facilitar selfies, no backend nao altera */
+}
+
+/* Nao espelhar a imagem capturada para que fique correta */
+.camera-video-element[src] {
+    transform: none;
+}
+
+.camera-capture-trigger {
+    width: 64px;
+    height: 64px;
+    border-radius: 50%;
+    background: transparent;
+    border: 4px solid var(--primary-color, #007bff);
+    cursor: pointer;
+    transition: transform 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.camera-capture-trigger:hover {
+    transform: scale(1.05);
+}
+
+.camera-shutter {
+    width: 48px;
+    height: 48px;
+    border-radius: 50%;
+    background: var(--primary-color, #007bff);
+    transition: transform 0.1s;
+}
+
+.camera-capture-trigger:active .camera-shutter {
+    transform: scale(0.9);
+}
+
+.camera-modal-actions {
+    display: flex;
+    gap: 1rem;
+    width: 100%;
+}
+
+.camera-modal-actions button {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    font-weight: 500;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    transition: all 0.2s;
+}
+
+.camera-cancel {
+    background: transparent;
+    border: 1px solid var(--border-color, #444);
+    color: var(--text-primary, #fff);
+}
+
+.camera-cancel:hover {
+    background: var(--hover-color, #333);
+}
+
+.camera-confirm {
+    background: var(--primary-color, #007bff);
+    border: none;
+    color: #fff;
+}
+
+.camera-confirm:hover {
+    filter: brightness(1.1);
+}
+
+.camera-error, .camera-loading {
+    color: var(--text-secondary, #aaa);
+    font-size: 1.1rem;
+    text-align: center;
+}
+
+.camera-error {
+    color: #ff4d4f;
+}
