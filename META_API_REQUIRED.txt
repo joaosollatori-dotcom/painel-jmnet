@@ -1,0 +1,13 @@
+INFORMAÇÃO CRÍTICA PARA IMPLEMENTAÇÃO DO CHAT (TITÃ | ISP)
+
+STATUS ATUAL:
+A interface de chat está pronta e integrada ao Supabase, porém, para o funcionamento real de recepção e envio de mensagens via WhatsApp/Instagram, é OBRIGATÓRIA a integração com a API Oficial da META (Cloud API).
+
+PENDÊNCIAS TÉCNICAS:
+1. API da META: Necessário Token de Acesso Permanente e ID do Número de Telefone para configurar os Webhooks no backend.
+2. BANCO DE DADOS: O erro atual "contact_email column not found" no Supabase é um erro de schema. O código já foi atualizado para ignorar esse campo, mas o cache do PostgREST (Supabase) pode precisar de um reload manual nas configurações do seu projeto Supabase se o erro persistir na web.
+
+PRÓXIMOS PASSOS:
+- Obter credenciais da Meta for Developers.
+- Configurar Webhook Endpoint em apps/api/src/modules/chat/webhooks.ts (a implementar).
+- Mapear números oficiais para o roteamento automático.
