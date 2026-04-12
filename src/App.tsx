@@ -3,6 +3,7 @@ import Sidebar from './components/Sidebar';
 import ChatList from './components/ChatList';
 import ChatArea from './components/ChatArea';
 import Dashboard from './components/Dashboard';
+import InternalChat from './components/InternalChat';
 import './App.css';
 
 const App: React.FC = () => {
@@ -46,6 +47,8 @@ const App: React.FC = () => {
           </>
         ) : activeTab === 'dashboard' ? (
           <Dashboard />
+        ) : activeTab === 'internal_chat' ? (
+          <InternalChat />
         ) : (
           <div className="welcome-screen">
             <div className="welcome-content">

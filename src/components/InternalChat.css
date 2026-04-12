@@ -1,0 +1,583 @@
+.internal-chat-wrapper {
+    display: flex;
+    flex: 1;
+    height: 100vh;
+    background-color: #36393f;
+    /* Discord primary background */
+    color: #dcddde;
+    font-family: 'Inter', sans-serif;
+    overflow: hidden;
+}
+
+/* Sidebar Channels & DMs */
+.ic-sidebar {
+    width: 240px;
+    background-color: #2f3136;
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-sidebar-header {
+    height: 48px;
+    padding: 0 16px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    border-bottom: 1px solid #202225;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.ic-sidebar-header:hover {
+    background-color: rgba(255, 255, 255, 0.05);
+}
+
+.ic-sidebar-header h2 {
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0;
+}
+
+.ic-sidebar-scroll {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 8px;
+}
+
+.ic-sidebar-scroll::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ic-sidebar-scroll::-webkit-scrollbar-thumb {
+    background: #202225;
+    border-radius: 4px;
+}
+
+.ic-category {
+    margin-bottom: 24px;
+}
+
+.ic-category-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 0 8px;
+    margin-bottom: 4px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8e9297;
+}
+
+.ic-category-header span {
+    cursor: pointer;
+}
+
+.ic-category-header span:hover {
+    color: #dcddde;
+}
+
+.ic-category-header .add-btn {
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ic-category-header .add-btn:hover {
+    color: #dcddde;
+}
+
+.ic-channel,
+.ic-user {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    margin-bottom: 2px;
+    border-radius: 4px;
+    cursor: pointer;
+    color: #8e9297;
+    transition: background 0.1s, color 0.1s;
+}
+
+.ic-channel:hover,
+.ic-user:hover {
+    background-color: #393c43;
+    color: #dcddde;
+}
+
+.ic-channel.active,
+.ic-user.active {
+    background-color: #393c43;
+    color: #fff;
+}
+
+.ic-channel .icon {
+    margin-right: 6px;
+    color: #8e9297;
+}
+
+.ic-sidebar .ic-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    background-color: #5865F2;
+    /* Discord blurple */
+    color: white;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 0.85rem;
+    margin-right: 12px;
+    position: relative;
+}
+
+.status-dot {
+    position: absolute;
+    bottom: -2px;
+    right: -2px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    border: 2px solid #2f3136;
+    /* Match bg color to look cut out */
+}
+
+.status-dot.online {
+    background-color: #3ba55c;
+}
+
+.status-dot.dnd {
+    background-color: #ed4245;
+}
+
+.status-dot.idle {
+    background-color: #faa61a;
+}
+
+.status-dot.offline {
+    background-color: #747f8d;
+}
+
+.ic-user-controls {
+    height: 52px;
+    background-color: #292b2f;
+    padding: 0 8px;
+    display: flex;
+    align-items: center;
+}
+
+.ic-user-controls .user-profile {
+    display: flex;
+    align-items: center;
+    padding: 4px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    flex: 1;
+}
+
+.ic-user-controls .user-profile:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.ic-user-controls .user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-user-controls .user-info strong {
+    font-size: 0.85rem;
+    color: #fff;
+    line-height: 1.2;
+}
+
+.ic-user-controls .user-info span {
+    font-size: 0.75rem;
+    color: #b9bbbe;
+}
+
+/* Main Area */
+.ic-main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    background-color: #36393f;
+    min-width: 0;
+    /* Important for flex-shrink */
+}
+
+.ic-main-header {
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 0 16px;
+    border-bottom: 1px solid #202225;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.2);
+}
+
+.ic-main-header .header-left,
+.ic-main-header .header-right {
+    display: flex;
+    align-items: center;
+}
+
+.ic-main-header h3 {
+    margin: 0 8px;
+    font-size: 1rem;
+    font-weight: 700;
+    color: #fff;
+}
+
+.ic-main-header .divider {
+    width: 1px;
+    height: 24px;
+    background-color: #4f545c;
+    margin: 0 12px;
+}
+
+.ic-main-header .topic {
+    font-size: 0.85rem;
+    color: #b9bbbe;
+    font-weight: 500;
+}
+
+.ic-main-header .action-icon {
+    color: #b9bbbe;
+    margin-left: 16px;
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.ic-main-header .action-icon:hover,
+.ic-main-header .action-icon.active {
+    color: #dcddde;
+}
+
+.search-box {
+    position: relative;
+    margin-left: 16px;
+}
+
+.search-box input {
+    background-color: #202225;
+    border: none;
+    border-radius: 4px;
+    padding: 4px 8px;
+    padding-right: 28px;
+    color: #dcddde;
+    font-size: 0.85rem;
+    width: 144px;
+    transition: width 0.2s;
+    outline: none;
+}
+
+.search-box input:focus {
+    width: 240px;
+}
+
+.search-box svg {
+    position: absolute;
+    right: 8px;
+    top: 5px;
+    color: #8e9297;
+    pointer-events: none;
+}
+
+.ic-messages-area {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.ic-messages-scroll {
+    flex: 1;
+    padding: 16px 0;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-messages-scroll::-webkit-scrollbar {
+    width: 8px;
+}
+
+.ic-messages-scroll::-webkit-scrollbar-track {
+    background-color: #2e3338;
+}
+
+.ic-messages-scroll::-webkit-scrollbar-thumb {
+    background-color: #202225;
+    border-radius: 8px;
+}
+
+.ic-welcome {
+    margin: 16px;
+    margin-top: 48px;
+}
+
+.ic-welcome .welcome-icon {
+    width: 68px;
+    height: 68px;
+    background-color: #4f545c;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #fff;
+    margin-bottom: 16px;
+}
+
+.ic-welcome h2 {
+    font-size: 2rem;
+    font-weight: 700;
+    color: #fff;
+    margin: 0 0 8px 0;
+}
+
+.ic-welcome p {
+    color: #b9bbbe;
+    font-size: 1rem;
+    margin: 0;
+}
+
+.ic-divider {
+    display: flex;
+    align-items: center;
+    margin: 16px 16px 24px 16px;
+}
+
+.ic-divider::before,
+.ic-divider::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background-color: rgba(79, 84, 92, 0.48);
+}
+
+.ic-divider span {
+    padding: 0 8px;
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: #72767d;
+}
+
+.ic-message {
+    padding: 4px 16px;
+    display: flex;
+    padding-top: 8px;
+    margin-bottom: 8px;
+    position: relative;
+}
+
+.ic-message:hover {
+    background-color: rgba(4, 4, 5, 0.07);
+}
+
+.bot-message {
+    background-color: rgba(88, 101, 242, 0.04);
+}
+
+.bot-message:hover {
+    background-color: rgba(88, 101, 242, 0.08);
+}
+
+.ic-msg-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    margin-right: 16px;
+    flex-shrink: 0;
+    background-color: #5865F2;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    cursor: pointer;
+    margin-top: 2px;
+}
+
+.ic-msg-content {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-msg-header {
+    display: flex;
+    align-items: baseline;
+    margin-bottom: 4px;
+}
+
+.ic-msg-user {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #fff;
+    cursor: pointer;
+    margin-right: 8px;
+}
+
+.ic-msg-user:hover {
+    text-decoration: underline;
+}
+
+.bot-tag {
+    background-color: #5865F2;
+    color: #fff;
+    font-size: 0.65rem;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+    margin-right: 8px;
+    line-height: 1;
+    display: flex;
+    align-items: center;
+}
+
+.bot-tag::before {
+    content: '✓';
+    font-size: 0.5rem;
+    margin-right: 2px;
+}
+
+.ic-msg-time {
+    font-size: 0.75rem;
+    color: #72767d;
+}
+
+.ic-msg-text {
+    font-size: 1rem;
+    line-height: 1.375rem;
+    color: #dcddde;
+    word-break: break-word;
+}
+
+/* Input Area */
+.ic-input-container {
+    padding: 0 16px 24px 16px;
+    position: relative;
+}
+
+.ic-input-wrapper {
+    background-color: #40444b;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    padding: 8px 16px;
+}
+
+.ic-input-wrapper input {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: #dcddde;
+    font-size: 1rem;
+    outline: none;
+    padding: 0 12px;
+}
+
+.ic-input-wrapper input::placeholder {
+    color: #72767d;
+}
+
+.ic-action-btn {
+    background: transparent;
+    border: none;
+    color: #b9bbbe;
+    cursor: pointer;
+    padding: 4px;
+    border-radius: 4px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: color 0.1s;
+}
+
+.ic-action-btn:hover {
+    color: #dcddde;
+}
+
+.ic-input-actions {
+    display: flex;
+    gap: 8px;
+}
+
+/* Members Sidebar */
+.ic-members-sidebar {
+    width: 240px;
+    background-color: #2f3136;
+    display: flex;
+    flex-direction: column;
+    padding: 16px 8px;
+}
+
+.ic-members-category {
+    font-size: 0.75rem;
+    font-weight: 700;
+    color: #8e9297;
+    margin: 8px 8px 4px 8px;
+}
+
+.ic-member {
+    display: flex;
+    align-items: center;
+    padding: 6px 8px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background 0.1s, opacity 0.1s;
+}
+
+.ic-member:hover {
+    background-color: #393c43;
+}
+
+.ic-member.offline {
+    opacity: 0.5;
+}
+
+.ic-member.offline:hover {
+    opacity: 0.8;
+}
+
+.ic-member .ic-avatar-small {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    margin-right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    position: relative;
+}
+
+.ic-member .status-dot {
+    border-color: #2f3136;
+}
+
+.ic-member:hover .status-dot {
+    border-color: #393c43;
+}
+
+.ic-member .name-box {
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-member .name-box .name {
+    font-size: 1rem;
+    font-weight: 500;
+    color: #8e9297;
+}
+
+.ic-member:hover .name-box .name {
+    color: #dcddde;
+}
+
+.ic-member .name-box .sub {
+    font-size: 0.75rem;
+    color: #b9bbbe;
+}

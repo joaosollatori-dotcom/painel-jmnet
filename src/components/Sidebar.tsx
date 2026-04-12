@@ -1,5 +1,5 @@
 import React from 'react';
-import { MessageSquare, LayoutDashboard, Settings, Users, LogOut, Zap, PanelLeftClose, PanelLeftOpen, Sun, Moon } from 'lucide-react';
+import { MessageSquare, LayoutDashboard, Settings, Users, LogOut, Zap, PanelLeftClose, PanelLeftOpen, Sun, Moon, Hash } from 'lucide-react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -26,6 +26,7 @@ const Sidebar: React.FC<SidebarProps> = ({
 
     const menuItems = [
         { id: 'chats', icon: MessageSquare, label: 'Mensagens' },
+        { id: 'internal_chat', icon: Hash, label: 'Chat Interno' },
         { id: 'dashboard', icon: LayoutDashboard, label: 'Relatórios' },
         { id: 'agents', icon: Zap, label: 'Agentes IA' },
         { id: 'crm', icon: Users, label: 'Clientes' },
