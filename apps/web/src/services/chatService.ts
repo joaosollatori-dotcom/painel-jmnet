@@ -4,7 +4,6 @@ export interface Conversation {
     id: string;
     contact_name: string;
     contact_phone?: string;
-    contact_email?: string;
     platform: 'whatsapp' | 'instagram' | 'web';
     status: 'new' | 'waiting' | 'active';
     assigned_to?: string;
@@ -286,7 +285,7 @@ export const sendInternalMessage = async (
             created_at: new Date().toISOString(),
             channel,
             ...message
-        };
+        } as InternalMessage;
     }
 };
 
