@@ -1,9 +1,10 @@
 services:
   postgres:
-    image: postgres:16
+    image: postgres:16-alpine
+    container_name: titan-db
     environment:
       POSTGRES_USER: titan
-      POSTGRES_PASSWORD: password
+      POSTGRES_PASSWORD: titan_password
       POSTGRES_DB: titan_isp
     ports:
       - "5432:5432"
@@ -12,31 +13,34 @@ services:
 
   redis:
     image: redis:7-alpine
+    container_name: titan-redis
     ports:
       - "6379:6379"
 
   api:
-    build: 
+    build:
       context: .
-      dockerfile: ./apps/api/Dockerfile
+      dockerfile: apps/api/Dockerfile
+    container_name: titan-api
     environment:
-      DATABASE_URL: "postgresql://titan:password@postgres:5432/titan_isp?schema=public"
+      DATABASE_URL: "postgresql://titan:titan_password@postgres:5432/titan_isp?schema=public"
       REDIS_URL: "redis://redis:6379"
-      JWT_SECRET: "super-secret-key"
+      JWT_SECRET: "seu_secret_super_seguro"
+    ports:
+      - "3000:3000"
     depends_on:
       - postgres
       - redis
-    ports:
-      - "3000:3000"
 
   web:
     build:
       context: .
-      dockerfile: ./apps/web/Dockerfile
+      dockerfile: apps/web/Dockerfile
+    container_name: titan-web
     ports:
       - "5173:5173"
-    environment:
-      VITE_API_URL: "http://localhost:3000"
+    depends_on:
+      - api
 
 volumes:
   postgres_data:

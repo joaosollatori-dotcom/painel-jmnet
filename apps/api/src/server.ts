@@ -8,6 +8,10 @@ import { assinantesRoutes } from './modules/assinantes/assinantes.routes';
 import { financeiroRoutes } from './modules/financeiro/financeiro.routes';
 import { redeRoutes } from './modules/rede/rede.routes';
 import { osRoutes } from './modules/os/os.routes';
+import { telefoniaRoutes } from './modules/telefonia/telefonia.routes';
+import { redisPlugin } from './plugins/redis.plugin';
+import { bullmqPlugin } from './plugins/bullmq.plugin';
+import { setupWorkers } from './jobs';
 
 const server = Fastify({
     logger: true,
@@ -41,6 +45,13 @@ async function main() {
     await server.register(financeiroRoutes, { prefix: '/v1/financeiro' });
     await server.register(redeRoutes, { prefix: '/v1/rede' });
     await server.register(osRoutes, { prefix: '/v1/os' });
+    await server.register(telefoniaRoutes, { prefix: '/v1/telefonia' });
+
+    await server.register(redisPlugin);
+    await server.register(bullmqPlugin);
+
+    // Start Background Workers
+    setupWorkers();
 
     // Health Check
     server.get('/health', async () => {
