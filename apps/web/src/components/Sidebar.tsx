@@ -70,7 +70,14 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
             label: 'GESTÃO',
             items: [
-                { id: 'crm', icon: TrendUp, label: 'Leads e Vendas' },
+                {
+                    id: 'crm',
+                    icon: TrendUp,
+                    label: 'Leads e Vendas',
+                    subItems: [
+                        { id: 'crm', label: 'CRM' },
+                    ]
+                },
                 {
                     id: 'financeiro',
                     icon: CurrencyDollar,

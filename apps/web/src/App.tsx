@@ -143,10 +143,24 @@ const App: React.FC = () => {
 
   const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   const toggleSidebar = () => setIsRetracted(prev => !prev);
+  const retractSidebar = () => {
+    if (!isRetracted) setIsRetracted(true);
+  };
+
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === '.') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRetracted]);
 
   return (
     <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
-      <div className="sidebar-placeholder" />
+      <div className="sidebar-placeholder" onClick={retractSidebar} />
       <Sidebar
         activeTab={activeTab}
         onTabChange={setActiveTab}
@@ -155,7 +169,7 @@ const App: React.FC = () => {
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      <main className="main-layout">
+      <main className="main-layout" onClick={retractSidebar}>
         {activeTab === 'chats' ? (
           <>
             <ChatList selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
