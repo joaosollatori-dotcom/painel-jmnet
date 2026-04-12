@@ -114,7 +114,7 @@ export const getLeads = async (): Promise<Lead[]> => {
 
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
     const { data, error } = await supabase
-        .from('leads')
+        .from('Lead')
         .insert([lead])
         .select()
         .single();
@@ -125,7 +125,7 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
     const { error } = await supabase
-        .from('leads')
+        .from('Lead')
         .update({ ...updates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
@@ -134,7 +134,7 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<vo
 
 export const deleteLead = async (id: string): Promise<void> => {
     const { error } = await supabase
-        .from('leads')
+        .from('Lead')
         .delete()
         .eq('id', id);
 
