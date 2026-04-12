@@ -252,54 +252,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             </nav>
 
             <div className="sidebar-footer">
-                <div className="last-access-container">
-                    <Clock size={18} weight="bold" className="footer-icon" />
-                    {!isRetracted && (
-                        <div className="last-access-info">
-                            <span className="last-access-label">Último Acesso</span>
-                            <span className="last-access-time">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                        </div>
-                    )}
-                </div>
-                <div className="user-status-container">
-                    <button
-                        className={`status-indicator-btn ${isStatusMenuOpen ? 'active' : ''}`}
-                        onClick={() => setIsStatusMenuOpen(!isStatusMenuOpen)}
-                    >
-                        <div className="status-dot" style={{ backgroundColor: getStatusColor(status) }} />
-                        {!isRetracted && (
-                            <div className="status-info">
-                                <span className="status-label">{status}</span>
-                                <span className="timer-text">{timer}</span>
-                            </div>
-                        )}
+                <div className="footer-toolbar">
+                    <button className="footer-item" onClick={onToggleTheme} title={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}>
+                        {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
                     </button>
-                    {isStatusMenuOpen && (
-                        <div className="status-menu">
-                            {(['Online', 'Banheiro', 'Almoço', 'Offline'] as const).map(s => (
-                                <button key={s} onClick={() => handleStatusChange(s)} className={status === s ? 'active' : ''}>
-                                    <div className="status-dot" style={{ backgroundColor: getStatusColor(s) }} />
-                                    {s}
-                                </button>
-                            ))}
-                        </div>
-                    )}
+                    <button className="footer-item" title="Ajustes" onClick={() => onTabChange('settings')}>
+                        <Gear size={22} weight="duotone" />
+                    </button>
+                    <button className="footer-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
+                        <SignOut size={22} weight="duotone" />
+                    </button>
                 </div>
-
-                <div className="sidebar-divider" />
-
-                <button className="nav-item" onClick={onToggleTheme} title={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}>
-                    {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
-                    {!isRetracted && <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>}
-                </button>
-                <button className="nav-item" title="Configurações" onClick={() => onTabChange('settings')}>
-                    <Gear size={22} />
-                    {!isRetracted && <span className="nav-label">Ajustes</span>}
-                </button>
-                <button className="nav-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
-                    <SignOut size={22} />
-                    {!isRetracted && <span className="nav-label">Sair</span>}
-                </button>
             </div>
         </aside>
     );

@@ -1,33 +1,19 @@
 :root {
   /* Branding Colors - Default Dark */
+  --primary-color: #3b82f6;
   --bg-deep: #0e0e0e;
   --bg-surface: #131313;
   --bg-surface-light: #1c1b1b;
-  --text-primary: #e5e2e1;
-  --text-secondary: #a0a0a0;
-  --accent: #046bed;
-  --accent-soft: rgba(4, 107, 237, 0.1);
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+  --accent: #3b82f6;
+  --accent-soft: rgba(59, 130, 246, 0.1);
   --border: #222222;
   --border-light: #2c2c2c;
-
-  /* Light Theme Overrides */
-  --bg-deep-light: #f5f7f9;
-  --bg-surface-light-theme: #ffffff;
-  --bg-surface-soft-light: #f0f2f5;
-  --text-primary-light: #1a1a1a;
-  --text-secondary-light: #65676b;
-  --border-light-theme: #e4e6eb;
 
   /* Typography */
   --font-title: 'Space Grotesk', sans-serif;
   --font-body: 'Manrope', sans-serif;
-
-  /* Spacing */
-  --space-xs: 4px;
-  --space-sm: 8px;
-  --space-md: 16px;
-  --space-lg: 24px;
-  --space-xl: 32px;
 
   /* Effects */
   --radius-sm: 4px;
@@ -38,14 +24,15 @@
 }
 
 [data-theme='light'] {
-  --bg-deep: var(--bg-deep-light);
-  --bg-surface: var(--bg-surface-light-theme);
-  --bg-surface-light: var(--bg-surface-soft-light);
-  --text-primary: var(--text-primary-light);
-  --text-secondary: var(--text-secondary-light);
-  --border: var(--border-light-theme);
-  --border-light: var(--bg-surface-soft-light);
-  --shadow: 0 4px 24px rgba(0, 0, 0, 0.1);
+  --bg-deep: #f1f5f9;
+  --bg-surface: #ffffff;
+  --bg-surface-light: #f8fafc;
+  --text-primary: #0f172a;
+  --text-secondary: #64748b;
+  --accent: #2563eb;
+  --border: #e2e8f0;
+  --border-light: #f1f5f9;
+  --shadow: 0 4px 24px rgba(0, 0, 0, 0.05);
 }
 
 * {
@@ -148,4 +135,30 @@ textarea:focus {
 .secondary-text {
   color: var(--text-secondary);
   font-size: 0.9rem;
+}
+
+/* Global Loading States */
+.loading-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 100px 0;
+  gap: 1rem;
+  color: var(--text-secondary);
+}
+
+.spinner-premium {
+  width: 40px;
+  height: 40px;
+  border: 3px solid var(--accent-soft);
+  border-top-color: var(--accent);
+  border-radius: 50%;
+  animation: spin 0.8s linear infinite;
+}
+
+@keyframes spin {
+  to {
+    transform: rotate(360deg);
+  }
 }

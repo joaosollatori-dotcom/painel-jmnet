@@ -21,8 +21,10 @@ interface OS {
 const OSManager: React.FC = () => {
     const [oss, setOss] = useState<OS[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        setLoading(true);
         const mockOS: OS[] = [
             {
                 id: '1',
@@ -48,7 +50,10 @@ const OSManager: React.FC = () => {
                 }
             }
         ];
-        setOss(mockOS);
+        setTimeout(() => {
+            setOss(mockOS);
+            setLoading(false);
+        }, 1000);
     }, []);
 
     const getStatusColor = (status: string) => {
@@ -89,7 +94,12 @@ const OSManager: React.FC = () => {
             </div>
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
-                {filteredOSS.map(os => (
+                {loading ? (
+                    <div className="loading-state" style={{ gridColumn: '1/-1' }}>
+                        <div className="spinner-premium"></div>
+                        <p>Sincronizando Ordens de Serviço...</p>
+                    </div>
+                ) : filteredOSS.map(os => (
                     <div key={os.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                             <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '999px', background: `${getStatusColor(os.status)}20`, color: getStatusColor(os.status), fontWeight: 700 }}>{os.status}</span>
