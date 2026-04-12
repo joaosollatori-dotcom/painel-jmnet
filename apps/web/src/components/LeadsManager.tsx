@@ -442,12 +442,13 @@ const LeadsManager: React.FC = () => {
                 .results-counter span { color: var(--primary-color); font-weight: 700; }
                 
                 .header-actions { display: flex; gap: 1rem; align-items: center; }
-                .search-box { position: relative; width: 350px; }
-                .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #555; }
+                .search-box { position: relative; width: 350px; display: flex; align-items: center; }
+                .search-icon { position: absolute; left: 16px; color: #666; pointer-events: none; display: flex; align-items: center; }
                 .search-box input { 
-                    width: 100%; padding: 12px 12px 12px 48px; border-radius: 12px; 
+                    width: 100%; padding: 12px 16px 12px 48px; border-radius: 12px; 
                     background: var(--bg-surface); border: 1px solid var(--border); 
                     color: #fff; font-size: 0.95rem; transition: all 0.2s;
+                    line-height: 1;
                 }
                 .search-box input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
                 
