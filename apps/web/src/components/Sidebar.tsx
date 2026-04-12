@@ -20,7 +20,9 @@ import {
     ShoppingCart,
     TrendUp,
     CaretDown,
-    CaretRight
+    CaretRight,
+    Clock,
+    WarningCircle
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
@@ -71,11 +73,45 @@ const Sidebar: React.FC<SidebarProps> = ({
             label: 'GESTÃO',
             items: [
                 {
-                    id: 'crm',
+                    id: 'crm_module',
                     icon: TrendUp,
                     label: 'Leads e Vendas',
                     subItems: [
-                        { id: 'crm', label: 'CRM' },
+                        {
+                            id: 'crm',
+                            label: 'CRM',
+                            subItems: [
+                                { id: 'crm_leads', label: 'Gestão de Leads' },
+                                { id: 'crm_tasks', label: 'Tarefas e Lembretes' },
+                                { id: 'crm_contratos', label: 'Contratos' },
+                                { id: 'crm_consultas', label: 'Consultas' },
+                            ]
+                        },
+                        {
+                            id: 'analytics',
+                            label: 'Analytics',
+                            subItems: [
+                                { id: 'ana_conversa', label: 'Taxa de Conversão' },
+                                { id: 'ana_performance', label: 'Performance Editorial' },
+                            ]
+                        },
+                        {
+                            id: 'clientes',
+                            label: 'Clientes',
+                            subItems: [
+                                { id: 'client_new', label: 'Novo cliente' },
+                                { id: 'client_search', label: 'Consultar cliente' },
+                                { id: 'client_delete', label: 'Apagar cliente' },
+                            ]
+                        },
+                        {
+                            id: 'kanban',
+                            label: 'Kanban',
+                            subItems: [
+                                { id: 'kanban_view', label: 'Visualizar Funil' },
+                                { id: 'kanban_config', label: 'Configurar Etapas' },
+                            ]
+                        },
                     ]
                 },
                 {
@@ -90,6 +126,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     ]
                 },
                 { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
+                { id: 'ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
                 { id: 'estoque', icon: Package, label: 'Estoque' },
             ]
         },
@@ -103,10 +140,18 @@ const Sidebar: React.FC<SidebarProps> = ({
         }
     ];
 
+    const isItemActive = (item: any): boolean => {
+        if (activeTab === item.id) return true;
+        if (item.subItems) {
+            return item.subItems.some((subItem: any) => isItemActive(subItem));
+        }
+        return false;
+    };
+
     const renderMenuItem = (item: any, depth = 0) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const isExpanded = expandedItems.has(item.id);
-        const isActive = activeTab === item.id || (hasSubItems && item.subItems.some((si: any) => activeTab === si.id));
+        const isActive = isItemActive(item);
 
         return (
             <div key={item.id} className="nav-item-container">
@@ -207,6 +252,15 @@ const Sidebar: React.FC<SidebarProps> = ({
             </nav>
 
             <div className="sidebar-footer">
+                <div className="last-access-container">
+                    <Clock size={18} weight="bold" className="footer-icon" />
+                    {!isRetracted && (
+                        <div className="last-access-info">
+                            <span className="last-access-label">Último Acesso</span>
+                            <span className="last-access-time">{new Date().toLocaleDateString('pt-BR')} {new Date().toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                        </div>
+                    )}
+                </div>
                 <div className="user-status-container">
                     <button
                         className={`status-indicator-btn ${isStatusMenuOpen ? 'active' : ''}`}

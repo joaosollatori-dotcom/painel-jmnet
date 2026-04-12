@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Calendar, User, MapPin, CheckCircle } from '@phosphor-icons/react';
+import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel } from '@phosphor-icons/react';
+import { genericFilter } from '../utils/filterUtils';
 
 interface OS {
     id: string;
@@ -19,6 +20,7 @@ interface OS {
 
 const OSManager: React.FC = () => {
     const [oss, setOss] = useState<OS[]>([]);
+    const [searchTerm, setSearchTerm] = useState('');
 
     useEffect(() => {
         const mockOS: OS[] = [
@@ -58,6 +60,8 @@ const OSManager: React.FC = () => {
         }
     };
 
+    const filteredOSS = genericFilter(oss, searchTerm);
+
     return (
         <div style={{ padding: '2rem', flex: 1, overflowY: 'auto', background: 'var(--bg-main)' }}>
             <header style={{ marginBottom: '2rem' }}>
@@ -65,8 +69,27 @@ const OSManager: React.FC = () => {
                 <p style={{ color: 'var(--text-secondary)' }}>Gerenciamento de campo e agendamento técnico.</p>
             </header>
 
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                    <MagnifyingGlass size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                    <input
+                        type="text"
+                        placeholder="Buscar por ID, tipo, descrição, assinante ou endereço..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: '100%', padding: '12px 12px 12px 44px', borderRadius: '8px',
+                            background: 'var(--bg-surface)', border: '1px solid var(--border)', color: '#fff'
+                        }}
+                    />
+                </div>
+                <button className="flex-center" style={{ padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', color: '#aaa', cursor: 'pointer' }}>
+                    <Funnel size={20} />
+                </button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
-                {oss.map(os => (
+                {filteredOSS.map(os => (
                     <div key={os.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
                             <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '999px', background: `${getStatusColor(os.status)}20`, color: getStatusColor(os.status), fontWeight: 700 }}>{os.status}</span>

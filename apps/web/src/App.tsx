@@ -190,7 +190,7 @@ const App: React.FC = () => {
           <InternalChat />
         ) : activeTab === 'agents' ? (
           <AgentsPage />
-        ) : activeTab === 'crm' ? (
+        ) : (activeTab.startsWith('crm') || activeTab.startsWith('kanban') || activeTab.startsWith('client') || activeTab.startsWith('ana')) ? (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
             <div style={{ padding: '1rem 2rem 0', background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '2rem' }}>
               <button

@@ -10,6 +10,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getConversations, updateConversation, deleteConversation, subscribeToConversations, createConversation } from '../services/chatService';
 import { CheckSquareOffset } from '@phosphor-icons/react';
 import type { Conversation } from '../services/chatService';
+import { genericFilter } from '../utils/filterUtils';
 import './ChatList.css';
 
 interface ChatListProps {
@@ -159,7 +160,9 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
         return new Date(timestamp).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
     };
 
-    const sortedChats = [...chats]
+    const filteredChats = genericFilter(chats, searchTerm);
+
+    const sortedChats = [...filteredChats]
         .sort((a, b) => {
             if (a.is_pinned && !b.is_pinned) return -1;
             if (!a.is_pinned && b.is_pinned) return 1;

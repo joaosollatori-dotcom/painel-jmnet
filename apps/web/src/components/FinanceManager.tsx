@@ -1,7 +1,19 @@
 import React from 'react';
-import { CurrencyDollar, ArrowUp, ArrowDown, Receipt, CreditCard, Bank, Calendar, WarningCircle } from '@phosphor-icons/react';
+import { CurrencyDollar, ArrowUp, ArrowDown, Receipt, CreditCard, Bank, Calendar, WarningCircle, MagnifyingGlass, Funnel } from '@phosphor-icons/react';
+import { genericFilter } from '../utils/filterUtils';
 
 const FinanceManager: React.FC = () => {
+    const [searchTerm, setSearchTerm] = React.useState('');
+    const invoices = [
+        { id: 1, cliente: 'Assinante Exemplo 1', vencimento: '15/04/2026', valor: 'R$ 109,90', status: 'PAGO' },
+        { id: 2, cliente: 'Assinante Exemplo 2', vencimento: '16/04/2026', valor: 'R$ 159,90', status: 'PENDENTE' },
+        { id: 3, cliente: 'Empresa Alpha', vencimento: '20/04/2026', valor: 'R$ 450,00', status: 'PAGO' },
+        { id: 4, cliente: 'Condomínio Solar', vencimento: '22/04/2026', valor: 'R$ 2.100,00', status: 'ATRASADO' },
+        { id: 5, cliente: 'João Silva', vencimento: '25/04/2026', valor: 'R$ 89,90', status: 'PAGO' },
+    ];
+
+    const filteredInvoices = genericFilter(invoices, searchTerm);
+
     const stats = [
         { label: 'MRR (Mensalidade)', value: 'R$ 142.500,00', icon: CurrencyDollar, trend: '+8%', color: '#10b981' },
         { label: 'Inadimplência', value: '4.2%', icon: WarningCircle, trend: '-0.5%', color: '#ef4444' },
@@ -35,6 +47,25 @@ const FinanceManager: React.FC = () => {
                 ))}
             </div>
 
+            <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem' }}>
+                <div style={{ flex: 1, position: 'relative' }}>
+                    <MagnifyingGlass size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                    <input
+                        type="text"
+                        placeholder="Buscar em faturas, clientes, valores ou status..."
+                        value={searchTerm}
+                        onChange={(e) => setSearchTerm(e.target.value)}
+                        style={{
+                            width: '100%', padding: '12px 12px 12px 44px', borderRadius: '8px',
+                            background: 'var(--bg-surface)', border: '1px solid var(--border)', color: '#fff'
+                        }}
+                    />
+                </div>
+                <button className="flex-center" style={{ padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', color: '#aaa', cursor: 'pointer' }}>
+                    <Funnel size={20} />
+                </button>
+            </div>
+
             <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '24px' }}>
                 <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '1.5rem' }}>
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -51,13 +82,20 @@ const FinanceManager: React.FC = () => {
                             </tr>
                         </thead>
                         <tbody style={{ fontSize: '0.9rem' }}>
-                            {[1, 2, 3, 4, 5].map(i => (
-                                <tr key={i} style={{ borderTop: '1px solid var(--border)' }}>
-                                    <td style={{ padding: '16px 0' }}>Assinante Exemplo {i}</td>
-                                    <td style={{ padding: '16px 0' }}>15/04/2026</td>
-                                    <td style={{ padding: '16px 0' }}>R$ 109,90</td>
+                            {filteredInvoices.map(inv => (
+                                <tr key={inv.id} style={{ borderTop: '1px solid var(--border)' }}>
+                                    <td style={{ padding: '16px 0' }}>{inv.cliente}</td>
+                                    <td style={{ padding: '16px 0' }}>{inv.vencimento}</td>
+                                    <td style={{ padding: '16px 0' }}>{inv.valor}</td>
                                     <td style={{ padding: '16px 0' }}>
-                                        <span style={{ padding: '4px 10px', borderRadius: '999px', background: '#10b98120', color: '#10b981', fontSize: '0.75rem', fontWeight: 700 }}>PAGO</span>
+                                        <span style={{
+                                            padding: '4px 10px', borderRadius: '999px',
+                                            background: inv.status === 'PAGO' ? '#10b98120' : inv.status === 'ATRASADO' ? '#ef444420' : '#f59e0b20',
+                                            color: inv.status === 'PAGO' ? '#10b981' : inv.status === 'ATRASADO' ? '#ef4444' : '#f59e0b',
+                                            fontSize: '0.75rem', fontWeight: 700
+                                        }}>
+                                            {inv.status}
+                                        </span>
                                     </td>
                                 </tr>
                             ))}

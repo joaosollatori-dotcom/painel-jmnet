@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLeads, createLead, updateLead, deleteLead, Lead } from '../services/leadService';
+import { genericFilter } from '../utils/filterUtils';
 import './Dashboard.css'; // Vou usar os estilos base de dashboard
 
 const LeadsManager: React.FC = () => {
@@ -79,11 +80,7 @@ const LeadsManager: React.FC = () => {
         }
     };
 
-    const filteredLeads = leads.filter(l =>
-        l.nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        l.telefonePrincipal.includes(searchTerm) ||
-        l.cpfCnpj?.includes(searchTerm)
-    );
+    const filteredLeads = genericFilter(leads, searchTerm);
 
     return (
         <div className="manager-container" style={{ padding: '2rem', height: '100%', overflowY: 'auto' }}>
