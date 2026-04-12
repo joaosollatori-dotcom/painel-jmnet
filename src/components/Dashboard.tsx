@@ -1,13 +1,75 @@
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { Users, MessageSquare, Clock, TrendingUp, CheckCircle } from 'lucide-react';
+import { getConversations, getMessages } from '../services/chatService';
+import type { Conversation } from '../services/chatService';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
+    const [conversations, setConversations] = useState<Conversation[]>([]);
+    const [avgTime, setAvgTime] = useState('--');
+    const [activities, setActivities] = useState<{ text: string; color: string }[]>([]);
+
+    useEffect(() => {
+        loadDashboardData();
+    }, []);
+
+    const loadDashboardData = async () => {
+        try {
+            const convs = await getConversations();
+            setConversations(convs);
+
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const todayConvs = convs.filter(c => new Date(c.last_message_at) >= today);
+
+            // Calcular tempo médio de resposta (simplificado)
+            let totalDiffMin = 0;
+            let count = 0;
+            for (const c of todayConvs.slice(0, 5)) {
+                try {
+                    const msgs = await getMessages(c.id);
+                    if (msgs.length >= 2) {
+                        const first = new Date(msgs[0].created_at).getTime();
+                        const second = new Date(msgs[1].created_at).getTime();
+                        totalDiffMin += (second - first) / 60000;
+                        count++;
+                    }
+                } catch { /* skip */ }
+            }
+            if (count > 0) {
+                const avg = Math.round(totalDiffMin / count);
+                setAvgTime(`${avg}m`);
+            }
+
+            // Gerar atividades recentes reais
+            const recentActivities = convs.slice(0, 5).map(c => {
+                if (c.is_closed) return { text: `${c.contact_name} teve atendimento encerrado`, color: 'orange' };
+                if (c.is_archived) return { text: `${c.contact_name} foi arquivado`, color: '' };
+                return { text: `${c.contact_name} — última msg: ${new Date(c.last_message_at).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}`, color: 'green' };
+            });
+            setActivities(recentActivities);
+        } catch (err) {
+            console.error('Erro ao carregar dados do dashboard:', err);
+        }
+    };
+
+    const todayCount = conversations.filter(c => {
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return new Date(c.last_message_at) >= today;
+    }).length;
+
+    const closedCount = conversations.filter(c => c.is_closed).length;
+    const newClients = conversations.filter(c => {
+        const d = new Date(c.created_at);
+        const today = new Date(); today.setHours(0, 0, 0, 0);
+        return d >= today;
+    }).length;
+
     const stats = [
-        { label: 'Atendimentos Hoje', value: '42', icon: MessageSquare, color: '#3b82f6' },
-        { label: 'Tempo Médio', value: '12m', icon: Clock, color: '#10b981' },
-        { label: 'Novos Clientes', value: '8', icon: Users, color: '#f59e0b' },
-        { label: 'Concluídos', value: '38', icon: CheckCircle, color: '#8b5cf6' },
+        { label: 'Atendimentos Hoje', value: String(todayCount), icon: MessageSquare, color: '#3b82f6' },
+        { label: 'Tempo Médio', value: avgTime, icon: Clock, color: '#10b981' },
+        { label: 'Novos Clientes', value: String(newClients), icon: Users, color: '#f59e0b' },
+        { label: 'Concluídos', value: String(closedCount), icon: CheckCircle, color: '#8b5cf6' },
     ];
 
     return (
@@ -39,7 +101,7 @@ const Dashboard: React.FC = () => {
             <div className="dashboard-charts">
                 <div className="chart-card placeholder">
                     <div className="chart-header">
-                        <h3>Volume de Atendimento per Hora</h3>
+                        <h3>Volume de Atendimento por Hora</h3>
                         <TrendingUp size={20} />
                     </div>
                     <div className="chart-content">
@@ -59,24 +121,14 @@ const Dashboard: React.FC = () => {
                 <div className="activity-list chart-card">
                     <h3>Últimas Atividades</h3>
                     <div className="activity-items">
-                        <div className="activity-item">
-                            <div className="activity-dot" />
-                            <div className="activity-text">
-                                <strong>João Silva</strong> finalizou atendimento às 13:40
+                        {activities.length === 0 ? (
+                            <div className="activity-item"><div className="activity-dot" /><div className="activity-text">Carregando atividades...</div></div>
+                        ) : activities.map((act, i) => (
+                            <div className="activity-item" key={i}>
+                                <div className={`activity-dot ${act.color}`} />
+                                <div className="activity-text">{act.text}</div>
                             </div>
-                        </div>
-                        <div className="activity-item">
-                            <div className="activity-dot green" />
-                            <div className="activity-text">
-                                <strong>Titã AI</strong> resolveu dúvida técnica de Maria S.
-                            </div>
-                        </div>
-                        <div className="activity-item">
-                            <div className="activity-dot orange" />
-                            <div className="activity-text">
-                                <strong>Equipe Financeira</strong> recebeu transferência de chat
-                            </div>
-                        </div>
+                        ))}
                     </div>
                 </div>
             </div>

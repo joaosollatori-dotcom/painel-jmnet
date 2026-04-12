@@ -113,11 +113,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {theme === 'dark' ? <Sun size={22} /> : <Moon size={22} />}
                     {!isRetracted && <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>}
                 </button>
-                <button className="nav-item" title="Configurações">
+                <button className="nav-item" title="Configurações" onClick={() => onTabChange('settings')}>
                     <Settings size={22} />
                     {!isRetracted && <span className="nav-label">Ajustes</span>}
                 </button>
-                <button className="nav-item logout" title="Sair">
+                <button className="nav-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
                     <LogOut size={22} />
                     {!isRetracted && <span className="nav-label">Sair</span>}
                 </button>

@@ -233,10 +233,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         alert('Copiado ✓');
     };
 
-    const handleRegisterBI = (msgId: string) => {
-        // Observador que registra/marca mensagens importantes para a automação de BI
-        console.log("Enviado para automação BI:", msgId);
-        alert('Mensagem registrada na automação de BI com sucesso!');
+    const handleRegisterBI = async (msgId: string) => {
+        const msg = messages.find(m => m.id === msgId);
+        if (!msg) return;
+        await sendMessage(chatId, {
+            sender: 'Sistema',
+            text: `📊 Mensagem registrada no BI (Auditoria):\n"${msg.text.substring(0, 80)}..."\nID: ${msgId}`,
+            is_user: false,
+            is_bot: false
+        });
     };
 
     const handleCameraCapture = async (file: File) => {
@@ -339,8 +344,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <span className="chat-ended-badge">Encerrado</span>
                     )}
                     <div className="divider"></div>
-                    <button className="action-btn" title="Ligar (VoIP)"><Phone size={20} weight="duotone" /></button>
-                    <button className="action-btn" title="Video Chamada"><Video size={20} weight="duotone" /></button>
+                    <button className="action-btn" title="Ligar (VoIP)" onClick={() => { window.open(`tel:${conversation?.contact_phone || ''}`, '_blank'); }}><Phone size={20} weight="duotone" /></button>
+                    <button className="action-btn" title="Video Chamada" onClick={async () => { await sendMessage(chatId, { sender: 'Sistema', text: '📹 Chamada de vídeo iniciada. Aguardando conexão do cliente...', is_user: false, is_bot: false }); }}><Video size={20} weight="duotone" /></button>
                     <div className="divider"></div>
                     <button className={`action-btn ${isInfoOpen ? 'active' : ''}`} onClick={() => setIsInfoOpen(!isInfoOpen)} title="Informações">
                         <Info size={20} weight="bold" />
@@ -648,7 +653,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             </div>
                             <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
                                 <button className="ca-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={() => { alert('Atendimento transferido para fila selecionada!'); setShowTransferModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Transferir</button>
+                                <button className="ca-confirm" onClick={async () => {
+                                    const dept = (document.querySelector('.ca-modal select') as HTMLSelectElement)?.value || 'Suporte Técnico';
+                                    const note = (document.querySelector('.ca-modal textarea') as HTMLTextAreaElement)?.value || '';
+                                    await sendMessage(chatId, {
+                                        sender: 'Sistema',
+                                        text: `➡️ Atendimento transferido para: ${dept}${note ? `\nNota interna: "${note}"` : ''}`,
+                                        is_user: false,
+                                        is_bot: false
+                                    });
+                                    await updateConversation(chatId, { assigned_to: dept });
+                                    setShowTransferModal(false);
+                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Transferir</button>
                             </div>
                         </motion.div>
                     </div>
@@ -670,7 +686,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                     <option>Carlos Oliveira</option>
                                     <option>Fernanda Costa</option>
                                 </select>
-                                <button style={{ padding: '8px 12px', background: 'var(--bg-surface-light)', color: '#fff', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>Adicionar</button>
+                                <button style={{ padding: '8px 12px', background: 'var(--bg-surface-light)', color: '#fff', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={async () => {
+                                    const sel = (document.querySelector('.ca-modal select:last-of-type') as HTMLSelectElement)?.value;
+                                    if (!sel || sel === 'Selecionar colaborador...') return;
+                                    await sendMessage(chatId, {
+                                        sender: 'Sistema',
+                                        text: `👥 ${sel} foi adicionado(a) como participante interno deste ticket.`,
+                                        is_user: false,
+                                        is_bot: false
+                                    });
+                                    setShowParticipantsModal(false);
+                                }}>Adicionar</button>
                             </div>
                         </motion.div>
                     </div>
@@ -729,7 +755,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             </div>
                             <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
                                 <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={() => { alert('OS gerada e sincronizada com o aplicativo de campo!'); setShowOSModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Gerar e Atribuir OS</button>
+                                <button className="ca-confirm" onClick={async () => {
+                                    const osId = `OS-${Date.now().toString().slice(-6)}`;
+                                    await sendMessage(chatId, {
+                                        sender: 'Sistema',
+                                        text: `🛠️ Ordem de Serviço ${osId} gerada com sucesso para ${conversation?.contact_name}.\nStatus: Aguardando atribuição de técnico.`,
+                                        is_user: false,
+                                        is_bot: false
+                                    });
+                                    setShowOSModal(false);
+                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Gerar e Atribuir OS</button>
                             </div>
                         </motion.div>
                     </div>
@@ -820,7 +855,22 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                             <div className="ca-modal-actions">
                                 <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={() => { alert(conflictMode === 'overwrite' ? 'Dados forçados no ERP com sucesso!' : 'Integração de novos dados finalizada de forma segura!'); setShowCadastroModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Ficha Completa</button>
+                                <button className="ca-confirm" onClick={async () => {
+                                    const nameInput = (document.querySelectorAll('.ca-modal-body input[type="text"]')[0] as HTMLInputElement)?.value || conversation?.contact_name;
+                                    const phoneInput = (document.querySelectorAll('.ca-modal-body input[type="text"]')[1] as HTMLInputElement)?.value || conversation?.contact_phone;
+                                    await updateConversation(chatId, {
+                                        contact_name: nameInput?.trim(),
+                                        contact_phone: phoneInput?.trim()
+                                    });
+                                    setConversation(prev => prev ? { ...prev, contact_name: nameInput?.trim() || prev.contact_name, contact_phone: phoneInput?.trim() || prev.contact_phone } : null);
+                                    await sendMessage(chatId, {
+                                        sender: 'Sistema',
+                                        text: `📝 Cadastro CRM atualizado (${conflictMode === 'overwrite' ? 'Sobrescrita ERP' : 'Agrupamento seguro'}).`,
+                                        is_user: false,
+                                        is_bot: false
+                                    });
+                                    setShowCadastroModal(false);
+                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Ficha Completa</button>
                             </div>
                         </motion.div>
                     </div>
