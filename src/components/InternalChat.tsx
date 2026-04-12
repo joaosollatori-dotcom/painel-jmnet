@@ -2,7 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import {
     Hash, Users, MagnifyingGlass, Plus, Bell, PushPin, Gift,
     Sticker, Smiley, Paperclip, FileText, UserCircle,
-    ChartBar, DeviceTower, Receipt, WifiHigh, X
+    ChartBar, Broadcast, Receipt, WifiHigh, X
 } from '@phosphor-icons/react';
 import {
     getInternalMessages, sendInternalMessage, subscribeToInternalMessages,
@@ -228,7 +228,7 @@ const InternalChat: React.FC = () => {
                                             <button type="button" onClick={() => openClientPicker('summary')}><FileText size={18} /> Pedir Resumo IA</button>
                                             <div className="ic-menu-divider" />
                                             <span className="ic-menu-label">RELATÓRIOS BI</span>
-                                            <button type="button" onClick={() => openClientPicker('equip')}><DeviceTower size={18} /> Info Equipamento</button>
+                                            <button type="button" onClick={() => openClientPicker('equip')}><Broadcast size={18} /> Info Equipamento</button>
                                             <button type="button" onClick={() => openClientPicker('contract')}><Receipt size={18} /> Info Contrato</button>
                                             <button type="button" onClick={() => openClientPicker('conn')}><WifiHigh size={18} /> Info Conexão</button>
                                             <div className="ic-menu-divider" />
