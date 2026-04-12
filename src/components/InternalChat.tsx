@@ -36,9 +36,12 @@ const InternalChat: React.FC = () => {
     const [showMembersSidebar, setShowMembersSidebar] = useState(true);
     const [pinnedMessages, setPinnedMessages] = useState<string[]>([]);
     const [toast, setToast] = useState<string | null>(null);
+    const [attachment, setAttachment] = useState<{ title: string; content: string; icon: string; clientName: string } | null>(null);
+    const [isLoadingReport, setIsLoadingReport] = useState<{ label: string } | null>(null);
 
     const messagesEndRef = useRef<HTMLDivElement>(null);
     const fileInputRef = useRef<HTMLInputElement>(null);
+    const inputRef = useRef<HTMLInputElement>(null);
 
     useEffect(() => {
         loadMessages();
@@ -62,10 +65,14 @@ const InternalChat: React.FC = () => {
 
     const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
-        if (!message.trim()) return;
+        if (!message.trim() && !attachment) return;
 
-        const textToSend = message;
+        let textToSend = message.trim();
+        if (attachment) {
+            textToSend = `📎 ${attachment.icon} ${attachment.title} — ${attachment.clientName}\n${'━'.repeat(36)}\n${attachment.content}${textToSend ? `\n\n💬 ${textToSend}` : ''}`;
+        }
         setMessage('');
+        setAttachment(null);
 
         await sendInternalMessage(activeChannel, {
             user: 'João Sollatori',
@@ -82,11 +89,32 @@ const InternalChat: React.FC = () => {
         setShowClientPicker(null);
         setIsMenuOpen(false);
 
-        let reportText = '';
-        const userName = 'João Sollatori';
+        const MODE_LABELS: Record<string, string> = {
+            mention: 'Mencionando cliente',
+            summary: 'Gerando resumo IA',
+            equip: 'Buscando Info Equipamento',
+            contract: 'Buscando Info Contrato',
+            conn: 'Buscando Status Conexão'
+        };
+        const MODE_ICONS: Record<string, string> = {
+            mention: '👤', summary: '🤖', equip: '📡', contract: '📜', conn: '🌐'
+        };
+        const MODE_TITLES: Record<string, string> = {
+            mention: 'Menção de Cliente',
+            summary: 'Resumo IA do Atendimento',
+            equip: 'Relatório de Equipamento',
+            contract: 'Relatório de Contrato',
+            conn: 'Status de Conexão'
+        };
 
+        setIsLoadingReport({ label: MODE_LABELS[mode] || 'Carregando...' });
+
+        // Simular tempo de busca real
+        await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
+
+        let reportText = '';
         if (mode === 'mention') {
-            reportText = `Estou analisando o caso do cliente @${client.contact_name}.`;
+            reportText = `Cliente: ${client.contact_name}\nTelefone: ${client.contact_phone || 'N/A'}\nE-mail: ${client.contact_email || 'N/A'}\nPlataforma: ${client.platform}\nStatus: ${client.is_closed ? 'Encerrado' : 'Ativo'}`;
         } else if (mode === 'summary') {
             reportText = await getClientSummary(client.id);
         } else if (mode === 'equip') {
@@ -97,14 +125,17 @@ const InternalChat: React.FC = () => {
             reportText = await getConnectionStatus(client.contact_phone || '');
         }
 
+        setIsLoadingReport(null);
+
         if (reportText) {
-            await sendInternalMessage(activeChannel, {
-                user: userName,
-                avatar: 'J',
-                text: reportText,
-                color: '#ef4444',
-                isBot: false
+            setAttachment({
+                title: MODE_TITLES[mode] || 'Relatório',
+                content: reportText,
+                icon: MODE_ICONS[mode] || '📎',
+                clientName: client.contact_name
             });
+            // Focus no input para o usuário digitar mensagem
+            setTimeout(() => inputRef.current?.focus(), 100);
         }
     };
 
@@ -294,6 +325,29 @@ const InternalChat: React.FC = () => {
                     </div>
 
                     <form className="ic-input-container" onSubmit={handleSendMessage}>
+                        {/* Attachment Card (Claude-style) */}
+                        <AnimatePresence>
+                            {attachment && (
+                                <motion.div
+                                    initial={{ opacity: 0, y: 12, height: 0 }}
+                                    animate={{ opacity: 1, y: 0, height: 'auto' }}
+                                    exit={{ opacity: 0, y: 12, height: 0 }}
+                                    className="ic-attachment-card"
+                                >
+                                    <div className="ic-attach-header">
+                                        <div className="ic-attach-icon">{attachment.icon}</div>
+                                        <div className="ic-attach-meta">
+                                            <strong>{attachment.title}</strong>
+                                            <span>{attachment.clientName} • {attachment.content.split('\n').length} linhas</span>
+                                        </div>
+                                        <button type="button" className="ic-attach-close" onClick={() => setAttachment(null)}>
+                                            <X size={16} weight="bold" />
+                                        </button>
+                                    </div>
+                                    <pre className="ic-attach-body">{attachment.content}</pre>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                         <div className="ic-input-wrapper">
                             <div className="ic-plus-container">
                                 <button type="button" className={`ic-action-btn ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
@@ -321,8 +375,9 @@ const InternalChat: React.FC = () => {
                                 </AnimatePresence>
                             </div>
                             <input
+                                ref={inputRef}
                                 type="text"
-                                placeholder={`Conversar em #${activeChannel}`}
+                                placeholder={attachment ? 'Adicione uma mensagem (opcional)...' : `Conversar em #${activeChannel}`}
                                 value={message}
                                 onChange={(e) => setMessage(e.target.value)}
                             />
@@ -423,6 +478,24 @@ const InternalChat: React.FC = () => {
                                 ))}
                                 {filteredClients.length === 0 && <div className="picker-empty">Nenhum cliente encontrado.</div>}
                             </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
+            {/* Loading Report Modal */}
+            <AnimatePresence>
+                {isLoadingReport && (
+                    <div className="ic-modal-overlay">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.85 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            exit={{ opacity: 0, scale: 0.85 }}
+                            className="ic-loading-modal"
+                        >
+                            <div className="ic-loading-spinner" />
+                            <strong>{isLoadingReport.label}</strong>
+                            <span>Consultando base de dados...</span>
                         </motion.div>
                     </div>
                 )}

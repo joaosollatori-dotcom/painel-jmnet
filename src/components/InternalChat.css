@@ -488,6 +488,139 @@
     gap: var(--space-xs);
 }
 
+/* ====== Attachment Card (Claude-style) ====== */
+.ic-attachment-card {
+    margin-bottom: var(--space-sm);
+    background: linear-gradient(135deg, rgba(4, 107, 237, 0.06), rgba(4, 107, 237, 0.02));
+    border: 1px solid rgba(4, 107, 237, 0.25);
+    border-radius: var(--radius-lg);
+    overflow: hidden;
+    backdrop-filter: blur(4px);
+}
+
+.ic-attach-header {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 12px 16px;
+    border-bottom: 1px solid rgba(4, 107, 237, 0.15);
+    background: rgba(4, 107, 237, 0.04);
+}
+
+.ic-attach-icon {
+    width: 40px;
+    height: 40px;
+    background: linear-gradient(135deg, var(--accent), #3b6cf6);
+    border-radius: var(--radius-md);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.3rem;
+    flex-shrink: 0;
+}
+
+.ic-attach-meta {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    min-width: 0;
+}
+
+.ic-attach-meta strong {
+    font-size: 0.95rem;
+    color: var(--text-primary);
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.ic-attach-meta span {
+    font-size: 0.8rem;
+    color: var(--text-secondary);
+}
+
+.ic-attach-close {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    cursor: pointer;
+    padding: 6px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s;
+}
+
+.ic-attach-close:hover {
+    background: rgba(255, 255, 255, 0.1);
+    color: var(--text-primary);
+}
+
+.ic-attach-body {
+    padding: 12px 16px;
+    font-family: 'JetBrains Mono', 'Fira Code', 'Cascadia Code', monospace;
+    font-size: 0.82rem;
+    line-height: 1.6;
+    color: var(--text-secondary);
+    white-space: pre-wrap;
+    word-break: break-word;
+    max-height: 200px;
+    overflow-y: auto;
+    margin: 0;
+    background: transparent;
+    scrollbar-width: thin;
+    scrollbar-color: var(--border) transparent;
+}
+
+.ic-attach-body::-webkit-scrollbar {
+    width: 4px;
+}
+
+.ic-attach-body::-webkit-scrollbar-thumb {
+    background: var(--border);
+    border-radius: 4px;
+}
+
+/* ====== Loading Report Modal ====== */
+.ic-loading-modal {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 2.5rem 3rem;
+    background: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    box-shadow: 0 20px 60px rgba(0, 0, 0, 0.6);
+    text-align: center;
+}
+
+.ic-loading-modal strong {
+    font-size: 1.1rem;
+    color: var(--text-primary);
+}
+
+.ic-loading-modal span {
+    font-size: 0.85rem;
+    color: var(--text-secondary);
+}
+
+.ic-loading-spinner {
+    width: 44px;
+    height: 44px;
+    border: 3px solid var(--border);
+    border-top-color: var(--accent);
+    border-radius: 50%;
+    animation: ic-spin 0.8s linear infinite;
+}
+
+@keyframes ic-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
 /* Plus Menu Support */
 .ic-plus-container {
     position: relative;
