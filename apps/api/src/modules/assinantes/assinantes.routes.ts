@@ -19,12 +19,12 @@ export async function assinantesRoutes(server: FastifyInstance) {
         return { data: assinante, success: true };
     });
 
-    server.post('/', {
+    server.post<{ Body: any }>('/', {
         schema: {
             body: assinanteSchema,
         }
     }, async (request, reply) => {
-        const data = request.body as any;
+        const data = request.body;
         const assinante = await service.create(data);
         return reply.status(201).send({ data: assinante, success: true });
     });

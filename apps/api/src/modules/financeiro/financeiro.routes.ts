@@ -11,18 +11,18 @@ export async function financeiroRoutes(server: FastifyInstance) {
         return { data: faturas, success: true };
     });
 
-    server.post('/faturas', {
+    server.post<{ Body: any }>('/faturas', {
         schema: { body: faturaSchema }
     }, async (request, reply) => {
-        const data = request.body as any;
+        const data = request.body;
         const fatura = await service.createFatura(data);
         return reply.status(201).send({ data: fatura, success: true });
     });
 
-    server.post('/pagamentos', {
+    server.post<{ Body: any }>('/pagamentos', {
         schema: { body: pagamentoSchema }
     }, async (request, reply) => {
-        const data = request.body as any;
+        const data = request.body;
         const pagamento = await service.processPagamento(data);
         return reply.status(201).send({ data: pagamento, success: true });
     });
