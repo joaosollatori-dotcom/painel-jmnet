@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Users, Plus, Search, Filter,
+    Users, Plus, MagnifyingGlass, Funnel,
     IdentificationCard, Phone, MapPin,
-    Briefcase, Calendar, Info,
+    Suitcase, Calendar, Info,
     CheckCircle, XCircle, Clock,
     TrendUp, UserPlus, FileText,
     Buildings, User, WhatsappLogo,
@@ -109,7 +109,7 @@ const LeadsManager: React.FC = () => {
 
             <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
                 <div style={{ flex: 1, position: 'relative' }}>
-                    <Search size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                    <MagnifyingGlass size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
                     <input
                         type="text"
                         placeholder="Buscar por nome, telefone ou CPF..."
@@ -122,7 +122,7 @@ const LeadsManager: React.FC = () => {
                     />
                 </div>
                 <button className="flex-center" style={{ padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', color: '#aaa' }}>
-                    <Filter size={20} />
+                    <Funnel size={20} />
                 </button>
             </div>
 
