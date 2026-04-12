@@ -7,6 +7,7 @@ import InternalChat from './components/InternalChat';
 import OSManager from './components/OSManager';
 import FinanceManager from './components/FinanceManager';
 import NetworkManager from './components/NetworkManager';
+import OcorrenciasManager from './components/OcorrenciasManager';
 import LeadsManager from './components/LeadsManager';
 import SalesPipeline from './components/SalesPipeline';
 import { getConversations } from './services/chatService';
@@ -210,8 +211,31 @@ const App: React.FC = () => {
           <FinanceManager />
         ) : activeTab === 'os' ? (
           <OSManager />
+        ) : activeTab === 'ocorrencias' ? (
+          <OcorrenciasManager />
         ) : activeTab === 'rede' ? (
           <NetworkManager />
+        ) : activeTab === 'mapa' ? (
+          <div className="welcome-screen">
+            <div className="welcome-content">
+              <h2>Mapa de Rede</h2>
+              <p>Visualização geo-espacial da malha de fibra óptica.</p>
+            </div>
+          </div>
+        ) : activeTab === 'dashboard_bi' ? (
+          <div className="welcome-screen">
+            <div className="welcome-content">
+              <h2>Dashboard BI</h2>
+              <p>Análise de dados e métricas de desempenho ISP.</p>
+            </div>
+          </div>
+        ) : activeTab === 'estoque' ? (
+          <div className="welcome-screen">
+            <div className="welcome-content">
+              <h2>Gestão de Estoque</h2>
+              <p>Controle de ONUs, Roteadores e insumos de rede.</p>
+            </div>
+          </div>
         ) : activeTab === 'settings' ? (
           <SettingsPage theme={theme} onToggleTheme={toggleTheme} />
         ) : (

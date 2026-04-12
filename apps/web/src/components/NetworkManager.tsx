@@ -1,14 +1,18 @@
 import React, { useState } from 'react';
-import { Globe, HardDrives, Cpu, WifiHigh, WarningCircle, GitBranch, Desktop, CheckCircle } from '@phosphor-icons/react';
+import { Globe, HardDrives, Cpu, WifiHigh, WarningCircle, GitBranch, Desktop, CheckCircle, MagnifyingGlass } from '@phosphor-icons/react';
+import { genericFilter } from '../utils/filterUtils';
 
 const NetworkManager: React.FC = () => {
     const [selectedOlt, setSelectedOlt] = useState<string | null>('OLT-01');
+    const [searchTerm, setSearchTerm] = useState('');
 
     const olts = [
         { id: 'OLT-01', nome: 'OLT Central Matriz', ip: '10.0.0.50', modelo: 'Nokia 7360 FX-4', status: 'ONLINE', onus: 124 },
         { id: 'OLT-02', nome: 'OLT Filial Norte', ip: '10.0.1.50', modelo: 'Huawei MA5800-X7', status: 'ONLINE', onus: 86 },
         { id: 'OLT-03', nome: 'OLT POP Sul', ip: '10.0.2.50', modelo: 'Intelbras OLT 8820 G', status: 'WARNING', onus: 42 },
     ];
+
+    const filteredOlts = genericFilter(olts, searchTerm);
 
     return (
         <div style={{ padding: '2rem', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
@@ -20,8 +24,21 @@ const NetworkManager: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', flex: 1 }}>
                 {/* Sidebar com OLTs */}
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <div style={{ position: 'relative', marginBottom: '8px' }}>
+                        <MagnifyingGlass size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                        <input
+                            type="text"
+                            placeholder="Buscar OLT..."
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                            style={{
+                                width: '100%', padding: '10px 10px 10px 36px', borderRadius: 'var(--radius-md)',
+                                background: 'var(--bg-surface)', border: '1px solid var(--border)', color: '#fff', fontSize: '0.85rem'
+                            }}
+                        />
+                    </div>
                     <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>OLTs CONFIGURADAS</h3>
-                    {olts.map(olt => (
+                    {filteredOlts.map(olt => (
                         <div
                             key={olt.id}
                             onClick={() => setSelectedOlt(olt.id)}

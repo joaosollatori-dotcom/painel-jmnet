@@ -7,7 +7,7 @@ import {
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
-    IdentificationCard, Wrench, WifiHigh, Clock, TrendUp
+    IdentificationCard, Wrench, WifiHigh, Clock, TrendUp, WarningCircle
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -43,6 +43,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [editContactData, setEditContactData] = useState({ name: '', phone: '', email: '' });
 
     const [showOSModal, setShowOSModal] = useState(false);
+    const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
     const [showCadastroModal, setShowCadastroModal] = useState(false);
     const [cadastroMode, setCadastroMode] = useState<'rapido' | 'completo'>('rapido');
     const [conflictMode, setConflictMode] = useState<'add' | 'overwrite'>('add');
@@ -408,6 +409,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                         </button>
                                         <button className="menu-item" onClick={() => { setShowCadastroModal(true); setIsHeaderMenuOpen(false); }}>
                                             <IdentificationCard size={18} /> Gerenciar Cadastro
+                                        </button>
+                                        <button className="menu-item highlight-warn" onClick={() => { setShowOcorrenciaModal(true); setIsHeaderMenuOpen(false); }}>
+                                            <WarningCircle size={18} /> Abrir Ocorrência
                                         </button>
                                         <div className="menu-divider" />
                                         <button
@@ -794,6 +798,58 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                     });
                                     setShowOSModal(false);
                                 }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Gerar e Atribuir OS</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showOcorrenciaModal && (
+                    <div className="modal-overlay" onClick={() => setShowOcorrenciaModal(false)}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '450px' }}>
+                            <button className="ca-modal-close" onClick={() => setShowOcorrenciaModal(false)}><X size={18} /></button>
+                            <div className="ca-modal-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><WarningCircle size={32} weight="duotone" /></div>
+                            <h3>Nova Ocorrência</h3>
+                            <p style={{ marginBottom: '1.5rem' }}>Abrir um chamado de suporte para <strong>{conversation?.contact_name}</strong></p>
+
+                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
+                                <div className="form-group-ca">
+                                    <label>Assunto / Motivo</label>
+                                    <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                        <option>Problemas de Conexão</option>
+                                        <option>Dúvidas Financeiras</option>
+                                        <option>Troca de Equipamento</option>
+                                        <option>Mudança de Titularidade</option>
+                                        <option>Outros assuntos...</option>
+                                    </select>
+                                </div>
+                                <div className="form-group-ca">
+                                    <label>Prioridade</label>
+                                    <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                        <option value="BAIXA">Baixa</option>
+                                        <option value="MEDIA" selected>Média</option>
+                                        <option value="ALTA">Alta</option>
+                                        <option value="CRITICA">Crítica</option>
+                                    </select>
+                                </div>
+                                <div className="form-group-ca">
+                                    <label>Descrição Detalhada</label>
+                                    <textarea placeholder="O que o cliente relatou? Contextualize o problema..." rows={4} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
+                                </div>
+                            </div>
+
+                            <div className="ca-modal-actions" style={{ marginTop: '2rem' }}>
+                                <button className="ca-cancel" onClick={() => setShowOcorrenciaModal(false)}>Cancelar</button>
+                                <button className="ca-confirm warn" onClick={async () => {
+                                    const proc = `PROT-${Date.now().toString().slice(-8)}`;
+                                    const subject = (document.querySelector('.ca-modal-body select') as HTMLSelectElement)?.value;
+                                    await sendMessage(chatId, {
+                                        sender: 'Sistema',
+                                        text: `🎫 OCORRÊNCIA ABERTA\nProtocolo: ${proc}\nAssunto: ${subject}\n\nO suporte N2 foi notificado e entrará em contato em breve.`,
+                                        is_user: false,
+                                        is_bot: false
+                                    });
+                                    setShowOcorrenciaModal(false);
+                                }} style={{ flex: 1, padding: '12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}>Abrir chamado</button>
                             </div>
                         </motion.div>
                     </div>
