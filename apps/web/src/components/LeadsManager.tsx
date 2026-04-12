@@ -241,7 +241,7 @@ const LeadsManager: React.FC = () => {
                     className={`stat-card ${currentQuickFilter === 'slaOverdue' ? 'active' : ''}`}
                     onClick={() => setCurrentQuickFilter(currentQuickFilter === 'slaOverdue' ? null : 'slaOverdue')}
                 >
-                    <div className="stat-value error">{stats.slaOverdue || 8}</div>
+                    <div className="stat-value error">{stats.slaOverdue}</div>
                     <div className="stat-label">SLA Vencido</div>
                 </div>
                 <div
@@ -262,7 +262,7 @@ const LeadsManager: React.FC = () => {
                     className={`stat-card ${currentQuickFilter === 'waitingContract' ? 'active' : ''}`}
                     onClick={() => setCurrentQuickFilter(currentQuickFilter === 'waitingContract' ? null : 'waitingContract')}
                 >
-                    <div className="stat-value success">{stats.waitingContract || 3}</div>
+                    <div className="stat-value success">{stats.waitingContract}</div>
                     <div className="stat-label">Aguard. Assinatura</div>
                 </div>
             </section>
