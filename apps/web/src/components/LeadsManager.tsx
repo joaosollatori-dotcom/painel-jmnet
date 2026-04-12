@@ -13,8 +13,9 @@ import {
     CalendarPlus
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getLeads, createLead, updateLead, deleteLead, Lead } from '../services/leadService';
+import { Lead, getLeads, deleteLead, updateLead } from '../services/leadService';
 import { genericFilter } from '../utils/filterUtils';
+import LeadDetail from './LeadDetail';
 import './Dashboard.css';
 
 const LeadsManager: React.FC = () => {
@@ -23,6 +24,7 @@ const LeadsManager: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [viewingDetail, setViewingDetail] = useState<Lead | null>(null);
     const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability'>('none');
     const [currentQuickFilter, setCurrentQuickFilter] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: keyof Lead, direction: 'asc' | 'desc' } | null>(null);
@@ -336,7 +338,7 @@ const LeadsManager: React.FC = () => {
                                     return (
                                         <tr key={lead.id} className={`lead-row ${selectedIds.includes(lead.id) ? 'selected' : ''}`}>
                                             <td><input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelect(lead.id)} /></td>
-                                            <td onClick={() => { setSelectedLead(lead); setFormData(lead); setShowModal(true); }}>
+                                            <td onClick={() => setViewingDetail(lead)}>
                                                 <div className="lead-id-cell">
                                                     <div className="lead-avatar">
                                                         {lead.nomeCompleto.charAt(0)}
@@ -423,73 +425,13 @@ const LeadsManager: React.FC = () => {
                 {renderEmptyState()}
             </div>
 
-            {/* Modal - Reutilizando o formulário anterior porém com o layout do pedido */}
             <AnimatePresence>
-                {showModal && (
-                    <div className="modal-overlay">
-                        <motion.div
-                            initial={{ opacity: 0, y: 30 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            exit={{ opacity: 0, y: 30 }}
-                            className="lead-modal"
-                        >
-                            <form onSubmit={handleSubmit} className="modal-content">
-                                <header className="modal-header">
-                                    <h2>{selectedLead ? 'Detalhes do Lead' : 'Qualificação de Novo Lead'}</h2>
-                                    <button type="button" onClick={() => setShowModal(false)} className="btn-close"><XCircle size={28} /></button>
-                                </header>
-
-                                <div className="modal-sections-grid">
-                                    <div className="modal-section-col">
-                                        <div className="form-group">
-                                            <label>Nome Completo</label>
-                                            <input type="text" value={formData.nomeCompleto} onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} required />
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Telefone Principal</label>
-                                                <input type="text" value={formData.telefonePrincipal} onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} required />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>WhatsApp</label>
-                                                <input type="text" value={formData.telefoneWhatsapp} onChange={e => setFormData({ ...formData, telefoneWhatsapp: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>E-mail</label>
-                                            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                                        </div>
-                                    </div>
-
-                                    <div className="modal-section-col">
-                                        <div className="form-group">
-                                            <label>CEP</label>
-                                            <input type="text" value={formData.cep} onChange={e => setFormData({ ...formData, cep: e.target.value })} />
-                                        </div>
-                                        <div className="form-row">
-                                            <div className="form-group">
-                                                <label>Bairro</label>
-                                                <input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Cidade</label>
-                                                <input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Logradouro / Próximo a...</label>
-                                            <input type="text" value={formData.logradouro} onChange={e => setFormData({ ...formData, logradouro: e.target.value })} />
-                                        </div>
-                                    </div>
-                                </div>
-
-                                <footer className="modal-footer">
-                                    <button type="button" onClick={() => setShowModal(false)} className="btn-cancel">Cancelar</button>
-                                    <button type="submit" className="btn-submit">Salvar Alterações</button>
-                                </footer>
-                            </form>
-                        </motion.div>
-                    </div>
+                {viewingDetail && (
+                    <LeadDetail
+                        lead={viewingDetail}
+                        onClose={() => setViewingDetail(null)}
+                        onUpdate={() => { loadLeads(); }}
+                    />
                 )}
             </AnimatePresence>
 

@@ -196,19 +196,43 @@ model Lead {
   vendedorId        String?
   vendedor          User?     @relation("VendedorLeads", fields: [vendedorId], references: [id])
   
-  // Qualificação e Viabilidade
+  // Qualificação
   tipoCliente       String    @default("RESIDENCIAL") // RESIDENCIAL, EMPRESARIAL
   perfilUso         String?   // Básico, Premium, etc
+  usoPrincipal      String?   // Streaming, Trabalho, Jogos
+  numDispositivos   Int?
+  temMEI            Boolean   @default(false)
+  scoreQualificacao Int       @default(0)
   interesseDeclarado String?
   interessePlano    String?
   valorPagoAtual    Decimal?  @db.Decimal(10, 2)
   operadoraAtual    String?
   statusQualificacao String   @default("PENDENTE") // PENDENTE, QUALIFICADO, DESQUALIFICADO
+  
+  // Viabilidade Técnica
   statusViabilidade  String   @default("PENDENTE") // PENDENTE, APROVADA, REPROVADA
+  distanciaDistribuidor Float? // Metros
+  ctoProxima         String?
+  portasDisponiveis  Int?
+  obsTecnica         String?
+  verificadoPor      String?
+  dataVerificacao    DateTime?
+  
+  // Proposta e Contrato
+  statusProposta    String?   // ENVIADA, VISUALIZADA, ACEITA, RECUSADA
+  valorProposta     Decimal?  @db.Decimal(10, 2)
+  linkContrato      String?
+  dataAceite        DateTime?
+  
+  // Agendamento
+  dataInstalacao    DateTime?
+  turnoInstalacao   String?   // MANHA, TARDE
+  tecnicoId         String?
+  numeroOS          String?
   
   // Controle
   observacoes       String?
-  perfilComercial   String?   // Renda ou porte da empresa (descritivo)
+  perfilComercial   String?   
   decisorIdentificado Boolean @default(false)
   melhorHorario     String?
   tentativasContato Int       @default(0)
@@ -243,9 +267,13 @@ model LeadHistory {
   id              String   @id @default(uuid())
   leadId          String
   lead            Lead     @relation(fields: [leadId], references: [id])
-  stageId         String
+  type            String   @default("STAGE_CHANGE") // STAGE_CHANGE, NOTE, CALL, WHATSAPP, EMAIL, TASK
+  content         String?
+  duration        Int?     // Minutos ou Segundos
+  fromStage       String?
+  toStage         String?
   responsavelId   String?
-  dataEntrada     DateTime @default(now())
+  dataEvento      DateTime @default(now())
   motivoPerda     String?
-  observacoes     String?
+  metadata        Json?    // Detalhes extras (ex: preview msg)
 }

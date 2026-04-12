@@ -36,15 +36,39 @@ export interface Lead {
     dispositivo?: string;
     vendedorId?: string;
 
-    // Qualificação e Viabilidade
+    // Qualificação
     tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
     perfilUso?: string;
+    usoPrincipal?: string;
+    numDispositivos?: number;
+    temMEI: boolean;
+    scoreQualificacao: number;
     interesseDeclarado?: string;
     interessePlano?: string;
     valorPagoAtual?: number;
     operadoraAtual?: string;
     statusQualificacao: 'PENDENTE' | 'QUALIFICADO' | 'DESQUALIFICADO';
+
+    // Viabilidade
     statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA';
+    distanciaDistribuidor?: number;
+    ctoProxima?: string;
+    portasDisponiveis?: number;
+    obsTecnica?: string;
+    verificadoPor?: string;
+    dataVerificacao?: string;
+
+    // Proposta
+    statusProposta?: string;
+    valorProposta?: number;
+    linkContrato?: string;
+    dataAceite?: string;
+
+    // Agendamento
+    dataInstalacao?: string;
+    turnoInstalacao?: string;
+    tecnicoId?: string;
+    numeroOS?: string;
 
     // Controle
     observacoes?: string;
@@ -61,6 +85,21 @@ export interface Lead {
     createdAt: string;
     updatedAt: string;
     stageId?: string;
+
+    history?: LeadHistory[];
+}
+
+export interface LeadHistory {
+    id: string;
+    leadId: string;
+    type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'WHATSAPP' | 'EMAIL' | 'TASK' | 'DOCUMENT';
+    content?: string;
+    duration?: number;
+    fromStage?: string;
+    toStage?: string;
+    responsavelId?: string;
+    dataEvento: string;
+    metadata?: any;
 }
 
 export const getLeads = async (): Promise<Lead[]> => {
