@@ -194,5 +194,33 @@ model Lead {
   // Metricas
   dataEntrada      DateTime @default(now())
   createdAt        DateTime @default(now())
-  updatedAt        DateTime @updatedAt
+  updatedAt         DateTime @updatedAt
+
+  stageId           String?
+  stage             SalesStage? @relation(fields: [stageId], references: [id])
+  history           LeadHistory[]
+}
+
+model SalesStage {
+  id              String   @id @default(uuid())
+  nome            String
+  ordem           Int      @default(0)
+  isObrigatoria   Boolean  @default(false)
+  isConversao     Boolean  @default(false) // Se esta etapa marca o "Ativado"
+  slaDias         Int      @default(3)
+  cor             String?  @default("#3b82f6")
+  
+  leads           Lead[]
+  createdAt       DateTime @default(now())
+}
+
+model LeadHistory {
+  id              String   @id @default(uuid())
+  leadId          String
+  lead            Lead     @relation(fields: [leadId], references: [id])
+  stageId         String
+  responsavelId   String?
+  dataEntrada     DateTime @default(now())
+  motivoPerda     String?
+  observacoes     String?
 }

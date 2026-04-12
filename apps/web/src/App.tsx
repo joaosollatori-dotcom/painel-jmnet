@@ -8,6 +8,7 @@ import OSManager from './components/OSManager';
 import FinanceManager from './components/FinanceManager';
 import NetworkManager from './components/NetworkManager';
 import LeadsManager from './components/LeadsManager';
+import SalesPipeline from './components/SalesPipeline';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import './App.css';
@@ -134,6 +135,8 @@ const App: React.FC = () => {
   const [isRetracted, setIsRetracted] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
 
+  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
+
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
@@ -174,7 +177,21 @@ const App: React.FC = () => {
         ) : activeTab === 'agents' ? (
           <AgentsPage />
         ) : activeTab === 'crm' ? (
-          <LeadsManager />
+          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
+            <div style={{ padding: '1rem 2rem 0', background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '2rem' }}>
+              <button
+                onClick={() => setViewMode('list')}
+                style={{ padding: '12px 0', border: 'none', background: 'transparent', color: viewMode === 'list' ? 'var(--primary-color)' : '#666', fontWeight: 600, borderBottom: viewMode === 'list' ? '2px solid var(--primary-color)' : 'none', cursor: 'pointer' }}
+              >Lista de Leads</button>
+              <button
+                onClick={() => setViewMode('pipeline')}
+                style={{ padding: '12px 0', border: 'none', background: 'transparent', color: viewMode === 'pipeline' ? 'var(--primary-color)' : '#666', fontWeight: 600, borderBottom: viewMode === 'pipeline' ? '2px solid var(--primary-color)' : 'none', cursor: 'pointer' }}
+              >Funil (Kanban)</button>
+            </div>
+            <div style={{ flex: 1, overflow: 'hidden' }}>
+              {viewMode === 'list' ? <LeadsManager /> : <SalesPipeline />}
+            </div>
+          </div>
         ) : activeTab === 'financeiro' ? (
           <FinanceManager />
         ) : activeTab === 'os' ? (
