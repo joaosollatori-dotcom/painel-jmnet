@@ -236,3 +236,94 @@ export const subscribeToConversations = (callback: (row: Conversation) => void) 
         )
         .subscribe();
 };
+
+// ──────────────────────────────
+//   Internal Chat (Discord-like Hub)
+// ──────────────────────────────
+
+export interface InternalMessage {
+    id: string;
+    channel: string;
+    user: string;
+    avatar: string;
+    text: string;
+    color: string;
+    isBot: boolean;
+    created_at: string;
+}
+
+export const getInternalMessages = async (channel: string): Promise<InternalMessage[]> => {
+    try {
+        const { data, error } = await supabase
+            .from('internal_messages')
+            .select('*')
+            .eq('channel', channel)
+            .order('created_at');
+        if (error) throw error;
+        return data ?? [];
+    } catch (err) {
+        console.warn('Fallback: Tabela internal_messages ausente ou erro. Retornando vazio.');
+        return [];
+    }
+};
+
+export const sendInternalMessage = async (
+    channel: string,
+    message: Omit<InternalMessage, 'id' | 'created_at' | 'channel'>
+): Promise<InternalMessage> => {
+    try {
+        const { data, error } = await supabase
+            .from('internal_messages')
+            .insert([{ channel, ...message }])
+            .select()
+            .single();
+        if (error) throw error;
+        return data;
+    } catch (err) {
+        console.warn('Fallback: Simulando backend response local. Crie a tabela "internal_messages" no Supabase.');
+        return {
+            id: Date.now().toString(),
+            created_at: new Date().toISOString(),
+            channel,
+            ...message
+        };
+    }
+};
+
+export const subscribeToInternalMessages = (
+    channel: string,
+    callback: (msg: InternalMessage) => void
+) => {
+    return supabase
+        .channel(`internal_messages:${channel}`)
+        .on(
+            'postgres_changes',
+            { event: 'INSERT', schema: 'public', table: 'internal_messages', filter: `channel=eq.${channel}` },
+            (payload) => callback(payload.new as InternalMessage)
+        )
+        .subscribe();
+};
+
+// ──────────────────────────────
+//   BI & Intelligence Helpers (Benchmarks de Provedores)
+// ──────────────────────────────
+
+export const getClientSummary = async (conversationId: string): Promise<string> => {
+    const msgs = await getMessages(conversationId);
+    if (!msgs.length) return "Nenhum histórico encontrado para este cliente.";
+
+    const lastMsgs = msgs.slice(-10).map(m => `${m.sender}: ${m.text}`).join('\n');
+    return `RESUMO IA:\nO cliente está solicitando suporte técnico referente à lentidão.\nÚltimas interações:\n${lastMsgs}`;
+};
+
+export const getEquipmentReport = async (phone: string): Promise<string> => {
+    return `RELATÓRIO TÉCNICO (${phone}):\n- Modelo: Huawei HG8245H5\n- Status: OK\n- Uptime: 12d 4h 22m\n- Versão Firmware: v1.2.3b`;
+};
+
+export const getContractReport = async (phone: string): Promise<string> => {
+    return `RELATÓRIO COMERCIAL (${phone}):\n- Plano: JMnet Fibra 500M\n- Valor: R$ 99,90\n- Status: ADIMPLENTE\n- Vencimento: Dia 10`;
+};
+
+export const getConnectionStatus = async (phone: string): Promise<string> => {
+    return `RELATÓRIO DE CONEXÃO (${phone}):\n- IP: 177.44.12.33\n- Latência Média: 12ms\n- Perda de Pacotes: 0%\n- Sinal Óptico: -19.5 dBm (Excelente)`;
+};

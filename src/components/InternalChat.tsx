@@ -1,33 +1,107 @@
-import React, { useState } from 'react';
-import { Hash, Users, MagnifyingGlass, Plus, Bell, PushPin, Gift, Sticker, Smiley, Paperclip } from '@phosphor-icons/react';
+import React, { useState, useEffect, useRef } from 'react';
+import {
+    Hash, Users, MagnifyingGlass, Plus, Bell, PushPin, Gift,
+    Sticker, Smiley, Paperclip, FileText, UserCircle,
+    ChartBar, DeviceTower, Receipt, WifiHigh, X
+} from '@phosphor-icons/react';
+import {
+    getInternalMessages, sendInternalMessage, subscribeToInternalMessages,
+    getConversations, getClientSummary, getEquipmentReport,
+    getContractReport, getConnectionStatus
+} from '../services/chatService';
+import type { InternalMessage, Conversation } from '../services/chatService';
+import { motion, AnimatePresence } from 'framer-motion';
 import './InternalChat.css';
 
 const InternalChat: React.FC = () => {
     const [activeChannel, setActiveChannel] = useState('geral');
     const [message, setMessage] = useState('');
-    const [messages, setMessages] = useState([
-        { id: '1', user: 'Carlos Oliveira', avatar: 'C', time: 'Hoje às 10:23', text: 'Bom dia pessoal! O roteador do cliente João foi trocado.', color: '#046bed' },
-        { id: '2', user: 'Titã AI', avatar: 'T', time: 'Hoje às 10:25', text: 'Sistema OLT reportou estabilidade na rede Norte.', color: '#10b981', isBot: true },
-        { id: '3', user: 'Mariana Silva', avatar: 'M', time: 'Hoje às 11:42', text: 'Anotado Carlos, vou dar baixa na Ordem de Serviço.', color: '#eab308' },
-        { id: '4', user: 'João Sollatori', avatar: 'J', time: 'Hoje às 14:00', text: 'Pessoal, lembrem-se de preencher o motivo detalhado ao encerrar chats!', color: '#ef4444' }
-    ]);
+    const [messages, setMessages] = useState<InternalMessage[]>([]);
+    const [isMenuOpen, setIsMenuOpen] = useState(false);
+    const [showClientPicker, setShowClientPicker] = useState<{ mode: 'summary' | 'equip' | 'contract' | 'conn' | 'mention' } | null>(null);
+    const [clients, setClients] = useState<Conversation[]>([]);
+    const [searchClient, setSearchClient] = useState('');
 
-    const handleSendMessage = (e: React.FormEvent) => {
+    const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        loadMessages();
+        const sub = subscribeToInternalMessages(activeChannel, (newMsg) => {
+            setMessages(prev => {
+                if (prev.find(m => m.id === newMsg.id)) return prev;
+                return [...prev, newMsg];
+            });
+        });
+        return () => sub.unsubscribe();
+    }, [activeChannel]);
+
+    useEffect(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
+    }, [messages]);
+
+    const loadMessages = async () => {
+        const data = await getInternalMessages(activeChannel);
+        setMessages(data);
+    };
+
+    const handleSendMessage = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!message.trim()) return;
-        setMessages([
-            ...messages,
-            {
-                id: Date.now().toString(),
-                user: 'João Sollatori', // Mock user
-                avatar: 'J',
-                time: 'Hoje às 14:02', // Mock time
-                text: message,
-                color: '#ef4444' // Mock color
-            }
-        ]);
+
+        const textToSend = message;
         setMessage('');
+
+        await sendInternalMessage(activeChannel, {
+            user: 'João Sollatori',
+            avatar: 'J',
+            text: textToSend,
+            color: '#ef4444',
+            isBot: false
+        });
     };
+
+    const triggerClientAction = async (client: Conversation) => {
+        if (!showClientPicker) return;
+        const mode = showClientPicker.mode;
+        setShowClientPicker(null);
+        setIsMenuOpen(false);
+
+        let reportText = '';
+        const userName = 'João Sollatori';
+
+        if (mode === 'mention') {
+            reportText = `Estou analisando o caso do cliente @${client.contact_name}.`;
+        } else if (mode === 'summary') {
+            reportText = await getClientSummary(client.id);
+        } else if (mode === 'equip') {
+            reportText = await getEquipmentReport(client.contact_phone || '');
+        } else if (mode === 'contract') {
+            reportText = await getContractReport(client.contact_phone || '');
+        } else if (mode === 'conn') {
+            reportText = await getConnectionStatus(client.contact_phone || '');
+        }
+
+        if (reportText) {
+            await sendInternalMessage(activeChannel, {
+                user: userName,
+                avatar: 'J',
+                text: reportText,
+                color: '#ef4444',
+                isBot: false
+            });
+        }
+    };
+
+    const openClientPicker = async (mode: any) => {
+        const data = await getConversations();
+        setClients(data);
+        setShowClientPicker({ mode });
+    };
+
+    const filteredClients = clients.filter(c =>
+        c.contact_name.toLowerCase().includes(searchClient.toLowerCase()) ||
+        c.contact_phone?.includes(searchClient)
+    );
 
     return (
         <div className="internal-chat-wrapper">
@@ -125,19 +199,44 @@ const InternalChat: React.FC = () => {
                                     <div className="ic-msg-header">
                                         <span className="ic-msg-user" style={{ color: msg.color }}>{msg.user}</span>
                                         {msg.isBot && <span className="bot-tag">BOT</span>}
-                                        <span className="ic-msg-time">{msg.time}</span>
+                                        <span className="ic-msg-time">{new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <div className="ic-msg-text">
+                                    <div className="ic-msg-text" style={{ whiteSpace: 'pre-wrap' }}>
                                         {msg.text}
                                     </div>
                                 </div>
                             </div>
                         ))}
+                        <div ref={messagesEndRef} />
                     </div>
 
                     <form className="ic-input-container" onSubmit={handleSendMessage}>
                         <div className="ic-input-wrapper">
-                            <button type="button" className="ic-action-btn"><Plus size={20} weight="bold" /></button>
+                            <div className="ic-plus-container">
+                                <button type="button" className={`ic-action-btn ${isMenuOpen ? 'active' : ''}`} onClick={() => setIsMenuOpen(!isMenuOpen)}>
+                                    <Plus size={20} weight="bold" />
+                                </button>
+                                <AnimatePresence>
+                                    {isMenuOpen && (
+                                        <motion.div
+                                            initial={{ opacity: 0, scale: 0.9, y: 10 }}
+                                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                                            exit={{ opacity: 0, scale: 0.9, y: 10 }}
+                                            className="ic-plus-menu"
+                                        >
+                                            <button type="button" onClick={() => openClientPicker('mention')}><UserCircle size={18} /> Mencionar Cliente</button>
+                                            <button type="button" onClick={() => openClientPicker('summary')}><FileText size={18} /> Pedir Resumo IA</button>
+                                            <div className="ic-menu-divider" />
+                                            <span className="ic-menu-label">RELATÓRIOS BI</span>
+                                            <button type="button" onClick={() => openClientPicker('equip')}><DeviceTower size={18} /> Info Equipamento</button>
+                                            <button type="button" onClick={() => openClientPicker('contract')}><Receipt size={18} /> Info Contrato</button>
+                                            <button type="button" onClick={() => openClientPicker('conn')}><WifiHigh size={18} /> Info Conexão</button>
+                                            <div className="ic-menu-divider" />
+                                            <button type="button"><Paperclip size={18} /> Enviar Arquivo</button>
+                                        </motion.div>
+                                    )}
+                                </AnimatePresence>
+                            </div>
                             <input
                                 type="text"
                                 placeholder={`Conversar em #${activeChannel}`}
@@ -193,6 +292,47 @@ const InternalChat: React.FC = () => {
                     </div>
                 </div>
             </aside>
+
+            <AnimatePresence>
+                {showClientPicker && (
+                    <div className="ic-modal-overlay" onClick={() => setShowClientPicker(null)}>
+                        <motion.div
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 20 }}
+                            className="ic-client-picker-modal"
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <header>
+                                <h3>Selecione o Cliente</h3>
+                                <button onClick={() => setShowClientPicker(null)}><X size={20} /></button>
+                            </header>
+                            <div className="picker-search">
+                                <MagnifyingGlass size={18} />
+                                <input
+                                    type="text"
+                                    placeholder="Pesquisar por nome ou telefone..."
+                                    value={searchClient}
+                                    onChange={e => setSearchClient(e.target.value)}
+                                    autoFocus
+                                />
+                            </div>
+                            <div className="picker-list ic-sidebar-scroll">
+                                {filteredClients.map(client => (
+                                    <button key={client.id} onClick={() => triggerClientAction(client)} className="picker-item">
+                                        <div className="avatar">{client.contact_name.charAt(0)}</div>
+                                        <div className="info">
+                                            <strong>{client.contact_name}</strong>
+                                            <span>{client.contact_phone || 'Sem telefone'}</span>
+                                        </div>
+                                    </button>
+                                ))}
+                                {filteredClients.length === 0 && <div className="picker-empty">Nenhum cliente encontrado.</div>}
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

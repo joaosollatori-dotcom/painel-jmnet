@@ -483,6 +483,182 @@
     gap: var(--space-xs);
 }
 
+.ic-input-actions {
+    display: flex;
+    gap: var(--space-xs);
+}
+
+/* Plus Menu Support */
+.ic-plus-container {
+    position: relative;
+    display: flex;
+}
+
+.ic-plus-menu {
+    position: absolute;
+    bottom: calc(100% + 12px);
+    left: 0;
+    width: 220px;
+    background-color: var(--bg-surface-light);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    padding: var(--space-xs);
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.4);
+    z-index: 100;
+    display: flex;
+    flex-direction: column;
+}
+
+.ic-plus-menu button {
+    display: flex;
+    align-items: center;
+    gap: var(--space-sm);
+    padding: 10px 12px;
+    width: 100%;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+    border-radius: var(--radius-md);
+    transition: all 0.2s;
+    text-align: left;
+}
+
+.ic-plus-menu button:hover {
+    background-color: var(--bg-surface);
+    color: var(--text-primary);
+}
+
+.ic-plus-menu button svg {
+    color: var(--accent);
+}
+
+.ic-menu-divider {
+    height: 1px;
+    background-color: var(--border);
+    margin: 4px 8px;
+}
+
+.ic-menu-label {
+    font-size: 0.65rem;
+    font-weight: 800;
+    color: var(--text-secondary);
+    padding: 8px 12px 4px;
+    letter-spacing: 0.8px;
+}
+
+/* Client Picker Modal */
+.ic-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: var(--space-lg);
+}
+
+.ic-client-picker-modal {
+    width: 100%;
+    max-width: 500px;
+    background-color: var(--bg-surface);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    max-height: 80vh;
+    box-shadow: var(--shadow);
+}
+
+.ic-client-picker-modal header {
+    padding: var(--space-lg);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid var(--border);
+}
+
+.ic-client-picker-modal h3 {
+    margin: 0;
+    font-size: 1.25rem;
+}
+
+.picker-search {
+    padding: var(--space-md);
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    background-color: var(--bg-surface-light);
+    margin: var(--space-md);
+    border-radius: var(--radius-md);
+    border: 1px solid var(--border);
+}
+
+.picker-search input {
+    flex: 1;
+    font-size: 1rem;
+}
+
+.picker-list {
+    flex: 1;
+    overflow-y: auto;
+    padding: 0 var(--space-md) var(--space-md);
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.picker-item {
+    display: flex;
+    align-items: center;
+    gap: var(--space-md);
+    padding: 12px;
+    border-radius: var(--radius-md);
+    transition: background 0.2s;
+    text-align: left;
+    width: 100%;
+}
+
+.picker-item:hover {
+    background-color: var(--bg-surface-light);
+}
+
+.picker-item .avatar {
+    width: 40px;
+    height: 40px;
+    background-color: var(--accent);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: bold;
+}
+
+.picker-item .info {
+    display: flex;
+    flex-direction: column;
+}
+
+.picker-item .info strong {
+    color: var(--text-primary);
+    font-size: 1rem;
+}
+
+.picker-item .info span {
+    color: var(--text-secondary);
+    font-size: 0.85rem;
+}
+
+.picker-empty {
+    text-align: center;
+    padding: var(--space-xl);
+    color: var(--text-secondary);
+}
+
 /* Members Sidebar */
 .ic-members-sidebar {
     width: 260px;
