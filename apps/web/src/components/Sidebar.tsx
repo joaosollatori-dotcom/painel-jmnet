@@ -18,7 +18,9 @@ import {
     MapTrifold,
     Headset,
     ShoppingCart,
-    TrendUp
+    TrendUp,
+    CaretDown,
+    CaretRight
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
@@ -43,6 +45,18 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [statusStartTime, setStatusStartTime] = React.useState<number>(Date.now());
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
     const [timer, setTimer] = React.useState('00:00:00');
+    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set(['GESTÃO']));
+
+    const toggleExpand = (id: string, e: React.MouseEvent) => {
+        e.stopPropagation();
+        const newExpanded = new Set(expandedItems);
+        if (newExpanded.has(id)) {
+            newExpanded.delete(id);
+        } else {
+            newExpanded.add(id);
+        }
+        setExpandedItems(newExpanded);
+    };
 
     const menuGroups = [
         {
@@ -57,7 +71,17 @@ const Sidebar: React.FC<SidebarProps> = ({
             label: 'GESTÃO',
             items: [
                 { id: 'crm', icon: TrendUp, label: 'Leads e Vendas' },
-                { id: 'financeiro', icon: CurrencyDollar, label: 'Financeiro' },
+                {
+                    id: 'financeiro',
+                    icon: CurrencyDollar,
+                    label: 'Financeiro',
+                    subItems: [
+                        { id: 'fin_analytics', label: 'Analytics' },
+                        { id: 'fin_nfs', label: 'Nfs' },
+                        { id: 'fin_recebiveis', label: 'Recebíveis' },
+                        { id: 'fin_cobrancas', label: 'Cobranças' },
+                    ]
+                },
                 { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
                 { id: 'estoque', icon: Package, label: 'Estoque' },
             ]
@@ -71,6 +95,50 @@ const Sidebar: React.FC<SidebarProps> = ({
             ]
         }
     ];
+
+    const renderMenuItem = (item: any, depth = 0) => {
+        const hasSubItems = item.subItems && item.subItems.length > 0;
+        const isExpanded = expandedItems.has(item.id);
+        const isActive = activeTab === item.id || (hasSubItems && item.subItems.some((si: any) => activeTab === si.id));
+
+        return (
+            <div key={item.id} className="nav-item-container">
+                <button
+                    className={`nav-item ${isActive ? 'active' : ''} ${depth > 0 ? 'sub-item' : ''}`}
+                    onClick={() => {
+                        if (hasSubItems && !isRetracted) {
+                            toggleExpand(item.id, { stopPropagation: () => { } } as any);
+                        } else {
+                            onTabChange(item.id);
+                        }
+                    }}
+                    title={item.label}
+                    style={{ paddingLeft: !isRetracted ? `${depth * 16 + 16}px` : undefined }}
+                >
+                    {item.icon ? (
+                        <item.icon size={22} weight={isActive ? "fill" : "regular"} className="nav-icon" />
+                    ) : (
+                        depth > 0 && !isRetracted && <div className="sub-item-bullet" />
+                    )}
+                    {!isRetracted && (
+                        <>
+                            <span className="nav-label">{item.label}</span>
+                            {hasSubItems && (
+                                <div className="expand-icon-wrapper" onClick={(e) => toggleExpand(item.id, e)}>
+                                    {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                                </div>
+                            )}
+                        </>
+                    )}
+                </button>
+                {hasSubItems && isExpanded && !isRetracted && (
+                    <div className="sub-items-container">
+                        {item.subItems.map((subItem: any) => renderMenuItem(subItem, depth + 1))}
+                    </div>
+                )}
+            </div>
+        );
+    };
 
     React.useEffect(() => {
         const interval = setInterval(() => {
@@ -108,22 +176,27 @@ const Sidebar: React.FC<SidebarProps> = ({
             </div>
 
             <nav className="sidebar-nav ic-sidebar-scroll">
-                {menuGroups.map((group, gIdx) => (
-                    <div key={gIdx} className="nav-group">
-                        {!isRetracted && <span className="nav-group-label">{group.label}</span>}
-                        {group.items.map((item) => (
-                            <button
-                                key={item.id}
-                                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                                onClick={() => onTabChange(item.id)}
-                                title={item.label}
-                            >
-                                <item.icon size={22} weight={activeTab === item.id ? "fill" : "regular"} className="nav-icon" />
-                                {!isRetracted && <span className="nav-label">{item.label}</span>}
-                            </button>
-                        ))}
-                    </div>
-                ))}
+                {menuGroups.map((group, gIdx) => {
+                    const isGroupExpanded = expandedItems.has(group.label);
+                    return (
+                        <div key={gIdx} className="nav-group">
+                            {!isRetracted && (
+                                <div
+                                    className="nav-group-header"
+                                    onClick={(e) => toggleExpand(group.label, e)}
+                                >
+                                    <span className="nav-group-label">{group.label}</span>
+                                    <div className="group-expand-icon">
+                                        {isGroupExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
+                                    </div>
+                                </div>
+                            )}
+                            {(!isRetracted ? isGroupExpanded : true) && (
+                                group.items.map((item) => renderMenuItem(item))
+                            )}
+                        </div>
+                    );
+                })}
             </nav>
 
             <div className="sidebar-footer">
