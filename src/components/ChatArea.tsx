@@ -7,7 +7,7 @@ import {
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
-    IdentificationCard, Wrench, WifiHigh
+    IdentificationCard, Wrench, WifiHigh, Clock
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -75,8 +75,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         loadData();
         const subscription = subscribeToMessages(chatId, (newMsg) => {
             setMessages(prev => {
-                if (prev.find(m => m.id === newMsg.id)) return prev;
-                return [...prev, newMsg];
+                const updated = prev.filter(m => !(m.text === newMsg.text && (m as any).pending));
+                if (updated.find(m => m.id === newMsg.id)) return updated;
+                return [...updated, newMsg];
             });
         });
 
@@ -114,17 +115,39 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const handleSendMessage = async () => {
         if (!message.trim() || !conversation || conversation.is_closed) return;
+
+        const text = message.trim();
+        setMessage('');
+
+        const optimisticId = `temp-${Date.now()}`;
+        const optimisticMsg: any = {
+            id: optimisticId,
+            conversation_id: chatId,
+            sender: 'Você',
+            text,
+            is_user: true,
+            is_bot: false,
+            reactions: [],
+            created_at: new Date().toISOString(),
+            pending: true
+        };
+
+        setMessages(prev => [...prev, optimisticMsg]);
+
         try {
-            const text = message.trim();
-            setMessage('');
-            await sendMessage(chatId, {
+            const realMsg = await sendMessage(chatId, {
                 sender: 'Você',
                 text,
                 is_user: true,
                 is_bot: false
             });
+
+            if (realMsg) {
+                setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
+            }
         } catch (err) {
             console.error('Error sending message:', err);
+            setMessages(prev => prev.filter(m => m.id !== optimisticId));
         }
     };
 
@@ -382,7 +405,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                         <p>{msg.text}</p>
                                         <div className="message-footer">
                                             <span className="message-time">{formatTime(msg.created_at)}</span>
-                                            {(msg.is_user || msg.is_bot) && <Checks size={14} className="status-icon" weight="bold" />}
+                                            {(msg.is_user || msg.is_bot) && (
+                                                (msg as any).pending ?
+                                                    <Clock size={14} className="status-icon" weight="regular" style={{ opacity: 0.6 }} /> :
+                                                    <Checks size={14} className="status-icon" weight="bold" />
+                                            )}
                                         </div>
 
                                         <div className="message-reactions">
