@@ -45,6 +45,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [showCadastroModal, setShowCadastroModal] = useState(false);
     const [cadastroMode, setCadastroMode] = useState<'rapido' | 'completo'>('rapido');
     const [conflictMode, setConflictMode] = useState<'add' | 'overwrite'>('add');
+    const [endReason, setEndReason] = useState('');
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -242,16 +243,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     };
 
     const handleEndChat = async () => {
+        if (!endReason.trim()) {
+            alert('Por favor, descreva detalhadamente o motivo para encerrar o atendimento.');
+            return;
+        }
         try {
             await updateConversation(chatId, { is_closed: true, is_archived: false, is_pinned: false });
             await sendMessage(chatId, {
                 sender: 'Sistema',
-                text: '🔒 Atendimento encerrado. Arquivado em Encerrados.',
+                text: `🔒 Atendimento encerrado. \nMotivo: "${endReason.trim()}"`,
                 is_user: false,
                 is_bot: false
             });
             setConversation(prev => prev ? { ...prev, is_closed: true, is_archived: false, is_pinned: false } : null);
             setShowEndModal(false);
+            setEndReason('');
         } catch (err) {
             console.error('Error ending chat:', err);
         }
@@ -555,10 +561,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal">
                             <div className="ca-modal-icon warning"><Warning size={28} weight="duotone" /></div>
                             <h3>Encerrar atendimento?</h3>
-                            <p>O cliente não poderá mais enviar mensagens nesta sessão.</p>
+                            <p style={{ marginBottom: '8px' }}>O cliente não poderá mais responder antes de triagem.</p>
+
+                            <textarea
+                                placeholder="Descreva o motivo pelo qual este atendimento está sendo definitivamente encerrado..."
+                                value={endReason}
+                                onChange={(e) => setEndReason(e.target.value)}
+                                rows={4}
+                                style={{
+                                    width: '100%', padding: '10px', borderRadius: '6px',
+                                    background: 'var(--bg-deep)', border: '1px solid #444',
+                                    color: '#fff', outline: 'none', resize: 'none',
+                                    marginBottom: '16px', fontSize: '0.9rem'
+                                }}
+                            ></textarea>
+
                             <div className="ca-modal-actions">
                                 <button className="ca-cancel" onClick={() => setShowEndModal(false)}>Cancelar</button>
-                                <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar</button>
+                                <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar Definitivo</button>
                             </div>
                         </motion.div>
                     </div>
@@ -636,7 +656,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             <h3>Nova Ordem de Serviço</h3>
                             <p style={{ marginBottom: '10px' }}>Criar OS para <strong>{conversation?.contact_name}</strong></p>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', maxHeight: '55vh', overflowY: 'auto', paddingRight: '12px', paddingBottom: '10px' }}>
+                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', maxHeight: '65vh', overflowY: 'auto', paddingRight: '16px', paddingBottom: '24px' }}>
                                 <div style={{ display: 'flex', gap: '10px' }}>
                                     <div style={{ flex: 1 }}>
                                         <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Tipo de Serviço</label>
@@ -700,7 +720,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                 <button onClick={() => setCadastroMode('completo')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'completo' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>CRM Completo</button>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginBottom: '16px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '12px' }}>
+                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '16px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '16px', paddingBottom: '24px' }}>
                                 <input type="text" placeholder="Nome Completo / Razão Social" defaultValue={conversation?.contact_name} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
 
                                 <div style={{ display: 'flex', gap: '10px' }}>
