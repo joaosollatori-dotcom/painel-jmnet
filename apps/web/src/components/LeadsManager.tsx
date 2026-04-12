@@ -736,14 +736,15 @@ const LeadsManager: React.FC = () => {
                 .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: #000; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
                 .form-group input::placeholder { color: #333; }
 
-                .modal-footer { padding: 2rem 2.5rem; background: #0e0e0e; display: flex; justify-content: flex-end; gap: 1.5rem; border-top: 1px solid #222; }
-                .btn-secondary { background: transparent; border: 1px solid #333; color: #888; padding: 12px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
+                .modal-footer { padding: 2rem 2.5rem; background: #0e0e0e; display: flex; justify-content: flex-end; align-items: center; gap: 1.5rem; border-top: 1px solid #222; }
+                .btn-secondary { background: transparent; border: 1px solid #333; color: #888; padding: 0 24px; height: 48px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
                 .btn-secondary:hover { color: #fff; border-color: #555; background: #1a1a1a; }
                 
                 .btn-primary { 
-                    background: var(--primary-color); color: #fff; border: none; padding: 12px 32px; border-radius: 14px; 
+                    background: var(--primary-color); color: #fff; border: none; padding: 0 32px; height: 48px; border-radius: 14px; 
                     font-weight: 800; cursor: pointer; transition: all 0.2s; font-size: 0.95rem;
                     box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+                    display: flex; align-items: center; justify-content: center;
                 }
                 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3); background: #2563eb; }
                 .btn-primary:active { transform: translateY(0); }
