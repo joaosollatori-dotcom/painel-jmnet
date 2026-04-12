@@ -1,10 +1,10 @@
 import React from 'react';
-import { CurrencyDollar, ArrowUp, ArrowDown, Receipt, CreditCard, Bank, Calendar, Warning } from '@phosphor-icons/react';
+import { CurrencyDollar, ArrowUp, ArrowDown, Receipt, CreditCard, Bank, Calendar, WarningCircle } from '@phosphor-icons/react';
 
 const FinanceManager: React.FC = () => {
     const stats = [
         { label: 'MRR (Mensalidade)', value: 'R$ 142.500,00', icon: CurrencyDollar, trend: '+8%', color: '#10b981' },
-        { label: 'Inadimplência', value: '4.2%', icon: Warning, trend: '-0.5%', color: '#ef4444' },
+        { label: 'Inadimplência', value: '4.2%', icon: WarningCircle, trend: '-0.5%', color: '#ef4444' },
         { label: 'Recebido (Hoje)', value: 'R$ 12.430,00', icon: Bank, trend: '+15%', color: '#3b82f6' },
         { label: 'NFSe Emitidas', value: '1.240', icon: Receipt, trend: '+2%', color: 'var(--accent)' },
     ];

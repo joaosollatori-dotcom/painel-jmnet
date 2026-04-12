@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Globe, HardDrives, Cpu, WifiHigh, Warning, TreeStructure, Desktop, CheckCircle } from '@phosphor-icons/react';
+import { Globe, HardDrives, Cpu, WifiHigh, WarningCircle, GitBranch, Desktop, CheckCircle } from '@phosphor-icons/react';
 
 const NetworkManager: React.FC = () => {
     const [selectedOlt, setSelectedOlt] = useState<string | null>('OLT-01');

@@ -1,13 +1,13 @@
 import React from 'react';
 import {
-    MessageSquare,
-    LayoutDashboard,
-    Settings,
+    ChatCircleDots,
+    SquaresFour,
+    Gear,
     Users,
-    LogOut,
-    Zap,
-    PanelLeftClose,
-    PanelLeftOpen,
+    SignOut,
+    Lightning,
+    CaretDoubleLeft,
+    CaretDoubleRight,
     Sun,
     Moon,
     Hash,
@@ -49,7 +49,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             items: [
                 { id: 'chats', icon: Headset, label: 'Atendimento' },
                 { id: 'internal_chat', icon: Hash, label: 'Chat Interno' },
-                { id: 'agents', icon: Zap, label: 'Agentes IA' },
+                { id: 'agents', icon: Lightning, label: 'Agentes IA' },
             ]
         },
         {
@@ -67,7 +67,7 @@ const Sidebar: React.FC<SidebarProps> = ({
             items: [
                 { id: 'rede', icon: Globe, label: 'Rede ISP' },
                 { id: 'mapa', icon: MapTrifold, label: 'Mapa de Rede' },
-                { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard BI' },
+                { id: 'dashboard', icon: SquaresFour, label: 'Dashboard BI' },
             ]
         }
     ];
@@ -102,7 +102,7 @@ const Sidebar: React.FC<SidebarProps> = ({
         <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
             <div className="sidebar-header">
                 <button className="toggle-btn" onClick={onToggleRetraction} title={isRetracted ? "Expandir" : "Recolher"}>
-                    {isRetracted ? <PanelLeftOpen size={20} /> : <PanelLeftClose size={20} />}
+                    {isRetracted ? <CaretDoubleRight size={20} /> : <CaretDoubleLeft size={20} />}
                 </button>
                 {!isRetracted && <span className="logo-text">TITÃ</span>}
             </div>
@@ -159,11 +159,11 @@ const Sidebar: React.FC<SidebarProps> = ({
                     {!isRetracted && <span className="nav-label">{theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}</span>}
                 </button>
                 <button className="nav-item" title="Configurações" onClick={() => onTabChange('settings')}>
-                    <Settings size={22} />
+                    <Gear size={22} />
                     {!isRetracted && <span className="nav-label">Ajustes</span>}
                 </button>
                 <button className="nav-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
-                    <LogOut size={22} />
+                    <SignOut size={22} />
                     {!isRetracted && <span className="nav-label">Sair</span>}
                 </button>
             </div>

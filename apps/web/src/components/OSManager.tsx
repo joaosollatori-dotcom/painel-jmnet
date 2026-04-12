@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import { Wrench, Calendar, User, MapPin, Clock, CheckCircle, Warning, X } from '@phosphor-icons/react';
+import { Wrench, Calendar, User, MapPin, Clock, CheckCircle, WarningCircle, X } from '@phosphor-icons/react';
 import 'leaflet/dist/leaflet.css';
 
 // Fix for default marker icons in Leaflet + React
