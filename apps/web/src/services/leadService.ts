@@ -4,8 +4,15 @@ export interface Lead {
     id: string;
     nomeCompleto: string;
     cpfCnpj?: string;
+    rg?: string;
+    dataNascimento?: string;
+    email?: string;
     telefonePrincipal: string;
     telefoneSecundario?: string;
+    telefoneWhatsapp?: string;
+    tipoPessoa: 'PF' | 'PJ';
+
+    // Endereço
     cep?: string;
     logradouro?: string;
     numero?: string;
@@ -13,20 +20,47 @@ export interface Lead {
     cidade?: string;
     uf?: string;
     pontoReferencia?: string;
+    latitude?: number;
+    longitude?: number;
+
+    // Comercial / Entrada
     canalEntrada: string;
     campanha?: string;
+    utmSource?: string;
+    utmMedium?: string;
+    utmCampaign?: string;
+    utmTerm?: string;
+    utmContent?: string;
+    indicador?: string;
+    ipEntrada?: string;
+    dispositivo?: string;
     vendedorId?: string;
-    statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA';
-    observacoes?: string;
+
+    // Qualificação e Viabilidade
     tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
+    perfilUso?: string;
+    interesseDeclarado?: string;
     interessePlano?: string;
+    valorPagoAtual?: number;
+    operadoraAtual?: string;
+    statusQualificacao: 'PENDENTE' | 'QUALIFICADO' | 'DESQUALIFICADO';
+    statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA';
+
+    // Controle
+    observacoes?: string;
     perfilComercial?: string;
     decisorIdentificado: boolean;
     melhorHorario?: string;
     tentativasContato: number;
+    dataProximoContato?: string;
+    dataUltimaInteracao: string;
+    isFrio: boolean;
+
+    // Metricas
     dataEntrada: string;
     createdAt: string;
     updatedAt: string;
+    stageId?: string;
 }
 
 export const getLeads = async (): Promise<Lead[]> => {

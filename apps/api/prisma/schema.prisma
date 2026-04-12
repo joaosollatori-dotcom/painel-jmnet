@@ -160,11 +160,16 @@ model AssinanteSVA {
 }
 
 model Lead {
-  id                String   @id @default(uuid())
+  id                String    @id @default(uuid())
   nomeCompleto      String
   cpfCnpj           String?
+  rg                String?
+  dataNascimento    DateTime?
+  email             String?
   telefonePrincipal String
   telefoneSecundario String?
+  telefoneWhatsapp  String?
+  tipoPessoa        String    @default("PF") // PF, PJ
   
   // Endereço
   cep               String?
@@ -174,27 +179,47 @@ model Lead {
   cidade            String?
   uf                String?
   pontoReferencia   String?
+  latitude          Float?
+  longitude         Float?
   
   // Comercial / Entrada
-  canalEntrada      String   // WhatsApp, ligação, indicação, campanha, visita
-  campanha          String?  // Origem marketing
+  canalEntrada      String    // WhatsApp, ligação, indicação, campanha, visita
+  campanha          String?   // Origem marketing
+  utmSource         String?
+  utmMedium         String?
+  utmCampaign       String?
+  utmTerm           String?
+  utmContent        String?
+  indicador         String?   // Nome de quem indicou
+  ipEntrada         String?
+  dispositivo       String?
   vendedorId        String?
-  vendedor          User?    @relation("VendedorLeads", fields: [vendedorId], references: [id])
-  statusViabilidade String   @default("PENDENTE") // PENDENTE, APROVADA, REPROVADA
-  observacoes       String?
+  vendedor          User?     @relation("VendedorLeads", fields: [vendedorId], references: [id])
   
-  // Qualificação
-  tipoCliente       String   @default("RESIDENCIAL") // RESIDENCIAL, EMPRESARIAL
+  // Qualificação e Viabilidade
+  tipoCliente       String    @default("RESIDENCIAL") // RESIDENCIAL, EMPRESARIAL
+  perfilUso         String?   // Básico, Premium, etc
+  interesseDeclarado String?
   interessePlano    String?
-  perfilComercial   String?  // Renda ou porte da empresa
+  valorPagoAtual    Decimal?  @db.Decimal(10, 2)
+  operadoraAtual    String?
+  statusQualificacao String   @default("PENDENTE") // PENDENTE, QUALIFICADO, DESQUALIFICADO
+  statusViabilidade  String   @default("PENDENTE") // PENDENTE, APROVADA, REPROVADA
+  
+  // Controle
+  observacoes       String?
+  perfilComercial   String?   // Renda ou porte da empresa (descritivo)
   decisorIdentificado Boolean @default(false)
   melhorHorario     String?
-  tentativasContato Int      @default(0)
+  tentativasContato Int       @default(0)
+  dataProximoContato DateTime?
+  dataUltimaInteracao DateTime @default(now())
+  isFrio            Boolean   @default(false)
   
   // Metricas
-  dataEntrada      DateTime @default(now())
-  createdAt        DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  dataEntrada      DateTime   @default(now())
+  createdAt        DateTime   @default(now())
+  updatedAt        DateTime   @updatedAt
 
   stageId           String?
   stage             SalesStage? @relation(fields: [stageId], references: [id])

@@ -24,9 +24,12 @@ const LeadsManager: React.FC = () => {
         telefonePrincipal: '',
         canalEntrada: 'WhatsApp',
         statusViabilidade: 'PENDENTE',
+        statusQualificacao: 'PENDENTE',
         tipoCliente: 'RESIDENCIAL',
+        tipoPessoa: 'PF',
         decisorIdentificado: false,
-        tentativasContato: 0
+        tentativasContato: 0,
+        isFrio: false
     });
 
     useEffect(() => {
@@ -93,7 +96,7 @@ const LeadsManager: React.FC = () => {
                     <p style={{ color: '#aaa', margin: '4px 0 0 0' }}>Qualificação comercial e viabilidade técnica</p>
                 </div>
                 <button
-                    onClick={() => { setSelectedLead(null); setFormData({ canalEntrada: 'WhatsApp', statusViabilidade: 'PENDENTE', tipoCliente: 'RESIDENCIAL' }); setShowModal(true); }}
+                    onClick={() => { setSelectedLead(null); setFormData({ canalEntrada: 'WhatsApp', statusViabilidade: 'PENDENTE', tipoCliente: 'RESIDENCIAL', tipoPessoa: 'PF', statusQualificacao: 'PENDENTE', tentativasContato: 0, isFrio: false }); setShowModal(true); }}
                     style={{
                         background: 'var(--primary-color)', color: '#fff', border: 'none',
                         padding: '12px 24px', borderRadius: '8px', fontWeight: 600,
@@ -147,7 +150,10 @@ const LeadsManager: React.FC = () => {
                                             {lead.tipoCliente === 'EMPRESARIAL' ? <Buildings size={20} /> : <User size={20} />}
                                         </div>
                                         <div>
-                                            <div style={{ fontWeight: 600 }}>{lead.nomeCompleto}</div>
+                                            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                {lead.nomeCompleto}
+                                                {lead.isFrio && <span title="Lead Frio" style={{ background: '#3b82f622', color: '#3b82f6', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>FRIO</span>}
+                                            </div>
                                             <div style={{ fontSize: '0.8rem', color: '#666' }}>{lead.cpfCnpj || 'CPF não inf.'}</div>
                                         </div>
                                     </div>
@@ -165,7 +171,7 @@ const LeadsManager: React.FC = () => {
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                                         <div style={{ fontSize: '0.85rem' }}>{lead.interessePlano || 'Plano não definido'}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#666' }}>Tentativas: {lead.tentativasContato}</div>
+                                        <div style={{ fontSize: '0.75rem', color: '#666' }}>Status: {lead.statusQualificacao}</div>
                                     </div>
                                 </td>
                                 <td style={{ padding: '16px' }}>
@@ -198,7 +204,7 @@ const LeadsManager: React.FC = () => {
                             initial={{ opacity: 0, scale: 0.95 }}
                             animate={{ opacity: 1, scale: 1 }}
                             exit={{ opacity: 0, scale: 0.95 }}
-                            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '16px', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflowY: 'auto' }}
+                            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '16px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto' }}
                         >
                             <form onSubmit={handleSubmit} style={{ padding: '2rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
@@ -206,51 +212,65 @@ const LeadsManager: React.FC = () => {
                                     <button type="button" onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: '#666' }}><XCircle size={24} /></button>
                                 </div>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
-                                    {/* Seção Dados Pessoais */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <h3 style={{ fontSize: '1rem', color: 'var(--primary-color)', margin: '0 0 0.5rem 0' }}>Dados do Contato</h3>
-                                        <div className="form-group">
-                                            <label>Nome Completo *</label>
-                                            <input required type="text" value={formData.nomeCompleto} onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} placeholder="Ex: João da Silva" />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>CPF / CNPJ</label>
-                                            <input type="text" value={formData.cpfCnpj} onChange={e => setFormData({ ...formData, cpfCnpj: e.target.value })} placeholder="000.000.000-00" />
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.5rem' }}>
+                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem' }}>
+                                    {/* 1. ENTIDADE LEAD (Dados Pessoais) */}
+                                    <div className="modal-section">
+                                        <h3><User size={18} weight="bold" /> Entidade Lead</h3>
+                                        <div className="form-grid">
+                                            <div className="form-group full">
+                                                <label>Nome Completo *</label>
+                                                <input required type="text" value={formData.nomeCompleto} onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} placeholder="Nome completo" />
+                                            </div>
                                             <div className="form-group">
-                                                <label>Telefone 1 *</label>
+                                                <label>Tipo de Pessoa</label>
+                                                <select value={formData.tipoPessoa} onChange={e => setFormData({ ...formData, tipoPessoa: e.target.value as any })}>
+                                                    <option value="PF">Pessoa Física</option>
+                                                    <option value="PJ">Pessoa Jurídica</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>CPF / CNPJ</label>
+                                                <input type="text" value={formData.cpfCnpj} onChange={e => setFormData({ ...formData, cpfCnpj: e.target.value })} placeholder="000.000.000-00" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>RG</label>
+                                                <input type="text" value={formData.rg} onChange={e => setFormData({ ...formData, rg: e.target.value })} placeholder="Registro Geral" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Data de Nascimento</label>
+                                                <input type="date" value={formData.dataNascimento ? formData.dataNascimento.split('T')[0] : ''} onChange={e => setFormData({ ...formData, dataNascimento: e.target.value })} />
+                                            </div>
+                                            <div className="form-group full">
+                                                <label>E-mail</label>
+                                                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="exemplo@email.com" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Telefone Principal *</label>
                                                 <input required type="text" value={formData.telefonePrincipal} onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} placeholder="(00) 00000-0000" />
                                             </div>
                                             <div className="form-group">
-                                                <label>Telefone 2</label>
-                                                <input type="text" value={formData.telefoneSecundario} onChange={e => setFormData({ ...formData, telefoneSecundario: e.target.value })} placeholder="(00) 00000-0000" />
+                                                <label>Telefone WhatsApp</label>
+                                                <input type="text" value={formData.telefoneWhatsapp} onChange={e => setFormData({ ...formData, telefoneWhatsapp: e.target.value })} placeholder="(00) 00000-0000" />
                                             </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Tipo de Cliente</label>
-                                            <select value={formData.tipoCliente} onChange={e => setFormData({ ...formData, tipoCliente: e.target.value as any })}>
-                                                <option value="RESIDENCIAL">Residencial</option>
-                                                <option value="EMPRESARIAL">Empresarial</option>
-                                            </select>
                                         </div>
                                     </div>
 
-                                    {/* Seção Endereço */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <h3 style={{ fontSize: '1rem', color: 'var(--primary-color)', margin: '0 0 0.5rem 0' }}>Endereço e Viabilidade</h3>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
+                                    {/* 2. ENDEREÇO */}
+                                    <div className="modal-section">
+                                        <h3><MapPin size={18} weight="bold" /> Endereço</h3>
+                                        <div className="form-grid">
                                             <div className="form-group">
                                                 <label>CEP</label>
                                                 <input type="text" value={formData.cep} onChange={e => setFormData({ ...formData, cep: e.target.value })} placeholder="00000-000" />
                                             </div>
                                             <div className="form-group">
-                                                <label>Logradouro</label>
-                                                <input type="text" value={formData.logradouro} onChange={e => setFormData({ ...formData, logradouro: e.target.value })} placeholder="Rua..." />
+                                                <label>UF</label>
+                                                <input type="text" value={formData.uf} onChange={e => setFormData({ ...formData, uf: e.target.value })} placeholder="SP" maxLength={2} />
                                             </div>
-                                        </div>
-                                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 2fr', gap: '0.5rem' }}>
+                                            <div className="form-group full">
+                                                <label>Logradouro</label>
+                                                <input type="text" value={formData.logradouro} onChange={e => setFormData({ ...formData, logradouro: e.target.value })} placeholder="Rua, Av..." />
+                                            </div>
                                             <div className="form-group">
                                                 <label>Número</label>
                                                 <input type="text" value={formData.numero} onChange={e => setFormData({ ...formData, numero: e.target.value })} placeholder="123" />
@@ -259,66 +279,140 @@ const LeadsManager: React.FC = () => {
                                                 <label>Bairro</label>
                                                 <input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Bairro" />
                                             </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Ponto de Referência</label>
-                                            <input type="text" value={formData.pontoReferencia} onChange={e => setFormData({ ...formData, pontoReferencia: e.target.value })} placeholder="Próximo ao..." />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Status Viabilidade</label>
-                                            <select value={formData.statusViabilidade} onChange={e => setFormData({ ...formData, statusViabilidade: e.target.value as any })}>
-                                                <option value="PENDENTE">Pendente de Vistoria</option>
-                                                <option value="APROVADA">Viável / Aprovada</option>
-                                                <option value="REPROVADA">Inviável</option>
-                                            </select>
+                                            <div className="form-group full">
+                                                <label>Ponto de Referência</label>
+                                                <input type="text" value={formData.pontoReferencia} onChange={e => setFormData({ ...formData, pontoReferencia: e.target.value })} placeholder="Próximo a..." />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Latitude</label>
+                                                <input type="number" step="any" value={formData.latitude} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })} placeholder="-23.5505" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Longitude</label>
+                                                <input type="number" step="any" value={formData.longitude} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })} placeholder="-46.6333" />
+                                            </div>
                                         </div>
                                     </div>
 
-                                    {/* Seção Qualificação */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <h3 style={{ fontSize: '1rem', color: 'var(--primary-color)', margin: '0 0 0.5rem 0' }}>Qualificação Comercial</h3>
-                                        <div className="form-group">
-                                            <label>Canal de Entrada</label>
-                                            <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
-                                                <option value="WhatsApp">WhatsApp</option>
-                                                <option value="Ligação">Ligação Telefônica</option>
-                                                <option value="Indicação">Indicação</option>
-                                                <option value="Campanha">Campanha Marketing</option>
-                                                <option value="Visita">Visita Porta a Porta</option>
-                                            </select>
+                                    {/* 3. ORIGEM E RASTREAMENTO */}
+                                    <div className="modal-section">
+                                        <h3><Clock size={18} weight="bold" /> Origem e Rastreamento</h3>
+                                        <div className="form-grid">
+                                            <div className="form-group">
+                                                <label>Canal de Entrada</label>
+                                                <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
+                                                    <option value="WhatsApp">WhatsApp</option>
+                                                    <option value="Ligação">Ligação</option>
+                                                    <option value="Web">Web Site</option>
+                                                    <option value="Indicação">Indicação</option>
+                                                    <option value="Visita">Visita Presencial</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Indicador Responsável</label>
+                                                <input type="text" value={formData.indicador} onChange={e => setFormData({ ...formData, indicador: e.target.value })} placeholder="Nome/Cód" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>UTM Source</label>
+                                                <input type="text" value={formData.utmSource} onChange={e => setFormData({ ...formData, utmSource: e.target.value })} placeholder="google, facebook" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>UTM Campaign</label>
+                                                <input type="text" value={formData.utmCampaign} onChange={e => setFormData({ ...formData, utmCampaign: e.target.value })} placeholder="blackfriday_2024" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>IP de Entrada</label>
+                                                <input type="text" value={formData.ipEntrada} onChange={e => setFormData({ ...formData, ipEntrada: e.target.value })} placeholder="192.168.0.1" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Dispositivo</label>
+                                                <input type="text" value={formData.dispositivo} onChange={e => setFormData({ ...formData, dispositivo: e.target.value })} placeholder="Mobile/Desktop" />
+                                            </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Plano de Interesse</label>
-                                            <input type="text" value={formData.interessePlano} onChange={e => setFormData({ ...formData, interessePlano: e.target.value })} placeholder="Ex: Fibra 500 Mega" />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Renda / Porte Empresa</label>
-                                            <input type="text" value={formData.perfilComercial} onChange={e => setFormData({ ...formData, perfilComercial: e.target.value })} placeholder="R$ / Tamanho" />
-                                        </div>
-                                        <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                            <input type="checkbox" checked={formData.decisorIdentificado} onChange={e => setFormData({ ...formData, decisorIdentificado: e.target.checked })} />
-                                            <span style={{ fontSize: '0.9rem' }}>Decisor identificado?</span>
-                                        </label>
                                     </div>
 
-                                    {/* Seção Observações */}
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                                        <h3 style={{ fontSize: '1rem', color: 'var(--primary-color)', margin: '0 0 0.5rem 0' }}>Controle</h3>
-                                        <div className="form-group">
-                                            <label>Vendedor Responsável</label>
-                                            <select value={formData.vendedorId} onChange={e => setFormData({ ...formData, vendedorId: e.target.value })}>
-                                                <option value="">A definir...</option>
-                                                <option value="vendedor-1">Carlos (Vendas 1)</option>
-                                                <option value="vendedor-2">Ana (Comercial)</option>
-                                            </select>
+                                    {/* 4. CLASSIFICAÇÃO INICIAL */}
+                                    <div className="modal-section">
+                                        <h3><Suitcase size={18} weight="bold" /> Classificação Inicial</h3>
+                                        <div className="form-grid">
+                                            <div className="form-group">
+                                                <label>Tipo de Cliente</label>
+                                                <select value={formData.tipoCliente} onChange={e => setFormData({ ...formData, tipoCliente: e.target.value as any })}>
+                                                    <option value="RESIDENCIAL">Residencial</option>
+                                                    <option value="EMPRESARIAL">Empresarial</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Perfil de Uso</label>
+                                                <select value={formData.perfilUso} onChange={e => setFormData({ ...formData, perfilUso: e.target.value })}>
+                                                    <option value="">Selecione...</option>
+                                                    <option value="Basico">Residencial Básico</option>
+                                                    <option value="Premium">Residencial Premium</option>
+                                                    <option value="Pequeno">Empresarial Pequeno</option>
+                                                    <option value="Medio">Empresarial Médio</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group full">
+                                                <label>Plano de Interesse</label>
+                                                <input type="text" value={formData.interessePlano} onChange={e => setFormData({ ...formData, interessePlano: e.target.value })} placeholder="Ex: Fibra 500 Mega" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Operadora Atual</label>
+                                                <input type="text" value={formData.operadoraAtual} onChange={e => setFormData({ ...formData, operadoraAtual: e.target.value })} placeholder="Vivo, Claro, etc" />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Valor Pago Atual (R$)</label>
+                                                <input type="number" step="0.01" value={formData.valorPagoAtual} onChange={e => setFormData({ ...formData, valorPagoAtual: parseFloat(e.target.value) })} placeholder="0,00" />
+                                            </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Melhor Horário Contato</label>
-                                            <input type="text" value={formData.melhorHorario} onChange={e => setFormData({ ...formData, melhorHorario: e.target.value })} placeholder="Ex: Manhã após as 10h" />
+                                    </div>
+
+                                    {/* 5. STATUS E CONTROLE */}
+                                    <div className="modal-section full">
+                                        <h3><CheckCircle size={18} weight="bold" /> Status e Controle</h3>
+                                        <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
+                                            <div className="form-group">
+                                                <label>Qualificação</label>
+                                                <select value={formData.statusQualificacao} onChange={e => setFormData({ ...formData, statusQualificacao: e.target.value as any })}>
+                                                    <option value="PENDENTE">Pendente</option>
+                                                    <option value="QUALIFICADO">Qualificado</option>
+                                                    <option value="DESQUALIFICADO">Desqualificado</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Viabilidade</label>
+                                                <select value={formData.statusViabilidade} onChange={e => setFormData({ ...formData, statusViabilidade: e.target.value as any })}>
+                                                    <option value="PENDENTE">Pendente</option>
+                                                    <option value="APROVADA">Aprovada</option>
+                                                    <option value="REPROVADA">Reprovada</option>
+                                                </select>
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Próximo Contato</label>
+                                                <input type="datetime-local" value={formData.dataProximoContato ? formData.dataProximoContato.slice(0, 16) : ''} onChange={e => setFormData({ ...formData, dataProximoContato: e.target.value })} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Vendedor Responsável</label>
+                                                <select value={formData.vendedorId} onChange={e => setFormData({ ...formData, vendedorId: e.target.value })}>
+                                                    <option value="">Selecione...</option>
+                                                    <option value="vend-1">Carlos Oliveira</option>
+                                                    <option value="vend-2">Mariana Souza</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Observações</label>
-                                            <textarea rows={4} value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }}></textarea>
+                                        <div style={{ marginTop: '1rem', display: 'flex', gap: '2rem' }}>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <input type="checkbox" checked={formData.decisorIdentificado} onChange={e => setFormData({ ...formData, decisorIdentificado: e.target.checked })} />
+                                                <span style={{ fontSize: '0.9rem' }}>Decisor identificado?</span>
+                                            </label>
+                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                                                <input type="checkbox" checked={formData.isFrio} onChange={e => setFormData({ ...formData, isFrio: e.target.checked })} />
+                                                <span style={{ fontSize: '0.9rem', color: formData.isFrio ? '#3b82f6' : 'inherit' }}>Marcar como Lead Frio</span>
+                                            </label>
+                                        </div>
+                                        <div className="form-group full" style={{ marginTop: '1rem' }}>
+                                            <label>Observações Adicionais</label>
+                                            <textarea rows={3} value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
                                         </div>
                                     </div>
                                 </div>
@@ -334,14 +428,30 @@ const LeadsManager: React.FC = () => {
             </AnimatePresence>
 
             <style>{`
-                .form-group { display: flex; flexDirection: column; gap: 6px; text-align: left; }
-                .form-group label { font-size: 0.85rem; color: #aaa; }
+                .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
+                .form-group.full { grid-column: span 2; }
+                .modal-section.full { grid-column: span 2; }
+                .form-group label { font-size: 0.8rem; color: #aaa; font-weight: 500; }
                 .form-group input, .form-group select { 
-                    padding: 10px; borderRadius: 8px; background: var(--bg-deep); 
-                    border: 1px solid #444; color: #fff; outline: none; transition: border-color 0.2s;
+                    padding: 10px 12px; borderRadius: 8px; background: var(--bg-deep); 
+                    border: 1px solid #444; color: #fff; outline: none; transition: all 0.2s;
+                    font-size: 0.9rem;
                 }
-                .form-group input:focus { border-color: var(--primary-color); }
+                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.03); }
                 .table-row-hover:hover { background: rgba(255,255,255,0.03); }
+                
+                .modal-section { 
+                    display: flex; flex-direction: column; gap: 1.25rem; 
+                    background: rgba(255,255,255,0.01); padding: 1.5rem; 
+                    border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);
+                }
+                .modal-section h3 { 
+                    margin: 0; font-size: 0.95rem; color: var(--primary-color); 
+                    display: flex; alignItems: center; gap: 10px; text-transform: uppercase; 
+                    letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.05);
+                    padding-bottom: 0.75rem;
+                }
+                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
             `}</style>
         </div>
     );
