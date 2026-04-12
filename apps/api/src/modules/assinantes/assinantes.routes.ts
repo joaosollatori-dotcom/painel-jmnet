@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest } from 'fastify';
 import { AssinantesService } from './assinantes.service';
 import { assinanteSchema } from './assinantes.schema';
 
@@ -23,9 +23,9 @@ export async function assinantesRoutes(server: FastifyInstance) {
         schema: {
             body: assinanteSchema,
         }
-    }, async (request, reply) => {
+    }, async (request: FastifyRequest<{ Body: any }>, reply) => {
         const data = request.body;
-        const assinante = await service.create(data);
+        const assinante = await service.create(data as any);
         return reply.status(201).send({ data: assinante, success: true });
     });
 }

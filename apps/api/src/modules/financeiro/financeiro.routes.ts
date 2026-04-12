@@ -1,4 +1,4 @@
-import { FastifyInstance } from 'fastify';
+import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
 import { FinanceiroService } from './financeiro.service';
 import { faturaSchema, pagamentoSchema } from './financeiro.schema';
 
@@ -13,17 +13,17 @@ export async function financeiroRoutes(server: FastifyInstance) {
 
     server.post<{ Body: any }>('/faturas', {
         schema: { body: faturaSchema }
-    }, async (request, reply) => {
+    }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        const fatura = await service.createFatura(data);
+        const fatura = await service.createFatura(data as any);
         return reply.status(201).send({ data: fatura, success: true });
     });
 
     server.post<{ Body: any }>('/pagamentos', {
         schema: { body: pagamentoSchema }
-    }, async (request, reply) => {
+    }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        const pagamento = await service.processPagamento(data);
+        const pagamento = await service.processPagamento(data as any);
         return reply.status(201).send({ data: pagamento, success: true });
     });
 }

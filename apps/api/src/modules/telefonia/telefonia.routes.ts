@@ -9,7 +9,7 @@ export async function telefoniaRoutes(server: FastifyInstance) {
         schema: { body: ramalSchema }
     }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        const ramal = await service.createRamal(data);
+        const ramal = await service.createRamal(data as any);
         return reply.status(201).send({ data: ramal, success: true });
     });
 
@@ -17,7 +17,7 @@ export async function telefoniaRoutes(server: FastifyInstance) {
         schema: { body: linhaMVNOSchema }
     }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        const linha = await service.activateMVNO(data);
+        const linha = await service.activateMVNO(data as any);
         return reply.status(201).send({ data: linha, success: true });
     });
 }

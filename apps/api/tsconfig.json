@@ -2,21 +2,11 @@
     "extends": "../../packages/config/tsconfig.base.json",
     "compilerOptions": {
         "target": "ESNext",
-        "module": "NodeNext",
-        "moduleResolution": "NodeNext",
-        "baseUrl": ".",
-        "paths": {
-            "@titan/types": [
-                "../../packages/types/src"
-            ]
-        },
+        "module": "ESNext",
+        "moduleResolution": "node",
         "outDir": "dist",
-        "strict": true,
-        "esModuleInterop": true,
-        "skipLibCheck": true,
-        "forceConsistentCasingInFileNames": true,
-        "resolveJsonModule": true,
-        "isolatedModules": true
+        "noEmit": false,
+        "esModuleInterop": true
     },
     "include": [
         "src/**/*"

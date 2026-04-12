@@ -13,10 +13,10 @@ export async function redeRoutes(server: FastifyInstance) {
         schema: { body: oltSchema }
     }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        return reply.status(201).send({ data: await service.createOLT(data), success: true });
+        return reply.status(201).send({ data: await service.createOLT(data as any), success: true });
     });
 
-    server.get<{ Querystring: any }>('/onus', async (request: FastifyRequest<{ Querystring: any }>) => {
+    server.get<{ Querystring: { oltId?: string } }>('/onus', async (request: FastifyRequest<{ Querystring: { oltId?: string } }>) => {
         const { oltId } = request.query;
         return { data: await service.listONUs(oltId), success: true };
     });
@@ -25,6 +25,6 @@ export async function redeRoutes(server: FastifyInstance) {
         schema: { body: onuSchema }
     }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        return reply.status(201).send({ data: await service.provisionONU(data), success: true });
+        return reply.status(201).send({ data: await service.provisionONU(data as any), success: true });
     });
 }

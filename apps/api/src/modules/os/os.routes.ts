@@ -7,7 +7,7 @@ export async function osRoutes(server: FastifyInstance) {
 
     server.get<{ Querystring: any }>('/', async (request: FastifyRequest<{ Querystring: any }>) => {
         const filters = request.query;
-        const data = await service.list(filters);
+        const data = await service.list(filters as any);
         return { data, success: true };
     });
 
@@ -15,7 +15,7 @@ export async function osRoutes(server: FastifyInstance) {
         schema: { body: osSchema }
     }, async (request: FastifyRequest<{ Body: any }>, reply: FastifyReply) => {
         const data = request.body;
-        const os = await service.create(data);
+        const os = await service.create(data as any);
         return reply.status(201).send({ data: os, success: true });
     });
 
