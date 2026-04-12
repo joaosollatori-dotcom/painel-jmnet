@@ -427,10 +427,29 @@ const LeadsManager: React.FC = () => {
                                             </td>
                                             <td style={{ textAlign: 'right' }}>
                                                 <div className="actions-inline">
-                                                    <button title="Registrar Contato"><ChatCircleDots size={20} /></button>
-                                                    <button title="Agendar Tarefa"><CalendarPlus size={20} /></button>
-                                                    <button title="Mover Etapa"><ArrowSquareOut size={20} /></button>
-                                                    <button onClick={() => handleDelete(lead.id)} title="Arquivar"><Archive size={20} /></button>
+                                                    <button
+                                                        className={`btn-options ${openMenuId === lead.id ? 'active' : ''}`}
+                                                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === lead.id ? null : lead.id); }}
+                                                    >
+                                                        Opções <CaretDown size={14} weight="bold" />
+                                                    </button>
+
+                                                    {openMenuId === lead.id && (
+                                                        <div className="options-dropdown" onClick={e => e.stopPropagation()}>
+                                                            <div className="dropdown-item">
+                                                                <ChatCircleDots size={18} weight="duotone" /> Novo Registro
+                                                            </div>
+                                                            <div className="dropdown-item">
+                                                                <CalendarPlus size={18} weight="duotone" /> Nova Tarefa
+                                                            </div>
+                                                            <div className="dropdown-item">
+                                                                <ArrowSquareOut size={18} weight="duotone" /> Mover Etapa
+                                                            </div>
+                                                            <div className="dropdown-item danger" onClick={() => { handleDelete(lead.id); setOpenMenuId(null); }}>
+                                                                <Archive size={18} weight="duotone" /> Arquivar Lead
+                                                            </div>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </td>
                                         </tr>
