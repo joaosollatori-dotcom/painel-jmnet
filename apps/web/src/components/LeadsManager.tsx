@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
     Users, Plus, MagnifyingGlass, Funnel,
     IdentificationCard, Phone, MapPin,
@@ -6,12 +6,16 @@ import {
     CheckCircle, XCircle, Clock,
     TrendUp, UserPlus, FileText,
     Buildings, User, WhatsappLogo,
-    DotsThreeVertical, PencilSimple, Trash
+    DotsThreeVertical, PencilSimple, Trash,
+    ChatCircleDots, CalendarBlank, ArrowSquareOut,
+    Archive, MapTrifold, Warning, CaretDown,
+    PhoneCall, DeviceMobile, HardDrives, MapPinLine,
+    CalendarPlus
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getLeads, createLead, updateLead, deleteLead, Lead } from '../services/leadService';
 import { genericFilter } from '../utils/filterUtils';
-import './Dashboard.css'; // Vou usar os estilos base de dashboard
+import './Dashboard.css';
 
 const LeadsManager: React.FC = () => {
     const [leads, setLeads] = useState<Lead[]>([]);
@@ -19,6 +23,15 @@ const LeadsManager: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+    const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability'>('none');
+    const [currentQuickFilter, setCurrentQuickFilter] = useState<string | null>(null);
+    const [sortConfig, setSortConfig] = useState<{ key: keyof Lead, direction: 'asc' | 'desc' } | null>(null);
+    const [selectedIds, setSelectedIds] = useState<string[]>([]);
+
+    // Filtros de Chips
+    const [stageFilter, setStageFilter] = useState<string | null>(null);
+    const [viabilityFilter, setViabilityFilter] = useState<string | null>(null);
+
     const [formData, setFormData] = useState<Partial<Lead>>({
         nomeCompleto: '',
         telefonePrincipal: '',
@@ -61,7 +74,6 @@ const LeadsManager: React.FC = () => {
             loadLeads();
         } catch (err) {
             console.error('Error saving lead:', err);
-            alert("Erro ao salvar lead. Certifique-se de que a tabela 'leads' existe no Supabase.");
         }
     };
 
@@ -75,352 +87,406 @@ const LeadsManager: React.FC = () => {
         }
     };
 
-    const getStatusColor = (status: string) => {
-        switch (status) {
-            case 'APROVADA': return '#10b981';
-            case 'REPROVADA': return '#ef4444';
-            default: return '#f59e0b';
+    // Estatísticas para o Painel de Atenção
+    const stats = useMemo(() => {
+        const now = new Date();
+        const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
+        const threeDaysAgo = new Date(now.getTime() - 3 * 24 * 60 * 60 * 1000);
+
+        return {
+            noContact48h: leads.filter(l => new Date(l.dataUltimaInteracao) < fortyEightHoursAgo).length,
+            pendingViability: leads.filter(l => l.statusViabilidade === 'PENDENTE').length,
+            stalledProposals: leads.filter(l => l.statusQualificacao === 'QUALIFICADO' && new Date(l.updatedAt) < threeDaysAgo).length,
+        };
+    }, [leads]);
+
+    const handleSort = (key: keyof Lead) => {
+        let direction: 'asc' | 'desc' = 'asc';
+        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
+            direction = 'desc';
+        }
+        setSortConfig({ key, direction });
+    };
+
+    const processedLeads = useMemo(() => {
+        let result = genericFilter(leads, searchTerm);
+
+        // Quick Filters (Attention Panel)
+        if (currentQuickFilter === 'noContact48h') {
+            const limit = new Date(Date.now() - 48 * 60 * 60 * 1000);
+            result = result.filter(l => new Date(l.dataUltimaInteracao) < limit);
+        } else if (currentQuickFilter === 'pendingViability') {
+            result = result.filter(l => l.statusViabilidade === 'PENDENTE');
+        } else if (currentQuickFilter === 'stalledProposals') {
+            const limit = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
+            result = result.filter(l => l.statusQualificacao === 'QUALIFICADO' && new Date(l.updatedAt) < limit);
+        }
+
+        // Chip Filters
+        if (stageFilter) result = result.filter(l => l.statusQualificacao === stageFilter);
+        if (viabilityFilter) result = result.filter(l => l.statusViabilidade === viabilityFilter);
+
+        // Sorting
+        if (sortConfig) {
+            result.sort((a, b) => {
+                const aVal = String(a[sortConfig.key] ?? '');
+                const bVal = String(b[sortConfig.key] ?? '');
+                if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
+                if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+
+        return result;
+    }, [leads, searchTerm, currentQuickFilter, stageFilter, viabilityFilter, sortConfig]);
+
+    // Grouping Logic
+    const groupedLeads = useMemo(() => {
+        if (groupBy === 'none') return { 'Todos os Leads': processedLeads };
+
+        return processedLeads.reduce((acc, lead) => {
+            const groupKey = groupBy === 'stage' ? lead.statusQualificacao : lead.statusViabilidade;
+            if (!acc[groupKey]) acc[groupKey] = [];
+            acc[groupKey].push(lead);
+            return acc;
+        }, {} as Record<string, Lead[]>);
+    }, [processedLeads, groupBy]);
+
+    const toggleSelectAll = () => {
+        if (selectedIds.length === processedLeads.length) {
+            setSelectedIds([]);
+        } else {
+            setSelectedIds(processedLeads.map(l => l.id));
         }
     };
 
-    const filteredLeads = genericFilter(leads, searchTerm);
+    const toggleSelect = (id: string) => {
+        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+    };
+
+    const getDaysInStage = (updatedAt: string) => {
+        const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24));
+        return days;
+    };
+
+    const getStatusStyles = (status: string) => {
+        switch (status) {
+            case 'APROVADA': case 'QUALIFICADO': return { bg: '#10b98122', text: '#10b981', label: status };
+            case 'REPROVADA': case 'DESQUALIFICADO': return { bg: '#ef444422', text: '#ef4444', label: status };
+            case 'EM_ANALISE': return { bg: '#8b5cf622', text: '#8b5cf6', label: 'Em Análise' };
+            default: return { bg: '#f59e0b22', text: '#f59e0b', label: 'Pendente' };
+        }
+    };
+
+    const renderEmptyState = () => {
+        if (leads.length === 0 && !loading) {
+            return (
+                <div className="empty-state">
+                    <UserPlus size={64} weight="duotone" />
+                    <h2>Bem-vindo ao Titã CRM</h2>
+                    <p>Você ainda não possui leads cadastrados. Comece agora para impulsionar suas vendas.</p>
+                    <button onClick={() => setShowModal(true)} className="btn-primary">Criar Meu Primeiro Lead</button>
+                </div>
+            );
+        }
+        if (processedLeads.length === 0) {
+            return (
+                <div className="empty-state">
+                    <MagnifyingGlass size={64} weight="duotone" />
+                    <h2>Nada encontrado</h2>
+                    <p>Não encontramos resultados para "{searchTerm || currentQuickFilter}".</p>
+                    <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); }} className="btn-secondary">Limpar filtros</button>
+                </div>
+            );
+        }
+        return null;
+    };
 
     return (
-        <div className="manager-container" style={{ padding: '2rem', height: '100%', overflowY: 'auto' }}>
-            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
+        <div className="manager-container" style={{ padding: '2rem', height: '100%', overflowY: 'auto', background: 'var(--bg-deep)' }}>
+            {/* Barra Superior */}
+            <header className="listing-header">
                 <div>
-                    <h1 style={{ fontSize: '1.8rem', fontWeight: 700, margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
-                        <TrendUp size={32} weight="duotone" color="var(--primary-color)" />
-                        Gestão de Leads e Qualificação
+                    <h1 className="main-title">
+                        <Users size={32} weight="duotone" color="var(--primary-color)" />
+                        Gestão Comercial de Leads
                     </h1>
-                    <p style={{ color: '#aaa', margin: '4px 0 0 0' }}>Qualificação comercial e viabilidade técnica</p>
+                    <div className="results-counter">
+                        <span>{processedLeads.length}</span> leads encontrados
+                    </div>
                 </div>
-                <button
-                    onClick={() => { setSelectedLead(null); setFormData({ canalEntrada: 'WhatsApp', statusViabilidade: 'PENDENTE', tipoCliente: 'RESIDENCIAL', tipoPessoa: 'PF', statusQualificacao: 'PENDENTE', tentativasContato: 0, isFrio: false }); setShowModal(true); }}
-                    style={{
-                        background: 'var(--primary-color)', color: '#fff', border: 'none',
-                        padding: '12px 24px', borderRadius: '8px', fontWeight: 600,
-                        display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer'
-                    }}
-                >
-                    <UserPlus size={20} weight="bold" /> Novo Lead
-                </button>
+
+                <div className="header-actions">
+                    <div className="search-box">
+                        <MagnifyingGlass size={20} className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Pesquisa unificada (Nome, CPF, Tel...)"
+                            value={searchTerm}
+                            onChange={(e) => setSearchTerm(e.target.value)}
+                        />
+                    </div>
+
+                    <button onClick={() => setShowModal(true)} className="btn-new-lead">
+                        <Plus size={20} weight="bold" /> Novo Lead
+                    </button>
+                </div>
             </header>
 
-            <div style={{ display: 'flex', gap: '1rem', marginBottom: '1.5rem' }}>
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <MagnifyingGlass size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
-                    <input
-                        type="text"
-                        placeholder="Buscar por nome, telefone ou CPF..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        style={{
-                            width: '100%', padding: '12px 12px 12px 44px', borderRadius: '8px',
-                            background: 'var(--bg-surface)', border: '1px solid var(--border)', color: '#fff'
-                        }}
-                    />
+            {/* Painel de Atenção */}
+            <section className="attention-panel">
+                <div
+                    className={`stat-card ${currentQuickFilter === 'noContact48h' ? 'active' : ''}`}
+                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'noContact48h' ? null : 'noContact48h')}
+                >
+                    <div className="stat-value warning">{stats.noContact48h}</div>
+                    <div className="stat-label">Sem contato (+48h)</div>
                 </div>
-                <button className="flex-center" style={{ padding: '12px', background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '8px', color: '#aaa' }}>
-                    <Funnel size={20} />
-                </button>
+                <div
+                    className={`stat-card ${currentQuickFilter === 'pendingViability' ? 'active' : ''}`}
+                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'pendingViability' ? null : 'pendingViability')}
+                >
+                    <div className="stat-value purple">{stats.pendingViability}</div>
+                    <div className="stat-label">Viabilidades Pendentes</div>
+                </div>
+                <div
+                    className={`stat-card ${currentQuickFilter === 'stalledProposals' ? 'active' : ''}`}
+                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'stalledProposals' ? null : 'stalledProposals')}
+                >
+                    <div className="stat-value urgent">{stats.stalledProposals}</div>
+                    <div className="stat-label">Propostas Paradas (+3d)</div>
+                </div>
+                <div className="stat-card">
+                    <div className="stat-value success">{leads.length}</div>
+                    <div className="stat-label">Total Base</div>
+                </div>
+            </section>
+
+            {/* Toolbar de Filtros e Agrupamento */}
+            <div className="filter-toolbar">
+                <div className="filter-chips">
+                    <div className="filter-label"><Funnel size={16} /> Filtros:</div>
+                    <select value={stageFilter || ''} onChange={e => setStageFilter(e.target.value || null)} className="chip-select">
+                        <option value="">Etapa do Funil</option>
+                        <option value="PENDENTE">Novo / Pendente</option>
+                        <option value="QUALIFICADO">Qualificado</option>
+                        <option value="DESQUALIFICADO">Desqualificado</option>
+                    </select>
+                    <select value={viabilityFilter || ''} onChange={e => setViabilityFilter(e.target.value || null)} className="chip-select">
+                        <option value="">Viabilidade</option>
+                        <option value="PENDENTE">Pendente</option>
+                        <option value="APROVADA">Aprovada</option>
+                        <option value="REPROVADA">Inviável</option>
+                    </select>
+                    {(stageFilter || viabilityFilter || searchTerm || currentQuickFilter) && (
+                        <button className="clear-chip" onClick={() => { setStageFilter(null); setViabilityFilter(null); setSearchTerm(''); setCurrentQuickFilter(null); }}>
+                            Limpar Tudo <XCircle size={14} />
+                        </button>
+                    )}
+                </div>
+
+                <div className="view-actions">
+                    <span className="filter-label">Agrupar por:</span>
+                    <div className="toggle-group">
+                        <button className={groupBy === 'none' ? 'active' : ''} onClick={() => setGroupBy('none')}>Nenhum</button>
+                        <button className={groupBy === 'stage' ? 'active' : ''} onClick={() => setGroupBy('stage')}>Etapa</button>
+                        <button className={groupBy === 'viability' ? 'active' : ''} onClick={() => setGroupBy('viability')}>Viabilidade</button>
+                    </div>
+                </div>
             </div>
 
-            <div className="leads-table-wrapper" style={{ background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', overflow: 'hidden' }}>
-                <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            {/* Tabela de Listagem */}
+            <div className="table-container">
+                <table className="leads-table">
                     <thead>
-                        <tr style={{ background: 'rgba(255,255,255,0.02)', borderBottom: '1px solid var(--border)' }}>
-                            <th style={{ padding: '16px' }}>Lead</th>
-                            <th style={{ padding: '16px' }}>Contato / Canal</th>
-                            <th style={{ padding: '16px' }}>Qualificação</th>
-                            <th style={{ padding: '16px' }}>Viabilidade</th>
-                            <th style={{ padding: '16px' }}>Ações</th>
+                        <tr>
+                            <th style={{ width: '40px' }}>
+                                <input type="checkbox" checked={selectedIds.length === processedLeads.length && processedLeads.length > 0} onChange={toggleSelectAll} />
+                            </th>
+                            <th onClick={() => handleSort('nomeCompleto')} className="sortable">
+                                Lead {sortConfig?.key === 'nomeCompleto' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
+                            </th>
+                            <th>Contato e Canal</th>
+                            <th onClick={() => handleSort('statusQualificacao')} className="sortable">Etapa {sortConfig?.key === 'statusQualificacao' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                            <th onClick={() => handleSort('statusQualificacao')} className="sortable">Qualificação</th>
+                            <th onClick={() => handleSort('statusViabilidade')} className="sortable">Viabilidade</th>
+                            <th onClick={() => handleSort('dataProximoContato')} className="sortable">Próxima Ação</th>
+                            <th style={{ textAlign: 'right' }}>Ações</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Carregando leads...</td></tr>
-                        ) : filteredLeads.length === 0 ? (
-                            <tr><td colSpan={5} style={{ padding: '40px', textAlign: 'center', color: '#666' }}>Nenhum lead encontrado.</td></tr>
-                        ) : filteredLeads.map(lead => (
-                            <tr key={lead.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row-hover">
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: lead.tipoCliente === 'EMPRESARIAL' ? '#3b82f633' : '#10b98133', color: lead.tipoCliente === 'EMPRESARIAL' ? '#3b82f6' : '#10b981', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            {lead.tipoCliente === 'EMPRESARIAL' ? <Buildings size={20} /> : <User size={20} />}
-                                        </div>
-                                        <div>
-                                            <div style={{ fontWeight: 600, display: 'flex', alignItems: 'center', gap: '8px' }}>
-                                                {lead.nomeCompleto}
-                                                {lead.isFrio && <span title="Lead Frio" style={{ background: '#3b82f622', color: '#3b82f6', fontSize: '10px', padding: '2px 6px', borderRadius: '4px' }}>FRIO</span>}
+                            <tr><td colSpan={8} className="td-loading">Sincronizando com TITÃ Cloud...</td></tr>
+                        ) : Object.entries(groupedLeads).map(([groupName, groupLeads]) => (
+                            <React.Fragment key={groupName}>
+                                {groupBy !== 'none' && (
+                                    <tr className="group-header-row">
+                                        <td colSpan={8}>
+                                            <div className="group-header">
+                                                <CaretDown size={14} /> {groupName} <span>({groupLeads.length})</span>
                                             </div>
-                                            <div style={{ fontSize: '0.8rem', color: '#666' }}>{lead.cpfCnpj || 'CPF não inf.'}</div>
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <div style={{ fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                            <Phone size={14} /> {lead.telefonePrincipal}
-                                        </div>
-                                        <div style={{ fontSize: '0.8rem', color: 'var(--primary-color)', fontWeight: 500 }}>
-                                            {lead.canalEntrada}
-                                        </div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <div style={{ fontSize: '0.85rem' }}>{lead.interessePlano || 'Plano não definido'}</div>
-                                        <div style={{ fontSize: '0.75rem', color: '#666' }}>Status: {lead.statusQualificacao}</div>
-                                    </div>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <span style={{
-                                        padding: '4px 10px', borderRadius: '20px', fontSize: '0.75rem', fontWeight: 600,
-                                        background: `${getStatusColor(lead.statusViabilidade)}22`,
-                                        color: getStatusColor(lead.statusViabilidade),
-                                        border: `1px solid ${getStatusColor(lead.statusViabilidade)}44`
-                                    }}>
-                                        {lead.statusViabilidade}
-                                    </span>
-                                </td>
-                                <td style={{ padding: '16px' }}>
-                                    <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button onClick={() => { setSelectedLead(lead); setFormData(lead); setShowModal(true); }} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }}><PencilSimple size={20} /></button>
-                                        <button onClick={() => handleDelete(lead.id)} style={{ background: 'transparent', border: 'none', color: '#ef444499', cursor: 'pointer' }}><Trash size={20} /></button>
-                                    </div>
-                                </td>
-                            </tr>
+                                        </td>
+                                    </tr>
+                                )}
+                                {groupLeads.map(lead => {
+                                    const viab = getStatusStyles(lead.statusViabilidade);
+                                    const qual = getStatusStyles(lead.statusQualificacao);
+                                    const daysInStage = getDaysInStage(lead.updatedAt);
+
+                                    return (
+                                        <tr key={lead.id} className={`lead-row ${selectedIds.includes(lead.id) ? 'selected' : ''}`}>
+                                            <td><input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelect(lead.id)} /></td>
+                                            <td onClick={() => { setSelectedLead(lead); setFormData(lead); setShowModal(true); }}>
+                                                <div className="lead-id-cell">
+                                                    <div className="lead-avatar">
+                                                        {lead.nomeCompleto.charAt(0)}
+                                                    </div>
+                                                    <div className="lead-info">
+                                                        <div className="lead-name">
+                                                            {lead.nomeCompleto}
+                                                            <span className={`badge-p${lead.tipoPessoa}`}>{lead.tipoPessoa}</span>
+                                                        </div>
+                                                        <div className="lead-meta">Entrada: {new Date(lead.dataEntrada).toLocaleDateString()}</div>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="contact-cell">
+                                                    <div className="contact-main">
+                                                        <PhoneCall size={14} /> {lead.telefonePrincipal}
+                                                        <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                                                            <WhatsappLogo size={18} weight="fill" color="#25D366" />
+                                                        </a>
+                                                    </div>
+                                                    <div className="contact-sub">
+                                                        {lead.canalEntrada} • {lead.campanha || 'Direto'}
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="stage-cell">
+                                                    <div className="stage-badge" style={{ background: 'var(--primary-color-dim)', color: 'var(--primary-color)' }}>
+                                                        Pendente
+                                                    </div>
+                                                    <div className={`stage-sla ${daysInStage > 3 ? 'over' : ''}`}>
+                                                        {daysInStage} dias nesta etapa
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="qual-cell">
+                                                    <span className="badge-status" style={{ background: qual.bg, color: qual.text }}>{qual.label}</span>
+                                                    <div className="decisor-flag">
+                                                        {lead.decisorIdentificado ? <CheckCircle color="#10b981" weight="fill" /> : <XCircle color="#ef4444" weight="fill" />}
+                                                        Decisor
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="viab-cell">
+                                                    <span className="badge-status" style={{ background: viab.bg, color: viab.text }}>{viab.label}</span>
+                                                    <div className="viab-meta">
+                                                        <MapPinLine size={14} /> {lead.bairro || 'S/B'}
+                                                        <a href={`https://maps.google.com?q=${lead.latitude},${lead.longitude}`} target="_blank" rel="noreferrer" className="map-link">
+                                                            <MapTrifold size={16} />
+                                                        </a>
+                                                    </div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="action-cell">
+                                                    {lead.dataProximoContato ? (
+                                                        <div className={`next-task ${new Date(lead.dataProximoContato) < new Date() ? 'overdue' : ''}`}>
+                                                            <CalendarBlank size={14} />
+                                                            {new Date(lead.dataProximoContato).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                        </div>
+                                                    ) : (
+                                                        <div className="no-task">Sem agendamento</div>
+                                                    )}
+                                                </div>
+                                            </td>
+                                            <td style={{ textAlign: 'right' }}>
+                                                <div className="actions-inline">
+                                                    <button title="Registrar Contato"><ChatCircleDots size={20} /></button>
+                                                    <button title="Agendar Tarefa"><CalendarPlus size={20} /></button>
+                                                    <button title="Mover Etapa"><ArrowSquareOut size={20} /></button>
+                                                    <button onClick={() => handleDelete(lead.id)} title="Arquivar"><Archive size={20} /></button>
+                                                </div>
+                                            </td>
+                                        </tr>
+                                    );
+                                })}
+                            </React.Fragment>
                         ))}
                     </tbody>
                 </table>
+                {renderEmptyState()}
             </div>
 
-            {/* Modal de Cadastro */}
+            {/* Modal - Reutilizando o formulário anterior porém com o layout do pedido */}
             <AnimatePresence>
                 {showModal && (
-                    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }}>
+                    <div className="modal-overlay">
                         <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            exit={{ opacity: 0, scale: 0.95 }}
-                            style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '16px', width: '100%', maxWidth: '1000px', maxHeight: '90vh', overflowY: 'auto' }}
+                            initial={{ opacity: 0, y: 30 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            exit={{ opacity: 0, y: 30 }}
+                            className="lead-modal"
                         >
-                            <form onSubmit={handleSubmit} style={{ padding: '2rem' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1.5rem' }}>
-                                    <h2 style={{ margin: 0 }}>{selectedLead ? 'Editar Lead' : 'Novo Lead / Qualificação'}</h2>
-                                    <button type="button" onClick={() => setShowModal(false)} style={{ background: 'transparent', border: 'none', color: '#666' }}><XCircle size={24} /></button>
-                                </div>
+                            <form onSubmit={handleSubmit} className="modal-content">
+                                <header className="modal-header">
+                                    <h2>{selectedLead ? 'Detalhes do Lead' : 'Qualificação de Novo Lead'}</h2>
+                                    <button type="button" onClick={() => setShowModal(false)} className="btn-close"><XCircle size={28} /></button>
+                                </header>
 
-                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '2rem' }}>
-                                    {/* 1. ENTIDADE LEAD (Dados Pessoais) */}
-                                    <div className="modal-section">
-                                        <h3><User size={18} weight="bold" /> Entidade Lead</h3>
-                                        <div className="form-grid">
-                                            <div className="form-group full">
-                                                <label>Nome Completo *</label>
-                                                <input required type="text" value={formData.nomeCompleto} onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} placeholder="Nome completo" />
+                                <div className="modal-sections-grid">
+                                    <div className="modal-section-col">
+                                        <div className="form-group">
+                                            <label>Nome Completo</label>
+                                            <input type="text" value={formData.nomeCompleto} onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} required />
+                                        </div>
+                                        <div className="form-row">
+                                            <div className="form-group">
+                                                <label>Telefone Principal</label>
+                                                <input type="text" value={formData.telefonePrincipal} onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} required />
                                             </div>
                                             <div className="form-group">
-                                                <label>Tipo de Pessoa</label>
-                                                <select value={formData.tipoPessoa} onChange={e => setFormData({ ...formData, tipoPessoa: e.target.value as any })}>
-                                                    <option value="PF">Pessoa Física</option>
-                                                    <option value="PJ">Pessoa Jurídica</option>
-                                                </select>
+                                                <label>WhatsApp</label>
+                                                <input type="text" value={formData.telefoneWhatsapp} onChange={e => setFormData({ ...formData, telefoneWhatsapp: e.target.value })} />
                                             </div>
-                                            <div className="form-group">
-                                                <label>CPF / CNPJ</label>
-                                                <input type="text" value={formData.cpfCnpj} onChange={e => setFormData({ ...formData, cpfCnpj: e.target.value })} placeholder="000.000.000-00" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>RG</label>
-                                                <input type="text" value={formData.rg} onChange={e => setFormData({ ...formData, rg: e.target.value })} placeholder="Registro Geral" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Data de Nascimento</label>
-                                                <input type="date" value={formData.dataNascimento ? formData.dataNascimento.split('T')[0] : ''} onChange={e => setFormData({ ...formData, dataNascimento: e.target.value })} />
-                                            </div>
-                                            <div className="form-group full">
-                                                <label>E-mail</label>
-                                                <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} placeholder="exemplo@email.com" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Telefone Principal *</label>
-                                                <input required type="text" value={formData.telefonePrincipal} onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} placeholder="(00) 00000-0000" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Telefone WhatsApp</label>
-                                                <input type="text" value={formData.telefoneWhatsapp} onChange={e => setFormData({ ...formData, telefoneWhatsapp: e.target.value })} placeholder="(00) 00000-0000" />
-                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>E-mail</label>
+                                            <input type="email" value={formData.email} onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                         </div>
                                     </div>
 
-                                    {/* 2. ENDEREÇO */}
-                                    <div className="modal-section">
-                                        <h3><MapPin size={18} weight="bold" /> Endereço</h3>
-                                        <div className="form-grid">
-                                            <div className="form-group">
-                                                <label>CEP</label>
-                                                <input type="text" value={formData.cep} onChange={e => setFormData({ ...formData, cep: e.target.value })} placeholder="00000-000" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>UF</label>
-                                                <input type="text" value={formData.uf} onChange={e => setFormData({ ...formData, uf: e.target.value })} placeholder="SP" maxLength={2} />
-                                            </div>
-                                            <div className="form-group full">
-                                                <label>Logradouro</label>
-                                                <input type="text" value={formData.logradouro} onChange={e => setFormData({ ...formData, logradouro: e.target.value })} placeholder="Rua, Av..." />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Número</label>
-                                                <input type="text" value={formData.numero} onChange={e => setFormData({ ...formData, numero: e.target.value })} placeholder="123" />
-                                            </div>
+                                    <div className="modal-section-col">
+                                        <div className="form-group">
+                                            <label>CEP</label>
+                                            <input type="text" value={formData.cep} onChange={e => setFormData({ ...formData, cep: e.target.value })} />
+                                        </div>
+                                        <div className="form-row">
                                             <div className="form-group">
                                                 <label>Bairro</label>
-                                                <input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} placeholder="Bairro" />
-                                            </div>
-                                            <div className="form-group full">
-                                                <label>Ponto de Referência</label>
-                                                <input type="text" value={formData.pontoReferencia} onChange={e => setFormData({ ...formData, pontoReferencia: e.target.value })} placeholder="Próximo a..." />
+                                                <input type="text" value={formData.bairro} onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
                                             </div>
                                             <div className="form-group">
-                                                <label>Latitude</label>
-                                                <input type="number" step="any" value={formData.latitude} onChange={e => setFormData({ ...formData, latitude: parseFloat(e.target.value) })} placeholder="-23.5505" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Longitude</label>
-                                                <input type="number" step="any" value={formData.longitude} onChange={e => setFormData({ ...formData, longitude: parseFloat(e.target.value) })} placeholder="-46.6333" />
+                                                <label>Cidade</label>
+                                                <input type="text" value={formData.cidade} onChange={e => setFormData({ ...formData, cidade: e.target.value })} />
                                             </div>
                                         </div>
-                                    </div>
-
-                                    {/* 3. ORIGEM E RASTREAMENTO */}
-                                    <div className="modal-section">
-                                        <h3><Clock size={18} weight="bold" /> Origem e Rastreamento</h3>
-                                        <div className="form-grid">
-                                            <div className="form-group">
-                                                <label>Canal de Entrada</label>
-                                                <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
-                                                    <option value="WhatsApp">WhatsApp</option>
-                                                    <option value="Ligação">Ligação</option>
-                                                    <option value="Web">Web Site</option>
-                                                    <option value="Indicação">Indicação</option>
-                                                    <option value="Visita">Visita Presencial</option>
-                                                </select>
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Indicador Responsável</label>
-                                                <input type="text" value={formData.indicador} onChange={e => setFormData({ ...formData, indicador: e.target.value })} placeholder="Nome/Cód" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>UTM Source</label>
-                                                <input type="text" value={formData.utmSource} onChange={e => setFormData({ ...formData, utmSource: e.target.value })} placeholder="google, facebook" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>UTM Campaign</label>
-                                                <input type="text" value={formData.utmCampaign} onChange={e => setFormData({ ...formData, utmCampaign: e.target.value })} placeholder="blackfriday_2024" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>IP de Entrada</label>
-                                                <input type="text" value={formData.ipEntrada} onChange={e => setFormData({ ...formData, ipEntrada: e.target.value })} placeholder="192.168.0.1" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Dispositivo</label>
-                                                <input type="text" value={formData.dispositivo} onChange={e => setFormData({ ...formData, dispositivo: e.target.value })} placeholder="Mobile/Desktop" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 4. CLASSIFICAÇÃO INICIAL */}
-                                    <div className="modal-section">
-                                        <h3><Suitcase size={18} weight="bold" /> Classificação Inicial</h3>
-                                        <div className="form-grid">
-                                            <div className="form-group">
-                                                <label>Tipo de Cliente</label>
-                                                <select value={formData.tipoCliente} onChange={e => setFormData({ ...formData, tipoCliente: e.target.value as any })}>
-                                                    <option value="RESIDENCIAL">Residencial</option>
-                                                    <option value="EMPRESARIAL">Empresarial</option>
-                                                </select>
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Perfil de Uso</label>
-                                                <select value={formData.perfilUso} onChange={e => setFormData({ ...formData, perfilUso: e.target.value })}>
-                                                    <option value="">Selecione...</option>
-                                                    <option value="Basico">Residencial Básico</option>
-                                                    <option value="Premium">Residencial Premium</option>
-                                                    <option value="Pequeno">Empresarial Pequeno</option>
-                                                    <option value="Medio">Empresarial Médio</option>
-                                                </select>
-                                            </div>
-                                            <div className="form-group full">
-                                                <label>Plano de Interesse</label>
-                                                <input type="text" value={formData.interessePlano} onChange={e => setFormData({ ...formData, interessePlano: e.target.value })} placeholder="Ex: Fibra 500 Mega" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Operadora Atual</label>
-                                                <input type="text" value={formData.operadoraAtual} onChange={e => setFormData({ ...formData, operadoraAtual: e.target.value })} placeholder="Vivo, Claro, etc" />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Valor Pago Atual (R$)</label>
-                                                <input type="number" step="0.01" value={formData.valorPagoAtual} onChange={e => setFormData({ ...formData, valorPagoAtual: parseFloat(e.target.value) })} placeholder="0,00" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    {/* 5. STATUS E CONTROLE */}
-                                    <div className="modal-section full">
-                                        <h3><CheckCircle size={18} weight="bold" /> Status e Controle</h3>
-                                        <div className="form-grid" style={{ gridTemplateColumns: 'repeat(4, 1fr)' }}>
-                                            <div className="form-group">
-                                                <label>Qualificação</label>
-                                                <select value={formData.statusQualificacao} onChange={e => setFormData({ ...formData, statusQualificacao: e.target.value as any })}>
-                                                    <option value="PENDENTE">Pendente</option>
-                                                    <option value="QUALIFICADO">Qualificado</option>
-                                                    <option value="DESQUALIFICADO">Desqualificado</option>
-                                                </select>
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Viabilidade</label>
-                                                <select value={formData.statusViabilidade} onChange={e => setFormData({ ...formData, statusViabilidade: e.target.value as any })}>
-                                                    <option value="PENDENTE">Pendente</option>
-                                                    <option value="APROVADA">Aprovada</option>
-                                                    <option value="REPROVADA">Reprovada</option>
-                                                </select>
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Próximo Contato</label>
-                                                <input type="datetime-local" value={formData.dataProximoContato ? formData.dataProximoContato.slice(0, 16) : ''} onChange={e => setFormData({ ...formData, dataProximoContato: e.target.value })} />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Vendedor Responsável</label>
-                                                <select value={formData.vendedorId} onChange={e => setFormData({ ...formData, vendedorId: e.target.value })}>
-                                                    <option value="">Selecione...</option>
-                                                    <option value="vend-1">Carlos Oliveira</option>
-                                                    <option value="vend-2">Mariana Souza</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                        <div style={{ marginTop: '1rem', display: 'flex', gap: '2rem' }}>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                <input type="checkbox" checked={formData.decisorIdentificado} onChange={e => setFormData({ ...formData, decisorIdentificado: e.target.checked })} />
-                                                <span style={{ fontSize: '0.9rem' }}>Decisor identificado?</span>
-                                            </label>
-                                            <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
-                                                <input type="checkbox" checked={formData.isFrio} onChange={e => setFormData({ ...formData, isFrio: e.target.checked })} />
-                                                <span style={{ fontSize: '0.9rem', color: formData.isFrio ? '#3b82f6' : 'inherit' }}>Marcar como Lead Frio</span>
-                                            </label>
-                                        </div>
-                                        <div className="form-group full" style={{ marginTop: '1rem' }}>
-                                            <label>Observações Adicionais</label>
-                                            <textarea rows={3} value={formData.observacoes} onChange={e => setFormData({ ...formData, observacoes: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '8px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
+                                        <div className="form-group">
+                                            <label>Logradouro / Próximo a...</label>
+                                            <input type="text" value={formData.logradouro} onChange={e => setFormData({ ...formData, logradouro: e.target.value })} />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div style={{ marginTop: '2rem', display: 'flex', gap: '1rem', justifyContent: 'flex-end' }}>
-                                    <button type="button" onClick={() => setShowModal(false)} style={{ padding: '12px 24px', background: 'transparent', border: '1px solid #444', color: '#ccc', borderRadius: '8px', cursor: 'pointer' }}>Cancelar</button>
-                                    <button type="submit" style={{ padding: '12px 32px', background: 'var(--primary-color)', border: 'none', color: '#fff', borderRadius: '8px', fontWeight: 600, cursor: 'pointer' }}>Salvar Lead</button>
-                                </div>
+                                <footer className="modal-footer">
+                                    <button type="button" onClick={() => setShowModal(false)} className="btn-cancel">Cancelar</button>
+                                    <button type="submit" className="btn-submit">Salvar Alterações</button>
+                                </footer>
                             </form>
                         </motion.div>
                     </div>
@@ -428,30 +494,150 @@ const LeadsManager: React.FC = () => {
             </AnimatePresence>
 
             <style>{`
-                .form-group { display: flex; flex-direction: column; gap: 6px; text-align: left; }
-                .form-group.full { grid-column: span 2; }
-                .modal-section.full { grid-column: span 2; }
-                .form-group label { font-size: 0.8rem; color: #aaa; font-weight: 500; }
-                .form-group input, .form-group select { 
-                    padding: 10px 12px; borderRadius: 8px; background: var(--bg-deep); 
-                    border: 1px solid #444; color: #fff; outline: none; transition: all 0.2s;
-                    font-size: 0.9rem;
-                }
-                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: rgba(255,255,255,0.03); }
-                .table-row-hover:hover { background: rgba(255,255,255,0.03); }
+                .listing-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
+                .main-title { font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
+                .results-counter { margin-top: 4px; color: #666; font-size: 0.9rem; }
+                .results-counter span { color: var(--primary-color); font-weight: 700; }
                 
-                .modal-section { 
-                    display: flex; flex-direction: column; gap: 1.25rem; 
-                    background: rgba(255,255,255,0.01); padding: 1.5rem; 
-                    border-radius: 12px; border: 1px solid rgba(255,255,255,0.05);
+                .header-actions { display: flex; gap: 1rem; align-items: center; }
+                .search-box { position: relative; width: 350px; }
+                .search-icon { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #555; }
+                .search-box input { 
+                    width: 100%; padding: 12px 12px 12px 48px; border-radius: 12px; 
+                    background: var(--bg-surface); border: 1px solid var(--border); 
+                    color: #fff; font-size: 0.95rem; transition: all 0.2s;
                 }
-                .modal-section h3 { 
-                    margin: 0; font-size: 0.95rem; color: var(--primary-color); 
-                    display: flex; alignItems: center; gap: 10px; text-transform: uppercase; 
-                    letter-spacing: 0.05em; border-bottom: 1px solid rgba(255,255,255,0.05);
-                    padding-bottom: 0.75rem;
+                .search-box input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+                
+                .btn-new-lead { 
+                    background: var(--primary-color); color: #fff; border: none; padding: 12px 24px;
+                    border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px;
+                    cursor: pointer; transition: transform 0.2s, background 0.2s;
                 }
-                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .btn-new-lead:hover { background: #2563eb; transform: translateY(-2px); }
+
+                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+                .stat-card { 
+                    background: var(--bg-surface); border: 1px solid var(--border); padding: 1.5rem;
+                    border-radius: 16px; cursor: pointer; transition: all 0.2s;
+                }
+                .stat-card:hover { border-color: #444; background: rgba(255,255,255,0.02); }
+                .stat-card.active { border-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
+                .stat-value { font-size: 2.2rem; font-weight: 900; line-height: 1; margin-bottom: 8px; }
+                .stat-label { font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+                
+                .stat-value.warning { color: #f59e0b; }
+                .stat-value.purple { color: #8b5cf6; }
+                .stat-value.urgent { color: #ef4444; }
+                .stat-value.success { color: #10b981; }
+
+                .table-container { 
+                    background: var(--bg-surface); border: 1px solid var(--border); 
+                    border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                }
+                .leads-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                .leads-table th { 
+                    padding: 1.25rem 1.5rem; text-align: left; color: #555; font-size: 0.75rem;
+                    text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;
+                    border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1);
+                }
+                
+                .lead-row { border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer; }
+                .lead-row:hover { background: rgba(255,255,255,0.02); }
+                .lead-row td { padding: 1.25rem 1.5rem; vertical-align: middle; }
+                
+                .lead-id-cell { display: flex; align-items: center; gap: 14px; }
+                .lead-avatar { 
+                    width: 44px; height: 44px; border-radius: 12px; background: #3b82f622; color: #3b82f6;
+                    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;
+                }
+                .lead-name { font-weight: 700; color: #eee; display: flex; align-items: center; gap: 8px; }
+                .lead-meta { font-size: 0.75rem; color: #666; margin-top: 4px; }
+                
+                .badge-pPF { font-size: 9px; padding: 2px 6px; background: #10b98122; color: #10b981; border-radius: 4px; }
+                .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }
+
+                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #ccc; }
+                .contact-cell .contact-sub { font-size: 0.75rem; color: #555; margin-top: 4px; }
+                
+                .stage-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+                .stage-sla { font-size: 0.7rem; color: #666; margin-top: 6px; }
+                .stage-sla.over { color: #ef4444; font-weight: 600; }
+
+                .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+                .decisor-flag { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #666; margin-top: 6px; }
+                
+                .viab-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #666; margin-top: 6px; }
+                .map-link { color: var(--primary-color); display: flex; align-items: center; border-radius: 4px; padding: 2px; }
+                .map-link:hover { background: rgba(59, 130, 246, 0.1); }
+
+                .next-task { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #aaa; }
+                .next-task.overdue { color: #ef4444; }
+                .no-task { font-size: 0.75rem; color: #444; font-style: italic; }
+
+                .actions-inline { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
+                .lead-row:hover .actions-inline { opacity: 1; }
+                .actions-inline button { 
+                    background: transparent; border: none; color: #555; padding: 6px; cursor: pointer; border-radius: 6px;
+                }
+                .actions-inline button:hover { background: rgba(255,255,255,0.05); color: #fff; }
+
+                .empty-state { padding: 100px 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: #555; }
+                .empty-state h2 { color: #888; margin: 0; }
+                .empty-state p { max-width: 400px; margin: 0; line-height: 1.6; }
+                
+                .lead-modal { background: var(--bg-surface); width: 100%; maxWidth: 900px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 50px 100px rgba(0,0,0,0.5); }
+                .modal-content { padding: 2.5rem; }
+                .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
+                .modal-header h2 { margin: 0; font-size: 1.5rem; color: #fff; }
+                .btn-close { background: transparent; border: none; color: #666; cursor: pointer; }
+                .btn-close:hover { color: #fff; }
+
+                .modal-sections-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
+                .modal-section-col { display: flex; flex-direction: column; gap: 1.5rem; }
+                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .filter-toolbar { 
+                    display: flex; justify-content: space-between; align-items: center; 
+                    margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.75rem 1.5rem;
+                    border-radius: 12px; border: 1px solid var(--border);
+                }
+                .filter-chips { display: flex; align-items: center; gap: 12px; }
+                .filter-label { font-size: 0.75rem; color: #555; font-weight: 700; display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
+                
+                .chip-select { 
+                    background: var(--bg-surface); border: 1px solid var(--border); color: #aaa;
+                    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; outline: none;
+                    cursor: pointer; transition: all 0.2s;
+                }
+                .chip-select:hover { border-color: #555; color: #fff; }
+                
+                .clear-chip { 
+                    background: transparent; border: 1px solid #ef444444; color: #ef4444; 
+                    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
+                    display: flex; align-items: center; gap: 6px; transition: all 0.2s;
+                }
+                .clear-chip:hover { background: #ef444411; }
+
+                .view-actions { display: flex; align-items: center; gap: 12px; }
+                .toggle-group { display: flex; background: var(--bg-deep); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
+                .toggle-group button { 
+                    background: transparent; border: none; color: #666; padding: 6px 12px; 
+                    font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px;
+                    transition: all 0.2s;
+                }
+                .toggle-group button.active { background: var(--primary-color); color: #fff; }
+
+                .group-header-row { background: rgba(0,0,0,0.15) !important; }
+                .group-header { 
+                    display: flex; align-items: center; gap: 10px; font-size: 0.8rem; 
+                    font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.05em;
+                }
+                .group-header span { color: var(--primary-color); }
+
+                .sortable { cursor: pointer; transition: color 0.1s; position: relative; }
+                .sortable:hover { color: #fff !important; }
+                
+                .lead-row.selected { background: rgba(59, 130, 246, 0.03) !important; }
             `}</style>
         </div>
     );
