@@ -98,7 +98,12 @@ const LeadsManager: React.FC = () => {
         return {
             noContact48h: leads.filter(l => new Date(l.dataUltimaInteracao) < fortyEightHoursAgo).length,
             pendingViability: leads.filter(l => l.statusViabilidade === 'PENDENTE').length,
-            stalledProposals: leads.filter(l => l.statusQualificacao === 'QUALIFICADO' && new Date(l.updatedAt) < threeDaysAgo).length,
+            slaOverdue: leads.filter(l => {
+                // Simplificado: se está em 'Novo Lead' há mais de 24h
+                const limit = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+                return new Date(l.updatedAt) < limit;
+            }).length,
+            waitingContract: leads.filter(l => l.statusQualificacao === 'QUALIFICADO' && !l.dataAceite).length,
         };
     }, [leads]);
 
@@ -166,6 +171,11 @@ const LeadsManager: React.FC = () => {
         setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
     };
 
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        alert(`${label} copiado: ${text}`);
+    };
+
     const getDaysInStage = (updatedAt: string) => {
         const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24));
         return days;
@@ -181,7 +191,15 @@ const LeadsManager: React.FC = () => {
     };
 
     const renderEmptyState = () => {
-        if (leads.length === 0 && !loading) {
+        if (loading) {
+            return (
+                <div className="loading-state">
+                    <div className="spinner-premium"></div>
+                    <p>Sincronizando Leads Titã...</p>
+                </div>
+            );
+        }
+        if (leads.length === 0) {
             return (
                 <div className="empty-state">
                     <UserPlus size={64} weight="duotone" />
@@ -191,17 +209,14 @@ const LeadsManager: React.FC = () => {
                 </div>
             );
         }
-        if (processedLeads.length === 0) {
-            return (
-                <div className="empty-state">
-                    <MagnifyingGlass size={64} weight="duotone" />
-                    <h2>Nada encontrado</h2>
-                    <p>Não encontramos resultados para "{searchTerm || currentQuickFilter}".</p>
-                    <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); }} className="btn-secondary">Limpar filtros</button>
-                </div>
-            );
-        }
-        return null;
+        return (
+            <div className="empty-state">
+                <MagnifyingGlass size={64} weight="duotone" />
+                <h2>Nada encontrado</h2>
+                <p>Não encontramos resultados para "{searchTerm || currentQuickFilter}".</p>
+                <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); }} className="btn-secondary">Limpar filtros</button>
+            </div>
+        );
     };
 
     return (
@@ -347,7 +362,7 @@ const LeadsManager: React.FC = () => {
                                                         {lead.nomeCompleto.charAt(0)}
                                                     </div>
                                                     <div className="lead-info">
-                                                        <div className="lead-name">
+                                                        <div className="lead-name" onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.nomeCompleto, 'Nome'); }} title="Clique para copiar">
                                                             {lead.nomeCompleto}
                                                             <span className={`badge-p${lead.tipoPessoa}`}>{lead.tipoPessoa}</span>
                                                         </div>
@@ -357,9 +372,9 @@ const LeadsManager: React.FC = () => {
                                             </td>
                                             <td>
                                                 <div className="contact-cell">
-                                                    <div className="contact-main">
+                                                    <div className="contact-main" onClick={() => copyToClipboard(lead.telefonePrincipal, 'Telefone')} title="Clique para copiar">
                                                         <PhoneCall size={14} /> {lead.telefonePrincipal}
-                                                        <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer">
+                                                        <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
                                                             <WhatsappLogo size={18} weight="fill" color="#25D366" />
                                                         </a>
                                                     </div>
@@ -438,6 +453,90 @@ const LeadsManager: React.FC = () => {
                 )}
             </AnimatePresence>
 
+            {/* Bulk Actions Bar */}
+            <AnimatePresence>
+                {selectedIds.length > 0 && (
+                    <motion.div
+                        initial={{ y: 100 }}
+                        animate={{ y: 0 }}
+                        exit={{ y: 100 }}
+                        className="bulk-action-bar"
+                    >
+                        <div className="bulk-info">
+                            <span className="count">{selectedIds.length}</span>
+                            <span>leads selecionados</span>
+                        </div>
+                        <div className="bulk-actions">
+                            <button className="btn-bulk"><User size={18} /> Mudar Vendedor</button>
+                            <button className="btn-bulk"><TrendUp size={18} /> Mover Estágio</button>
+                            <button className="btn-bulk warning"><Warning size={18} /> Marcar como Frio</button>
+                            <button className="btn-bulk error" onClick={() => {
+                                if (window.confirm(`Deseja excluir ${selectedIds.length} leads permanentemente?`)) {
+                                    Promise.all(selectedIds.map(id => deleteLead(id))).then(() => {
+                                        setSelectedIds([]);
+                                        loadLeads();
+                                    });
+                                }
+                            }}><Trash size={18} /> Excluir em Lote</button>
+                        </div>
+                        <button className="btn-cancel-bulk" onClick={() => setSelectedIds([])}>Cancelar</button>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Novo Lead Modal */}
+            <AnimatePresence>
+                {showModal && (
+                    <div className="modal-overlay">
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9 }}
+                            animate={{ opacity: 1, scale: 1 }}
+                            className="lead-modal"
+                        >
+                            <header className="modal-header">
+                                <h2><UserPlus size={24} weight="duotone" /> Novo Lead Comercial</h2>
+                                <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={32} /></button>
+                            </header>
+                            <form onSubmit={handleSubmit} className="modal-content">
+                                <section className="modal-section">
+                                    <h3>Informações Básicas</h3>
+                                    <div className="form-grid">
+                                        <div className="form-group">
+                                            <label>Nome Completo</label>
+                                            <input required type="text" placeholder="Ex: João da Silva"
+                                                onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Telefone Principal</label>
+                                            <input required type="text" placeholder="(00) 00000-0000"
+                                                onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>E-mail</label>
+                                            <input type="email" placeholder="cliente@email.com"
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Origem / Canal</label>
+                                            <select onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
+                                                <option value="WhatsApp">WhatsApp</option>
+                                                <option value="Instagram">Instagram</option>
+                                                <option value="Indicação">Indicação</option>
+                                                <option value="Site/Formulário">Site/Formulário</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </section>
+                                <footer className="modal-footer">
+                                    <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                                    <button type="submit" className="btn-primary">Registrar Lead no Sistema</button>
+                                </footer>
+                            </form>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
+
             <style>{`
                 .listing-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
                 .main-title { font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
@@ -497,14 +596,15 @@ const LeadsManager: React.FC = () => {
                     width: 44px; height: 44px; border-radius: 12px; background: #3b82f622; color: #3b82f6;
                     display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;
                 }
-                .lead-name { font-weight: 700; color: #eee; display: flex; align-items: center; gap: 8px; }
+                .lead-name:hover { color: var(--primary-color); text-decoration: underline; }
                 .lead-meta { font-size: 0.75rem; color: #666; margin-top: 4px; }
                 
                 .badge-pPF { font-size: 9px; padding: 2px 6px; background: #10b98122; color: #10b981; border-radius: 4px; }
                 .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }
 
-                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #ccc; }
-                .contact-cell .contact-sub { font-size: 0.75rem; color: #555; margin-top: 4px; }
+                .contact-cell { min-width: 220px; }
+                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #ccc; cursor: pointer; white-space: nowrap; }
+                .contact-cell .contact-main:hover { color: var(--primary-color); }
                 
                 .stage-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
                 .stage-sla { font-size: 0.7rem; color: #666; margin-top: 6px; }
@@ -584,6 +684,47 @@ const LeadsManager: React.FC = () => {
                 .sortable:hover { color: #fff !important; }
                 
                 .lead-row.selected { background: rgba(59, 130, 246, 0.03) !important; }
+
+                /* Loading Premium */
+                .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 0; gap: 1rem; color: #666; }
+                .spinner-premium { 
+                    width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.1); border-top-color: var(--primary-color);
+                    border-radius: 50%; animation: spin 0.8s linear infinite;
+                }
+                @keyframes spin { to { transform: rotate(360deg); } }
+
+                /* Bulk Action Bar */
+                .bulk-action-bar { 
+                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
+                    background: #111; border: 1px solid var(--primary-color); padding: 12px 24px;
+                    border-radius: 999px; display: flex; align-items: center; gap: 2rem;
+                    box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 100;
+                }
+                .bulk-info { display: flex; align-items: center; gap: 8px; color: #888; font-size: 0.9rem; }
+                .bulk-info .count { background: var(--primary-color); color: #fff; padding: 2px 10px; border-radius: 999px; font-weight: 800; }
+                .bulk-actions { display: flex; gap: 12px; }
+                .btn-bulk { 
+                    background: transparent; border: none; color: #eee; font-size: 13px; font-weight: 600;
+                    display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border-radius: 8px;
+                    transition: all 0.2s;
+                }
+                .btn-bulk:hover { background: rgba(255,255,255,0.05); }
+                .btn-bulk.error { color: #ef4444; }
+                .btn-bulk.error:hover { background: #ef444411; }
+                .btn-cancel-bulk { background: transparent; border: 1px solid #333; color: #555; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; }
+
+                /* Modal Adjustments */
+                .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
+                .lead-modal { background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: 24px; border: 1px solid var(--border); overflow: hidden; }
+                .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
+                .modal-section { padding: 2rem; }
+                .modal-section h3 { font-size: 0.9rem; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; letter-spacing: 0.05em; }
+                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+                .form-group label { display: block; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
+                .form-group input, .form-group select { width: 100%; background: var(--bg-deep); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; outline: none; transition: border-color 0.2s; }
+                .form-group input:focus { border-color: var(--primary-color); }
+                .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); }
+                .btn-secondary { background: transparent; border: 1px solid var(--border); color: #888; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; }
             `}</style>
         </div>
     );

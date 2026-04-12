@@ -150,14 +150,20 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
+      // Atalho Ctrl + . para Sidebar
       if (e.ctrlKey && e.key === '.') {
         e.preventDefault();
         toggleSidebar();
       }
+      // Atalho Ctrl + Space para Tema
+      if (e.ctrlKey && e.code === 'Space') {
+        e.preventDefault();
+        toggleTheme();
+      }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRetracted]);
+  }, [isRetracted, theme]);
 
   return (
     <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
