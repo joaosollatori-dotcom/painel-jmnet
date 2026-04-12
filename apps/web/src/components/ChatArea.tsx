@@ -7,11 +7,12 @@ import {
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
-    IdentificationCard, Wrench, WifiHigh, Clock
+    IdentificationCard, Wrench, WifiHigh, Clock, TrendUp
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations } from '../services/chatService';
+import { createLead } from '../services/leadService';
 import type { Message, Conversation } from '../services/chatService';
 import CameraCaptureModal from './CameraCaptureModal';
 import './ChatArea.css';
@@ -291,6 +292,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         }
     };
 
+    const handleConvertToLead = async () => {
+        if (!conversation) return;
+        try {
+            await createLead({
+                nomeCompleto: conversation.contact_name,
+                telefonePrincipal: conversation.contact_phone || '',
+                canalEntrada: 'WhatsApp',
+                statusViabilidade: 'PENDENTE',
+                tipoCliente: 'RESIDENCIAL',
+                dataEntrada: new Date().toISOString()
+            });
+            await sendMessage(chatId, {
+                sender: 'Sistema',
+                text: `🚀 Cliente qualificado como novo LEAD no funil de vendas.\nConsulte o módulo "Leads e Vendas" para seguir com a negociação.`,
+                is_user: false,
+                is_bot: false
+            });
+            setIsHeaderMenuOpen(false);
+            alert("Lead criado com sucesso!");
+        } catch (err) {
+            console.error('Error converting to lead:', err);
+            alert("Erro ao criar lead. Verifique a tabela no banco.");
+        }
+    };
+
     const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     const toggleAccordion = (id: string) => setOpenAccordion(openAccordion === id ? null : id);
@@ -372,6 +398,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                         </button>
                                         <button className="menu-item" onClick={() => { setShowParticipantsModal(true); setIsHeaderMenuOpen(false); }}>
                                             <Users size={18} /> Participantes
+                                        </button>
+                                        <button className="menu-item highlight" onClick={handleConvertToLead}>
+                                            <TrendUp size={18} /> Qualificar como Lead
                                         </button>
                                         <div className="menu-divider" />
                                         <button className="menu-item" onClick={() => { setShowOSModal(true); setIsHeaderMenuOpen(false); }}>

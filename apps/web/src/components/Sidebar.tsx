@@ -17,7 +17,8 @@ import {
     Globe,
     MapTrifold,
     Headset,
-    ShoppingCart
+    ShoppingCart,
+    TrendUp
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
@@ -55,11 +56,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
             label: 'GESTÃO',
             items: [
-                { id: 'crm', icon: Users, label: 'Clientes' },
+                { id: 'crm', icon: TrendUp, label: 'Leads e Vendas' },
                 { id: 'financeiro', icon: CurrencyDollar, label: 'Financeiro' },
                 { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
                 { id: 'estoque', icon: Package, label: 'Estoque' },
-                { id: 'vendas', icon: ShoppingCart, label: 'Vendas' },
             ]
         },
         {

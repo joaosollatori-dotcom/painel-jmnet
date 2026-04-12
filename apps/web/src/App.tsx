@@ -7,6 +7,7 @@ import InternalChat from './components/InternalChat';
 import OSManager from './components/OSManager';
 import FinanceManager from './components/FinanceManager';
 import NetworkManager from './components/NetworkManager';
+import LeadsManager from './components/LeadsManager';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import './App.css';
@@ -173,7 +174,7 @@ const App: React.FC = () => {
         ) : activeTab === 'agents' ? (
           <AgentsPage />
         ) : activeTab === 'crm' ? (
-          <CRMPage />
+          <LeadsManager />
         ) : activeTab === 'financeiro' ? (
           <FinanceManager />
         ) : activeTab === 'os' ? (

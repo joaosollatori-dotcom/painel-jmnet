@@ -27,6 +27,7 @@ model User {
   updatedAt     DateTime @updatedAt
 
   assignedOS    OrdemServico[] @relation("TecnicoOS")
+  leads         Lead[]         @relation("VendedorLeads")
 }
 
 model Assinante {
@@ -156,4 +157,42 @@ model AssinanteSVA {
   assinante   Assinante @relation(fields: [assinanteId], references: [id])
   svaName     String    // Ex: Paramount+, Noggin, etc
   status      String    @default("ATIVO")
+}
+
+model Lead {
+  id                String   @id @default(uuid())
+  nomeCompleto      String
+  cpfCnpj           String?
+  telefonePrincipal String
+  telefoneSecundario String?
+  
+  // Endereço
+  cep               String?
+  logradouro        String?
+  numero            String?
+  bairro            String?
+  cidade            String?
+  uf                String?
+  pontoReferencia   String?
+  
+  // Comercial / Entrada
+  canalEntrada      String   // WhatsApp, ligação, indicação, campanha, visita
+  campanha          String?  // Origem marketing
+  vendedorId        String?
+  vendedor          User?    @relation("VendedorLeads", fields: [vendedorId], references: [id])
+  statusViabilidade String   @default("PENDENTE") // PENDENTE, APROVADA, REPROVADA
+  observacoes       String?
+  
+  // Qualificação
+  tipoCliente       String   @default("RESIDENCIAL") // RESIDENCIAL, EMPRESARIAL
+  interessePlano    String?
+  perfilComercial   String?  // Renda ou porte da empresa
+  decisorIdentificado Boolean @default(false)
+  melhorHorario     String?
+  tentativasContato Int      @default(0)
+  
+  // Metricas
+  dataEntrada      DateTime @default(now())
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
 }
