@@ -132,7 +132,19 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                 <button className="shortcut call" title="Ligar Agora"><Phone size={24} weight="fill" /></button>
                 <button className="shortcut wa" title="Abrir WhatsApp"><WhatsappLogo size={24} weight="fill" /></button>
                 <button className="shortcut plan" title="Agendar Tarefa"><Calendar size={24} weight="fill" /></button>
-                <button className="shortcut move" title="Avançar Etapa"><TrendUp size={24} weight="fill" /></button>
+                <button
+                    className={`shortcut move ${lead.statusQualificacao === 'QUALIFICADO' && lead.statusViabilidade === 'APROVADA' ? '' : 'locked'}`}
+                    title="Avançar Etapa"
+                    onClick={() => {
+                        if (lead.statusQualificacao !== 'QUALIFICADO' || lead.statusViabilidade !== 'APROVADA') {
+                            alert('Atenção: O lead deve estar Qualificado e com Viabilidade Aprovada para avançar para Proposta.');
+                        } else {
+                            // Lógica de avanço
+                        }
+                    }}
+                >
+                    <TrendUp size={24} weight="fill" />
+                </button>
             </div>
         </aside>
     );
@@ -272,33 +284,173 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         {activeTab === 'dados' && renderRegistrationTab()}
                         {activeTab === 'timeline' && renderTimelineTab()}
                         {activeTab === 'qualificacao' && (
-                            <div className="placeholder-pane">
-                                <Smiley size={48} weight="duotone" />
-                                <h3>Qualificação do Lead</h3>
-                                <p>Score atualizado: <strong>{lead.scoreQualificacao || 0} pts</strong></p>
-                                <div className="qual-tags">
-                                    <span className="tag">{lead.usoPrincipal || 'Uso não informado'}</span>
-                                    <span className="tag">{lead.numDispositivos || 0} dispositivos</span>
-                                    <span className="tag">{lead.temMEI ? 'Possui MEI' : 'Residencial'}</span>
+                            <div className="tab-pane-qualificacao">
+                                <div className="qual-header">
+                                    <div className="score-widget">
+                                        <div className="score-circle">
+                                            <svg viewBox="0 0 36 36">
+                                                <path className="circle-bg" d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                                <path className="circle" strokeDasharray={`${lead.scoreQualificacao}, 100`} d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" />
+                                            </svg>
+                                            <div className="score-text">
+                                                <strong>{lead.scoreQualificacao || 0}</strong>
+                                                <span>pts</span>
+                                            </div>
+                                        </div>
+                                        <div className="score-label">
+                                            <h3>Score de Conversão</h3>
+                                            <p>{lead.scoreQualificacao && lead.scoreQualificacao > 70 ? 'Alta Probabilidade' : 'Qualificação em Andamento'}</p>
+                                        </div>
+                                    </div>
+                                    <div className="qual-decision">
+                                        <label>Decisão Comercial</label>
+                                        <div className="decision-buttons">
+                                            <button className={lead.statusQualificacao === 'QUALIFICADO' ? 'active green' : ''}>Qualificado</button>
+                                            <button className={lead.statusQualificacao === 'DESQUALIFICADO' ? 'active red' : ''}>Desqualificado</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="qual-layers">
+                                    <section className="qual-layer bant">
+                                        <div className="layer-title">
+                                            <span className="layer-number">01</span>
+                                            <h4>Camada BANT (Fundamentos)</h4>
+                                        </div>
+                                        <div className="bant-grid">
+                                            <div className="bant-item" onClick={() => setIsEditing('valorPagoAtual')}>
+                                                <div className="bant-icon"><Briefcase /></div>
+                                                <div className="bant-info">
+                                                    <label>Budget (Paga atual)</label>
+                                                    <strong>{lead.valorPagoAtual ? `R$ ${Number(lead.valorPagoAtual).toFixed(2)}` : 'Não informado'}</strong>
+                                                </div>
+                                            </div>
+                                            <div className="bant-item">
+                                                <div className="bant-icon"><User /></div>
+                                                <div className="bant-info">
+                                                    <label>Authority (Decisor?)</label>
+                                                    <strong>{lead.decisorIdentificado ? 'Sim, Titular' : 'Não, Familiar/Terceiro'}</strong>
+                                                </div>
+                                            </div>
+                                            <div className="bant-item">
+                                                <div className="bant-icon"><DeviceMobile /></div>
+                                                <div className="bant-info">
+                                                    <label>Need (Uso/Velocidade)</label>
+                                                    <strong>{lead.interessePlano || 'Standard Fiber'}</strong>
+                                                </div>
+                                            </div>
+                                            <div className="bant-item">
+                                                <div className="bant-icon"><Clock /></div>
+                                                <div className="bant-info">
+                                                    <label>Timeline (Prazo)</label>
+                                                    <strong>{lead.dataProximoContato ? new Date(lead.dataProximoContato).toLocaleDateString() : 'Imediato'}</strong>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+
+                                    <section className="qual-layer business">
+                                        <div className="layer-title">
+                                            <span className="layer-number">02</span>
+                                            <h4>Perfil de Uso e Negócio</h4>
+                                        </div>
+                                        <div className="business-questions">
+                                            <div className="q-item">
+                                                <span>Uso principal da internet:</span>
+                                                <div className="q-tags">
+                                                    <button className={lead.usoPrincipal === 'Trabalho' ? 'active' : ''}>Trabalho</button>
+                                                    <button className={lead.usoPrincipal === 'Jogos' ? 'active' : ''}>Jogos</button>
+                                                    <button className={lead.usoPrincipal === 'Streaming' ? 'active' : ''}>Streaming</button>
+                                                </div>
+                                            </div>
+                                            <div className="q-item">
+                                                <span>Quantidade de dispositivos ativos:</span>
+                                                <div className="q-value"><strong>{lead.numDispositivos || 0}</strong> dispositivos</div>
+                                            </div>
+                                        </div>
+                                    </section>
                                 </div>
                             </div>
                         )}
                         {activeTab === 'viabilidade' && (
-                            <div className="placeholder-pane">
-                                <HardDrives size={48} weight="duotone" />
-                                <h3>Viabilidade Técnica</h3>
-                                <div className="viab-details">
-                                    <div className="viab-item">
-                                        <label>Distância da CTO</label>
-                                        <span>{lead.distanciaDistribuidor || 0} metros</span>
+                            <div className="tab-pane-viabilidade">
+                                <div className="viab-grid">
+                                    <div className="viab-form">
+                                        <section className="viab-section">
+                                            <div className="section-header">
+                                                <HardDrives size={20} weight="duotone" />
+                                                <h4>Infraestrutura de Rede</h4>
+                                            </div>
+                                            <div className="infra-grid">
+                                                <div className="infra-item">
+                                                    <label>Caixa (CTO) mais próxima</label>
+                                                    <div className="infra-value">
+                                                        <strong>{lead.ctoProxima || 'CTO-CENTRO-042'}</strong>
+                                                        <span className="badge-distance">{lead.distanciaDistribuidor || 45}m</span>
+                                                    </div>
+                                                </div>
+                                                <div className="infra-item">
+                                                    <label>Portas Disponíveis</label>
+                                                    <div className="infra-progress">
+                                                        <div className="bar"><div className="fill" style={{ width: '25%' }}></div></div>
+                                                        <span>2 de 8 livres</span>
+                                                    </div>
+                                                </div>
+                                                <div className="infra-item">
+                                                    <label>Tipo de Tecnologia</label>
+                                                    <select className="input-viab">
+                                                        <option>FTTH - Fibra Direta</option>
+                                                        <option>FTTB - Building</option>
+                                                        <option>Rádio / Wireless</option>
+                                                    </select>
+                                                </div>
+                                            </div>
+                                        </section>
+
+                                        <section className="viab-section">
+                                            <div className="section-header">
+                                                <FileText size={20} weight="duotone" />
+                                                <h4>Resultado e Custos</h4>
+                                            </div>
+                                            <div className="results-list">
+                                                <div className="result-option active">
+                                                    <div className="opt-check"><CheckCircle size={20} weight="fill" /></div>
+                                                    <div className="opt-text">
+                                                        <strong>Viável - Instalação Padrão</strong>
+                                                        <span>Sem custo adicional de extensão de drop</span>
+                                                    </div>
+                                                    <div className="opt-price">R$ 0,00</div>
+                                                </div>
+                                                <div className="result-option">
+                                                    <div className="opt-check"><Warning size={20} /></div>
+                                                    <div className="opt-text">
+                                                        <strong>Viável - Instalação Especial</strong>
+                                                        <span>Necessita mais que 300m de fibra</span>
+                                                    </div>
+                                                    <div className="opt-price">Sob Consult.</div>
+                                                </div>
+                                                <div className="result-option disabled">
+                                                    <div className="opt-check"><X size={20} /></div>
+                                                    <div className="opt-text">
+                                                        <strong>Inviável Definitivo</strong>
+                                                        <span>Fora da poligonal de cobertura atual</span>
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </section>
                                     </div>
-                                    <div className="viab-item">
-                                        <label>Caixa (CTO)</label>
-                                        <span>{lead.ctoProxima || 'Pendente de verificação'}</span>
-                                    </div>
-                                    <div className="viab-item">
-                                        <label>Status</label>
-                                        <span className={`badge-status ${lead.statusViabilidade.toLowerCase()}`}>{lead.statusViabilidade}</span>
+                                    <div className="viab-map">
+                                        <div className="map-card">
+                                            <MapContainer center={[lead.latitude || -23.5505, lead.longitude || -46.6333]} zoom={17} style={{ height: '350px', width: '100%', borderRadius: '16px' }}>
+                                                <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                                                <Marker position={[lead.latitude || -23.5505, lead.longitude || -46.6333]}>
+                                                    <Popup>Endereço de Instalação</Popup>
+                                                </Marker>
+                                            </MapContainer>
+                                            <div className="map-overlay-info">
+                                                <MapTrifold size={16} /> <span>Latitude: {lead.latitude || '...'} | Longitude: {lead.longitude || '...'}</span>
+                                            </div>
+                                        </div>
                                     </div>
                                 </div>
                             </div>
@@ -428,22 +580,79 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                 .shortcut.call { background: #3b82f6; color: #fff; }
                 .shortcut.wa { background: #25D366; color: #fff; }
                 .shortcut.plan { background: #8b5cf6; color: #fff; }
-                .shortcut.move { background: #f59e0b; color: #fff; }
-                .shortcut:hover { transform: translateY(-4px); filter: brightness(1.2); }
+                .shortcut.move.locked { background: #333; color: #555; cursor: not-allowed; filter: grayscale(1); }
+                .shortcut:hover:not(.locked) { transform: translateY(-4px); filter: brightness(1.2); }
 
-                .placeholder-pane { display: flex; flex-direction: column; align-items: center; justify-content: center; height: 100%; min-height: 400px; color: #444; text-align: center; }
-                .placeholder-pane h3 { color: #888; margin: 1.5rem 0 0.5rem 0; font-size: 1.4rem; }
-                .placeholder-pane p { color: #555; font-size: 1rem; }
-                .qual-tags { display: flex; gap: 10px; margin-top: 20px; }
-                .tag { background: rgba(255,255,255,0.05); padding: 6px 16px; border-radius: 20px; font-size: 12px; color: #888; font-weight: 600; border: 1px solid var(--border); }
+                /* Estilos Qualificação */
+                .tab-pane-qualificacao { display: flex; flex-direction: column; gap: 2.5rem; }
+                .qual-header { display: flex; justify-content: space-between; align-items: center; background: rgba(0,0,0,0.1); padding: 2rem; border-radius: 20px; border: 1px solid var(--border); }
+                .score-widget { display: flex; align-items: center; gap: 1.5rem; }
+                .score-circle { position: relative; width: 80px; height: 80px; }
+                .score-circle svg { transform: rotate(-90deg); }
+                .score-circle .circle-bg { fill: none; stroke: rgba(255,255,255,0.05); stroke-width: 3.8; }
+                .score-circle .circle { fill: none; stroke: var(--primary-color); stroke-width: 3.8; stroke-linecap: round; transition: stroke-dasharray 0.5s ease; }
+                .score-text { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
+                .score-text strong { display: block; font-size: 1.4rem; color: #fff; line-height: 1; }
+                .score-text span { font-size: 0.7rem; color: #666; text-transform: uppercase; }
+                .score-label h3 { margin: 0; font-size: 1.1rem; color: #fff; }
+                .score-label p { margin: 4px 0 0; font-size: 0.85rem; color: #10b981; font-weight: 600; }
                 
-                .viab-details { display: flex; flex-direction: column; gap: 1.5rem; width: 100%; max-width: 300px; margin-top: 2rem; }
-                .viab-item { display: flex; justify-content: space-between; align-items: center; padding-bottom: 0.5rem; border-bottom: 1px solid var(--border); }
-                .viab-item label { color: #555; font-size: 12px; text-transform: uppercase; }
-                .viab-item span { color: #eee; font-weight: 600; }
-                .badge-status.pendente { color: #f59e0b; }
-                .badge-status.aprovada { color: #10b981; }
-                .badge-status.reprovada { color: #ef4444; }
+                .qual-decision label { display: block; font-size: 11px; color: #555; text-transform: uppercase; font-weight: 700; margin-bottom: 12px; text-align: right; }
+                .decision-buttons { display: flex; gap: 8px; }
+                .decision-buttons button { background: var(--bg-deep); border: 1px solid var(--border); color: #666; padding: 8px 20px; border-radius: 10px; cursor: pointer; font-weight: 700; transition: all 0.2s; }
+                .decision-buttons button.active.green { background: #10b98122; color: #10b981; border-color: #10b98144; }
+                .decision-buttons button.active.red { background: #ef444422; color: #ef4444; border-color: #ef444444; }
+
+                .qual-layers { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+                .layer-title { display: flex; align-items: center; gap: 12px; margin-bottom: 1.5rem; }
+                .layer-number { background: var(--primary-color); color: #fff; width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 800; }
+                .layer-title h4 { margin: 0; font-size: 0.95rem; color: #eee; }
+                
+                .bant-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
+                .bant-item { background: var(--bg-surface); border: 1px solid var(--border); padding: 1.2rem; border-radius: 16px; display: flex; align-items: center; gap: 12px; cursor: pointer; transition: all 0.2s; }
+                .bant-item:hover { border-color: #444; transform: translateY(-2px); }
+                .bant-icon { color: var(--primary-color); background: rgba(59, 130, 246, 0.1); padding: 8px; border-radius: 10px; }
+                .bant-info label { display: block; font-size: 10px; color: #555; text-transform: uppercase; font-weight: 700; }
+                .bant-info strong { color: #eee; font-size: 0.9rem; }
+
+                .business-questions { background: var(--bg-surface); padding: 1.5rem; border-radius: 16px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 1.5rem; }
+                .q-item span { display: block; font-size: 0.9rem; color: #aaa; margin-bottom: 10px; }
+                .q-tags { display: flex; gap: 8px; }
+                .q-tags button { background: var(--bg-deep); border: 1px solid var(--border); color: #555; padding: 6px 14px; border-radius: 8px; font-size: 12px; font-weight: 600; cursor: pointer; }
+                .q-tags button.active { background: #3b82f622; color: #3b82f6; border-color: #3b82f644; }
+                .q-value strong { color: var(--primary-color); font-size: 1.1rem; }
+
+                /* Estilos Viabilidade */
+                .viab-grid { display: grid; grid-template-columns: 1fr 400px; gap: 2.5rem; }
+                .viab-section { background: var(--bg-surface); padding: 1.8rem; border-radius: 20px; border: 1px solid var(--border); margin-bottom: 1.5rem; }
+                .section-header { display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; color: #fff; }
+                .section-header h4 { margin: 0; font-size: 1rem; }
+                
+                .infra-grid { display: grid; grid-template-columns: 1fr; gap: 1.2rem; }
+                .infra-item label { display: block; font-size: 11px; color: #555; text-transform: uppercase; font-weight: 700; margin-bottom: 8px; }
+                .infra-value { display: flex; justify-content: space-between; align-items: center; }
+                .badge-distance { background: #f59e0b22; color: #f59e0b; padding: 2px 8px; border-radius: 4px; font-size: 11px; font-weight: 800; }
+                
+                .infra-progress { display: flex; align-items: center; gap: 12px; }
+                .infra-progress .bar { flex: 1; height: 6px; background: rgba(0,0,0,0.2); border-radius: 3px; overflow: hidden; }
+                .infra-progress .fill { height: 100%; background: #10b981; }
+                .infra-progress span { font-size: 12px; color: #555; font-weight: 600; white-space: nowrap; }
+                
+                .input-viab { width: 100%; background: var(--bg-deep); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 10px; outline: none; }
+
+                .results-list { display: flex; flex-direction: column; gap: 10px; }
+                .result-option { display: flex; align-items: center; gap: 15px; padding: 1.2rem; border-radius: 16px; border: 1px solid var(--border); cursor: pointer; transition: all 0.2s; background: rgba(255,255,255,0.02); }
+                .result-option.active { border-color: #10b981; background: #10b9810a; }
+                .opt-check { color: #333; }
+                .result-option.active .opt-check { color: #10b981; }
+                .opt-text { flex: 1; }
+                .opt-text strong { display: block; color: #eee; font-size: 0.95rem; }
+                .opt-text span { font-size: 0.8rem; color: #555; }
+                .opt-price { font-weight: 800; color: #fff; }
+                .result-option.disabled { opacity: 0.4; cursor: not-allowed; }
+
+                .map-card { position: relative; border-radius: 16px; overflow: hidden; border: 1px solid var(--border); }
+                .map-overlay-info { position: absolute; bottom: 0; width: 100%; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); padding: 10px; color: #888; font-size: 11px; display: flex; align-items: center; gap: 8px; z-index: 1000; }
 
                 .empty-timeline { text-align: center; color: #444; padding: 100px 0; }
             `}</style>
