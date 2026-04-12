@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { Users, MessageSquare, Clock, TrendingUp, CheckCircle } from 'lucide-react';
+import { Users, ChatCircleDots, Clock, TrendUp, CheckCircle } from '@phosphor-icons/react';
 import { getConversations, getMessages } from '../services/chatService';
 import type { Conversation } from '../services/chatService';
 import './Dashboard.css';
@@ -66,7 +66,7 @@ const Dashboard: React.FC = () => {
     }).length;
 
     const stats = [
-        { label: 'Atendimentos Hoje', value: String(todayCount), icon: MessageSquare, color: '#3b82f6' },
+        { label: 'Atendimentos Hoje', value: String(todayCount), icon: ChatCircleDots, color: '#3b82f6' },
         { label: 'Tempo Médio', value: avgTime, icon: Clock, color: '#10b981' },
         { label: 'Novos Clientes', value: String(newClients), icon: Users, color: '#f59e0b' },
         { label: 'Concluídos', value: String(closedCount), icon: CheckCircle, color: '#8b5cf6' },
@@ -102,7 +102,7 @@ const Dashboard: React.FC = () => {
                 <div className="chart-card placeholder">
                     <div className="chart-header">
                         <h3>Volume de Atendimento por Hora</h3>
-                        <TrendingUp size={20} />
+                        <TrendUp size={20} />
                     </div>
                     <div className="chart-content">
                         <div className="bar-container">
