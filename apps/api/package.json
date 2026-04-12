@@ -1,0 +1,36 @@
+{
+    "name": "@titan/api",
+    "private": true,
+    "version": "0.1.0",
+    "type": "module",
+    "scripts": {
+        "dev": "fastify start -l info -P src/server.ts -w",
+        "build": "tsc",
+        "start": "node dist/server.js",
+        "lint": "biome check src",
+        "test": "vitest run"
+    },
+    "dependencies": {
+        "@fastify/auth": "^5.0.0",
+        "@fastify/cors": "^10.0.0",
+        "@fastify/jwt": "^9.0.0",
+        "@fastify/static": "^8.0.0",
+        "@fastify/swagger": "^9.0.0",
+        "@fastify/swagger-ui": "^5.0.0",
+        "@prisma/client": "^6.0.0",
+        "bullmq": "^5.31.0",
+        "fastify": "^5.1.0",
+        "fastify-plugin": "^5.0.0",
+        "ioredis": "^5.4.1",
+        "zod": "^3.24.0"
+    },
+    "devDependencies": {
+        "@biomejs/biome": "1.9.4",
+        "@types/node": "^22.10.0",
+        "prisma": "^6.0.0",
+        "supertest": "^7.0.0",
+        "ts-node": "^10.9.2",
+        "typescript": "^5.7.0",
+        "vitest": "^2.1.0"
+    }
+}

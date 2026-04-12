@@ -1,0 +1,42 @@
+services:
+  postgres:
+    image: postgres:16
+    environment:
+      POSTGRES_USER: titan
+      POSTGRES_PASSWORD: password
+      POSTGRES_DB: titan_isp
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+
+  api:
+    build: 
+      context: .
+      dockerfile: ./apps/api/Dockerfile
+    environment:
+      DATABASE_URL: "postgresql://titan:password@postgres:5432/titan_isp?schema=public"
+      REDIS_URL: "redis://redis:6379"
+      JWT_SECRET: "super-secret-key"
+    depends_on:
+      - postgres
+      - redis
+    ports:
+      - "3000:3000"
+
+  web:
+    build:
+      context: .
+      dockerfile: ./apps/web/Dockerfile
+    ports:
+      - "5173:5173"
+    environment:
+      VITE_API_URL: "http://localhost:3000"
+
+volumes:
+  postgres_data:

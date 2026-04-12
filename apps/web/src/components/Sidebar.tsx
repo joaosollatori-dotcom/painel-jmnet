@@ -1,5 +1,24 @@
 import React from 'react';
-import { MessageSquare, LayoutDashboard, Settings, Users, LogOut, Zap, PanelLeftClose, PanelLeftOpen, Sun, Moon, Hash } from 'lucide-react';
+import {
+    MessageSquare,
+    LayoutDashboard,
+    Settings,
+    Users,
+    LogOut,
+    Zap,
+    PanelLeftClose,
+    PanelLeftOpen,
+    Sun,
+    Moon,
+    Hash,
+    CurrencyDollar,
+    Wrench,
+    Package,
+    Globe,
+    MapTrifold,
+    Headset,
+    ShoppingCart
+} from '@phosphor-icons/react';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -24,12 +43,33 @@ const Sidebar: React.FC<SidebarProps> = ({
     const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
     const [timer, setTimer] = React.useState('00:00:00');
 
-    const menuItems = [
-        { id: 'chats', icon: MessageSquare, label: 'Mensagens' },
-        { id: 'internal_chat', icon: Hash, label: 'Chat Interno' },
-        { id: 'dashboard', icon: LayoutDashboard, label: 'Relatórios' },
-        { id: 'agents', icon: Zap, label: 'Agentes IA' },
-        { id: 'crm', icon: Users, label: 'Clientes' },
+    const menuGroups = [
+        {
+            label: 'ATENDIMENTO',
+            items: [
+                { id: 'chats', icon: Headset, label: 'Atendimento' },
+                { id: 'internal_chat', icon: Hash, label: 'Chat Interno' },
+                { id: 'agents', icon: Zap, label: 'Agentes IA' },
+            ]
+        },
+        {
+            label: 'GESTÃO',
+            items: [
+                { id: 'crm', icon: Users, label: 'Clientes' },
+                { id: 'financeiro', icon: CurrencyDollar, label: 'Financeiro' },
+                { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
+                { id: 'estoque', icon: Package, label: 'Estoque' },
+                { id: 'vendas', icon: ShoppingCart, label: 'Vendas' },
+            ]
+        },
+        {
+            label: 'INFRA & BI',
+            items: [
+                { id: 'rede', icon: Globe, label: 'Rede ISP' },
+                { id: 'mapa', icon: MapTrifold, label: 'Mapa de Rede' },
+                { id: 'dashboard', icon: LayoutDashboard, label: 'Dashboard BI' },
+            ]
+        }
     ];
 
     React.useEffect(() => {
@@ -67,17 +107,22 @@ const Sidebar: React.FC<SidebarProps> = ({
                 {!isRetracted && <span className="logo-text">TITÃ</span>}
             </div>
 
-            <nav className="sidebar-nav">
-                {menuItems.map((item) => (
-                    <button
-                        key={item.id}
-                        className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
-                        onClick={() => onTabChange(item.id)}
-                        title={item.label}
-                    >
-                        <item.icon size={22} className="nav-icon" />
-                        {!isRetracted && <span className="nav-label">{item.label}</span>}
-                    </button>
+            <nav className="sidebar-nav ic-sidebar-scroll">
+                {menuGroups.map((group, gIdx) => (
+                    <div key={gIdx} className="nav-group">
+                        {!isRetracted && <span className="nav-group-label">{group.label}</span>}
+                        {group.items.map((item) => (
+                            <button
+                                key={item.id}
+                                className={`nav-item ${activeTab === item.id ? 'active' : ''}`}
+                                onClick={() => onTabChange(item.id)}
+                                title={item.label}
+                            >
+                                <item.icon size={22} weight={activeTab === item.id ? "fill" : "regular"} className="nav-icon" />
+                                {!isRetracted && <span className="nav-label">{item.label}</span>}
+                            </button>
+                        ))}
+                    </div>
                 ))}
             </nav>
 

@@ -4,6 +4,7 @@ import ChatList from './components/ChatList';
 import ChatArea from './components/ChatArea';
 import Dashboard from './components/Dashboard';
 import InternalChat from './components/InternalChat';
+import OSManager from './components/OSManager';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import './App.css';
@@ -115,6 +116,65 @@ const SettingsPage: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => voi
   );
 };
 
+/* ====== Financeiro Page ====== */
+const FinanceiroPage: React.FC = () => (
+  <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <h1 style={{ marginBottom: '0.5rem' }}>Financeiro</h1>
+    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Gestão de faturas, remessas bancárias e conciliação PIX.</p>
+    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '20px', marginBottom: '2rem' }}>
+      <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>MRR Atual</span>
+        <h2 style={{ margin: '0.5rem 0', color: '#10b981' }}>R$ 142.500,00</h2>
+        <span style={{ color: '#10b981', fontSize: '0.8rem' }}>+12% este mês</span>
+      </div>
+      <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <span style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Inadimplência</span>
+        <h2 style={{ margin: '0.5rem 0', color: '#ef4444' }}>4.2%</h2>
+        <span style={{ color: '#ef4444', fontSize: '0.8rem' }}>Meta: < 3%</span>
+      </div>
+      <div style={{ background: 'var(--bg-surface)', padding: '1.5rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <button style={{ width: '100%', height: '100%', border: '2px dashed var(--border)', borderRadius: 'var(--radius-md)', background: 'transparent', color: 'var(--text-secondary)', cursor: 'pointer' }}>
+          + Nova Remessa
+        </button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ====== OS Page ====== */
+const OSPage: React.FC = () => (
+  <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <h1 style={{ marginBottom: '0.5rem' }}>Ordens de Serviço</h1>
+    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Gestão de campo, instalações e suporte técnico.</p>
+    <div style={{ background: 'var(--bg-surface)', padding: '2rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)', textAlign: 'center' }}>
+      <p>Selecione um técnico no mapa ou crie uma nova OS para começar.</p>
+    </div>
+  </div>
+);
+
+/* ====== Rede Page ====== */
+const RedePage: React.FC = () => (
+  <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <h1 style={{ marginBottom: '0.5rem' }}>Infraestrutura de Rede</h1>
+    <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Monitoramento de OLTs, Concentradores e provisionamento de ONUs.</p>
+    <div style={{ display: 'flex', gap: '1rem' }}>
+      <div style={{ width: '300px', background: 'var(--bg-surface)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <strong>OLTs Ativas (4)</strong>
+        <ul style={{ listStyle: 'none', padding: 0, marginTop: '1rem' }}>
+          <li style={{ padding: '8px', borderBottom: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between' }}>
+            <span>OLT-01 Central</span>
+            <span style={{ color: '#10b981' }}>Estável</span>
+          </li>
+        </ul>
+      </div>
+      <div style={{ flex: 1, background: 'var(--bg-surface)', padding: '1rem', borderRadius: 'var(--radius-lg)', border: '1px solid var(--border)' }}>
+        <strong>Log de Provisionamento</strong>
+        <p style={{ color: 'var(--text-secondary)', marginTop: '2rem', textAlign: 'center' }}>Nenhuma atividade recente.</p>
+      </div>
+    </div>
+  </div>
+);
+
 const App: React.FC = () => {
   const [activeTab, setActiveTab] = useState('chats');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
@@ -148,8 +208,8 @@ const App: React.FC = () => {
             ) : (
               <div className="welcome-screen">
                 <div className="welcome-content">
-                  <h2>Bem-vindo ao TITÃ</h2>
-                  <p>Selecione uma conversa para começar a atender seus clientes.</p>
+                  <h2>Bem-vindo ao TITÃ | ISP</h2>
+                  <p>Gestão completa de atendimento e infraestrutura.</p>
                 </div>
               </div>
             )}
@@ -162,13 +222,19 @@ const App: React.FC = () => {
           <AgentsPage />
         ) : activeTab === 'crm' ? (
           <CRMPage />
+        ) : activeTab === 'financeiro' ? (
+          <FinanceiroPage />
+        ) : activeTab === 'os' ? (
+          <OSManager />
+        ) : activeTab === 'rede' ? (
+          <RedePage />
         ) : activeTab === 'settings' ? (
           <SettingsPage theme={theme} onToggleTheme={toggleTheme} />
         ) : (
           <div className="welcome-screen">
             <div className="welcome-content">
-              <h2>Seção em desenvolvimento</h2>
-              <p>Esta seção está sendo preparada para sua empresa.</p>
+              <h2>Módulo {activeTab.toUpperCase()}</h2>
+              <p>Esta seção está sendo configurada com os dados do seu provedor.</p>
             </div>
           </div>
         )}

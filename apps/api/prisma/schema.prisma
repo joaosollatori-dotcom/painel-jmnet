@@ -1,0 +1,159 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  SUPER_ADMIN
+  ADMIN
+  FINANCEIRO
+  SUPORTE
+  TECNICO
+  READONLY
+}
+
+model User {
+  id            String   @id @default(uuid())
+  email         String   @unique
+  password      String
+  name          String
+  role          Role     @default(SUPORTE)
+  permissions   String[]
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  assignedOS    OrdemServico[] @relation("TecnicoOS")
+}
+
+model Assinante {
+  id            String   @id @default(uuid())
+  nome          String
+  cpfCnpj       String   @unique
+  metadata      Json?    // Para conciliação com ERPs externos
+  status        String   @default("ATIVO") // ATIVO, BLOQUEADO, CANCELADO
+  
+  enderecos     Endereco[]
+  contatos      Contato[]
+  faturas       Fatura[]
+  ordensServico OrdemServico[]
+  svas          AssinanteSVA[]
+  
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Endereco {
+  id          String    @id @default(uuid())
+  assinanteId String
+  assinante   Assinante @relation(fields: [assinanteId], references: [id])
+  logradouro  String
+  numero      String
+  bairro      String
+  cidade      String
+  estado      String
+  cep         String
+  complemento String?
+  tipo        String    @default("COBRANCA") // INSTALACAO, COBRANCA
+  latitude    Float?
+  longitude   Float?
+}
+
+model Contato {
+  id          String    @id @default(uuid())
+  assinanteId String
+  assinante   Assinante @relation(fields: [assinanteId], references: [id])
+  tipo        String    // WHATSAPP, EMAIL, FIXO
+  valor       String
+}
+
+model Fatura {
+  id          String    @id @default(uuid())
+  assinanteId String
+  assinante   Assinante @relation(fields: [assinanteId], references: [id])
+  valor       Decimal
+  vencimento  DateTime
+  status      String    @default("PENDENTE") // PENDENTE, PAGO, CANCELADO, ATRASADO
+  
+  pagamento   Pagamento?
+  notaFiscal  NotaFiscal?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model Pagamento {
+  id        String   @id @default(uuid())
+  faturaId  String   @unique
+  fatura    Fatura   @relation(fields: [faturaId], references: [id])
+  metodo    String   // PIX, BOLETO, CARTAO
+  data      DateTime @default(now())
+  valor     Decimal
+  
+  pix       PagamentoPix?
+}
+
+model PagamentoPix {
+  id          String    @id @default(uuid())
+  pagamentoId String    @unique
+  pagamento   Pagamento @relation(fields: [pagamentoId], references: [id])
+  qrCode      String
+  txid        String    @unique
+  status      String    @default("PENDENTE")
+}
+
+model OrdemServico {
+  id          String    @id @default(uuid())
+  assinanteId String
+  assinante   Assinante @relation(fields: [assinanteId], references: [id])
+  tecnicoId   String?
+  tecnico     User?     @relation("TecnicoOS", fields: [tecnicoId], references: [id])
+  tipo        String    // INSTALACAO, REPARO, RETIRADA
+  status      String    @default("ABERTA") // ABERTA, EM_EXECUCAO, FINALIZADA, CANCELADA
+  descricao       String
+  prioridade      String    @default("MEDIA")
+  dataAgendamento DateTime?
+  
+  createdAt       DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+model OLT {
+  id        String   @id @default(uuid())
+  nome      String
+  ip        String   @unique
+  modelo    String   // INTELBRAS, ZTE, HUAWEI
+  comunidade String   @default("public")
+  
+  onus      ONU[]
+}
+
+model ONU {
+  id          String   @id @default(uuid())
+  oltId       String
+  olt         OLT      @relation(fields: [oltId], references: [id])
+  serial      String   @unique
+  ponPort     Int
+  status      String   @default("OFFLINE")
+  sinal       String?
+}
+
+model NotaFiscal {
+  id        String   @id @default(uuid())
+  faturaId  String   @unique
+  fatura    Fatura   @relation(fields: [faturaId], references: [id])
+  numero    String
+  xml       String
+  status    String   @default("EMITIDA")
+}
+
+model AssinanteSVA {
+  id          String    @id @default(uuid())
+  assinanteId String
+  assinante   Assinante @relation(fields: [assinanteId], references: [id])
+  svaName     String    // Ex: Paramount+, Noggin, etc
+  status      String    @default("ATIVO")
+}
