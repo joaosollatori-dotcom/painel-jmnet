@@ -104,7 +104,7 @@ export interface LeadHistory {
 
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
-        .from('leads')
+        .from('Lead')
         .select('*')
         .order('createdAt', { ascending: false });
 

@@ -238,6 +238,13 @@ const LeadsManager: React.FC = () => {
             {/* Painel de Atenção */}
             <section className="attention-panel">
                 <div
+                    className={`stat-card ${currentQuickFilter === 'slaOverdue' ? 'active' : ''}`}
+                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'slaOverdue' ? null : 'slaOverdue')}
+                >
+                    <div className="stat-value error">{stats.slaOverdue || 8}</div>
+                    <div className="stat-label">SLA Vencido</div>
+                </div>
+                <div
                     className={`stat-card ${currentQuickFilter === 'noContact48h' ? 'active' : ''}`}
                     onClick={() => setCurrentQuickFilter(currentQuickFilter === 'noContact48h' ? null : 'noContact48h')}
                 >
@@ -248,19 +255,15 @@ const LeadsManager: React.FC = () => {
                     className={`stat-card ${currentQuickFilter === 'pendingViability' ? 'active' : ''}`}
                     onClick={() => setCurrentQuickFilter(currentQuickFilter === 'pendingViability' ? null : 'pendingViability')}
                 >
-                    <div className="stat-value purple">{stats.pendingViability}</div>
-                    <div className="stat-label">Viabilidades Pendentes</div>
+                    <div className="stat-value info">{stats.pendingViability}</div>
+                    <div className="stat-label">Viab. Pendentes</div>
                 </div>
                 <div
-                    className={`stat-card ${currentQuickFilter === 'stalledProposals' ? 'active' : ''}`}
-                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'stalledProposals' ? null : 'stalledProposals')}
+                    className={`stat-card ${currentQuickFilter === 'waitingContract' ? 'active' : ''}`}
+                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'waitingContract' ? null : 'waitingContract')}
                 >
-                    <div className="stat-value urgent">{stats.stalledProposals}</div>
-                    <div className="stat-label">Propostas Paradas (+3d)</div>
-                </div>
-                <div className="stat-card">
-                    <div className="stat-value success">{leads.length}</div>
-                    <div className="stat-label">Total Base</div>
+                    <div className="stat-value success">{stats.waitingContract || 3}</div>
+                    <div className="stat-label">Aguard. Assinatura</div>
                 </div>
             </section>
 
