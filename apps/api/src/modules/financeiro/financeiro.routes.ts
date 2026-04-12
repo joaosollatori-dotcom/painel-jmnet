@@ -5,8 +5,8 @@ import { faturaSchema, pagamentoSchema } from './financeiro.schema';
 export async function financeiroRoutes(server: FastifyInstance) {
     const service = new FinanceiroService(server.prisma);
 
-    server.get('/faturas', async (request, reply) => {
-        const { assinanteId } = request.query as { assinanteId?: string };
+    server.get<{ Querystring: { assinanteId?: string } }>('/faturas', async (request, _reply) => {
+        const { assinanteId } = request.query;
         const faturas = await service.listFaturas(assinanteId);
         return { data: faturas, success: true };
     });

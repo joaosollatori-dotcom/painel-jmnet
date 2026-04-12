@@ -24,9 +24,9 @@ export async function osRoutes(server: FastifyInstance) {
         return { data, success: true };
     });
 
-    server.patch('/:id/agendar', async (request) => {
-        const { id } = request.params as { id: string };
-        const { tecnicoId, dataAgendamento } = request.body as { tecnicoId: string, dataAgendamento: string };
+    server.patch<{ Params: { id: string }; Body: { tecnicoId: string; dataAgendamento: string } }>('/:id/agendar', async (request) => {
+        const { id } = request.params;
+        const { tecnicoId, dataAgendamento } = request.body;
         const data = await service.schedule(id, tecnicoId, dataAgendamento);
         return { data, success: true };
     });

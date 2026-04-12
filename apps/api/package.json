@@ -5,7 +5,7 @@
     "type": "module",
     "scripts": {
         "dev": "fastify start -l info -P src/server.ts -w",
-        "build": "tsc",
+        "build": "prisma generate && tsc",
         "start": "node dist/server.js",
         "lint": "biome check src",
         "test": "vitest run"

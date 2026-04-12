@@ -5,13 +5,13 @@ import { assinanteSchema } from './assinantes.schema';
 export async function assinantesRoutes(server: FastifyInstance) {
     const service = new AssinantesService(server.prisma);
 
-    server.get('/', async (request, reply) => {
+    server.get('/', async (_request, _reply) => {
         const assinantes = await service.list();
         return { data: assinantes, success: true };
     });
 
-    server.get('/:id', async (request, reply) => {
-        const { id } = request.params as { id: string };
+    server.get<{ Params: { id: string } }>('/:id', async (request, reply) => {
+        const { id } = request.params;
         const assinante = await service.getById(id);
         if (!assinante) {
             return reply.status(404).send({ message: 'Assinante não encontrado', success: false });
