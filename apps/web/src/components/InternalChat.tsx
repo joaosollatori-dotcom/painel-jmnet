@@ -71,16 +71,38 @@ const InternalChat: React.FC = () => {
         if (attachment) {
             textToSend = `📎 ${attachment.icon} ${attachment.title} — ${attachment.clientName}\n${'━'.repeat(36)}\n${attachment.content}${textToSend ? `\n\n💬 ${textToSend}` : ''}`;
         }
-        setMessage('');
-        setAttachment(null);
 
-        await sendInternalMessage(activeChannel, {
+        const optimisticId = `temp-${Date.now()}`;
+        const newMsg: InternalMessage = {
+            id: optimisticId,
+            channel: activeChannel,
             user: 'João Sollatori',
             avatar: 'J',
             text: textToSend,
             color: '#ef4444',
-            isBot: false
-        });
+            isBot: false,
+            created_at: new Date().toISOString()
+        };
+
+        // Adição otimista para feedback imediato
+        setMessages(prev => [...prev, newMsg]);
+        setMessage('');
+        setAttachment(null);
+
+        try {
+            await sendInternalMessage(activeChannel, {
+                user: 'João Sollatori',
+                avatar: 'J',
+                text: textToSend,
+                color: '#ef4444',
+                isBot: false
+            });
+        } catch (err) {
+            console.error('Error sending internal message:', err);
+            showToastMsg("Erro ao enviar mensagem");
+            // Remove a mensagem otimista em caso de erro real
+            setMessages(prev => prev.filter(m => m.id !== optimisticId));
+        }
     };
 
     const triggerClientAction = async (client: Conversation) => {
@@ -256,7 +278,7 @@ const InternalChat: React.FC = () => {
                                 />
                             </div>
                         )}
-                        {channels.map(ch => (
+                        {channels.filter(ch => !ch.startsWith('dm-')).map(ch => (
                             <div key={ch} className={`ic-channel ${activeChannel === ch ? 'active' : ''}`} onClick={() => setActiveChannel(ch)}>
                                 <Hash size={20} className="icon" /> {ch}
                             </div>
@@ -268,13 +290,24 @@ const InternalChat: React.FC = () => {
                             <span>MENSAGENS DIRETAS</span>
                         </div>
                         <div className="ic-user" onClick={() => handleDMClick('Carlos Oliveira')}>
-                            <div className="ic-avatar-small"><div className="status-dot dnd" />C</div>
+                            <div className="ic-avatar-small" style={{ background: '#046bed' }}><div className="status-dot dnd" />C</div>
                             <span className="name">Carlos Oliveira</span>
                         </div>
                         <div className="ic-user" onClick={() => handleDMClick('Mariana Silva')}>
-                            <div className="ic-avatar-small"><div className="status-dot online" />M</div>
+                            <div className="ic-avatar-small" style={{ background: '#eab308' }}><div className="status-dot online" />M</div>
                             <span className="name">Mariana Silva</span>
                         </div>
+
+                        {/* DMs que foram abertas dinamicamente e não estão na lista fixa acima */}
+                        {channels.filter(ch => ch.startsWith('dm-')).map(dmId => {
+                            const name = dmId.replace('dm-', '').replace(/-/g, ' ');
+                            return (
+                                <div key={dmId} className={`ic-user ${activeChannel === dmId ? 'active' : ''}`} onClick={() => setActiveChannel(dmId)}>
+                                    <div className="ic-avatar-small" style={{ background: '#6366f1' }}>{name.charAt(0).toUpperCase()}</div>
+                                    <span className="name">{name}</span>
+                                </div>
+                            );
+                        })}
                     </div>
                 </div>
 
