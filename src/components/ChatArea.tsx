@@ -7,7 +7,7 @@ import {
     Info, FileText, Image as ImageIcon, Camera, UserList,
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
-    IdentificationCard, Wrench
+    IdentificationCard, Wrench, WifiHigh
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -48,6 +48,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
+
+    useEffect(() => {
+        const handleClickOutside = (e: MouseEvent) => {
+            const target = e.target as Element;
+            if (!target.closest('.chat-info-sidebar') && !target.closest('.action-btn[title="Informações"]') && !target.closest('.ca-modal-actions')) {
+                setIsInfoOpen(false);
+            }
+            if (!target.closest('.header-menu') && !target.closest('.relative-container')) {
+                setIsHeaderMenuOpen(false);
+            }
+            if (!target.closest('.attachment-menu') && !target.closest('.relative-container')) {
+                setIsAttachmentMenuOpen(false);
+            }
+            if (!target.closest('.EmojiPickerReact') && !target.closest('.relative-container')) {
+                setIsInputEmojiOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handleClickOutside);
+        return () => document.removeEventListener('mousedown', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         loadData();
@@ -185,6 +206,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const handleCopyPhone = (phone: string) => {
         navigator.clipboard.writeText(phone);
+        alert('Copiado ✓');
     };
 
     const handleRegisterBI = (msgId: string) => {
@@ -489,7 +511,29 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <div className="accordion-list">
                             {[
                                 { id: 'timeline', icon: <ClockCounterClockwise size={18} weight="duotone" />, label: 'Timeline', content: <><p>Criado em: {new Date(conversation?.created_at || '').toLocaleDateString()}</p><p>Canal: {conversation?.platform}</p></> },
-                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Nenhum débito encontrado.</p> },
+                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Nenhum débito pendente.</p> },
+                                {
+                                    id: 'conexao', icon: <WifiHigh size={18} weight="duotone" />, label: 'Status ISP / Rede', content: (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Status Contrato</span>
+                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>Ativo</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Plano de Internet</span>
+                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Fibra 500 Mega</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Sinal Óptico</span>
+                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>-18.4 dBm</span>
+                                            </div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Conexão (PPPoE)</span>
+                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>Conectado (3d 4h)</span>
+                                            </div>
+                                        </div>
+                                    )
+                                },
                             ].map(({ id, icon, label, content }) => (
                                 <div key={id} className={`accordion-item ${openAccordion === id ? 'open' : ''}`}>
                                     <button className="accordion-header" onClick={() => toggleAccordion(id)}>
@@ -532,25 +576,113 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     </div>
                 )}
 
+                {showTransferModal && (
+                    <div className="modal-overlay" onClick={() => setShowTransferModal(false)}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
+                            <button className="ca-modal-close" onClick={() => setShowTransferModal(false)}><X size={18} /></button>
+                            <h3>Transferir Atendimento</h3>
+                            <p style={{ marginBottom: '16px' }}>Selecione o destino para transferir o lead.</p>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Departamento / Fila</label>
+                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
+                                    <option>Suporte Técnico</option>
+                                    <option>Comercial / Vendas</option>
+                                    <option>Financeiro</option>
+                                </select>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Atendente Específico (Opcional)</label>
+                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
+                                    <option>Qualquer Atendente...</option>
+                                    <option>Carlos Oliveira</option>
+                                    <option>Mariana Silva</option>
+                                    <option>João Sollatori</option>
+                                </select>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Nota Interna (Oculto para Cliente)</label>
+                                <textarea placeholder="Deixe um contexto para o próximo atendente..." rows={2} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
+                            </div>
+                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                                <button className="ca-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
+                                <button className="ca-confirm" onClick={() => { alert('Atendimento transferido para fila selecionada!'); setShowTransferModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Transferir</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
+                {showParticipantsModal && (
+                    <div className="modal-overlay" onClick={() => setShowParticipantsModal(false)}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
+                            <button className="ca-modal-close" onClick={() => setShowParticipantsModal(false)}><X size={18} /></button>
+                            <h3>Participantes Internos</h3>
+                            <p style={{ marginBottom: '16px' }}>Colaboradores acompanhando este ticket.</p>
+                            <div className="history-list" style={{ marginBottom: '16px' }}>
+                                <div className="history-item"><div className="avatar-small flex-center" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>V</div><span>Você (Operador Atual)</span></div>
+                                <div className="history-item"><div className="avatar-small flex-center" style={{ width: '28px', height: '28px', fontSize: '0.8rem', background: 'var(--primary-color, #046bed)', color: '#fff' }}>M</div><span>Mariana Silva (Suporte N2)</span></div>
+                            </div>
+                            <div style={{ display: 'flex', gap: '8px' }}>
+                                <select style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
+                                    <option>Selecionar colaborador...</option>
+                                    <option>Carlos Oliveira</option>
+                                    <option>Fernanda Costa</option>
+                                </select>
+                                <button style={{ padding: '8px 12px', background: 'var(--bg-surface-light)', color: '#fff', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }}>Adicionar</button>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+
                 {showOSModal && (
                     <div className="modal-overlay" onClick={() => setShowOSModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '500px' }}>
                             <button className="ca-modal-close" onClick={() => setShowOSModal(false)}><X size={18} /></button>
                             <h3>Nova Ordem de Serviço</h3>
-                            <p style={{ marginBottom: '16px' }}>Criar OS para <strong>{conversation?.contact_name}</strong></p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Tipo de Serviço</label>
+                            <p style={{ marginBottom: '10px' }}>Criar OS para <strong>{conversation?.contact_name}</strong></p>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', maxHeight: '55vh', overflowY: 'auto', paddingRight: '12px', paddingBottom: '10px' }}>
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Tipo de Serviço</label>
+                                        <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', marginTop: '4px' }}>
+                                            <option>Instalação</option>
+                                            <option>Manutenção Preventiva</option>
+                                            <option>Manutenção Corretiva</option>
+                                            <option>Mudança de Endereço</option>
+                                            <option>Retirada de Equipamento</option>
+                                        </select>
+                                    </div>
+                                    <div style={{ flex: 1 }}>
+                                        <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Prioridade</label>
+                                        <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', marginTop: '4px' }}>
+                                            <option>Normal (SLA Padrão)</option>
+                                            <option>Alta</option>
+                                            <option style={{ color: '#ff4d4f' }}>Urgente</option>
+                                        </select>
+                                    </div>
+                                </div>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Agendamento (Data / Hora limite)</label>
+                                <input type="datetime-local" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Endereço da OS</label>
+                                <input type="text" placeholder="Rua, Número, Bairro, CEP..." style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Técnico Responsável (Opcional)</label>
                                 <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
-                                    <option>Instalação</option>
-                                    <option>Manutenção</option>
-                                    <option>Visita Técnica</option>
+                                    <option>A Definir / Fila Automática</option>
+                                    <option>João (Técnico N2)</option>
+                                    <option>Pedro (Técnico de Campo)</option>
                                 </select>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Descrição</label>
-                                <textarea placeholder="Detalhes do chamado..." rows={3} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
+
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Equipamentos (Retirada/Auditoria)</label>
+                                <div style={{ display: 'flex', gap: '12px', fontSize: '0.9rem', flexWrap: 'wrap', marginBottom: '4px' }}>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> ONU/Modem</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> Antena 5GHz</label>
+                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> Cabeamento Rig.</label>
+                                </div>
+
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Descrição do Problema</label>
+                                <textarea placeholder="Descreva os detalhes da solicitação para o Field Service..." rows={3} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
                             </div>
                             <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
                                 <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={() => { alert('OS Criada com sucesso!'); setShowOSModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Criar OS</button>
+                                <button className="ca-confirm" onClick={() => { alert('OS gerada e sincronizada com o aplicativo de campo!'); setShowOSModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Gerar e Atribuir OS</button>
                             </div>
                         </motion.div>
                     </div>
@@ -558,43 +690,90 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                 {showCadastroModal && (
                     <div className="modal-overlay" onClick={() => setShowCadastroModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '450px' }}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '550px' }}>
                             <button className="ca-modal-close" onClick={() => setShowCadastroModal(false)}><X size={18} /></button>
-                            <h3>Cadastro do Cliente</h3>
-                            <p style={{ marginBottom: '16px' }}>Atualize as informações do Lead atual.</p>
+                            <h3>Cadastro CRM do Cliente</h3>
+                            <p style={{ marginBottom: '16px' }}>Atualize o CRM / Ficha Financeira do Lead.</p>
 
                             <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                                <button onClick={() => setCadastroMode('rapido')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'rapido' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s' }}>Cadastro Rápido</button>
-                                <button onClick={() => setCadastroMode('completo')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'completo' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s' }}>Cadastro Completo</button>
+                                <button onClick={() => setCadastroMode('rapido')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'rapido' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>Básico</button>
+                                <button onClick={() => setCadastroMode('completo')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'completo' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>CRM Completo</button>
                             </div>
 
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginBottom: '16px' }}>
-                                <input type="text" placeholder="Nome Completo" defaultValue={conversation?.contact_name} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                <input type="text" placeholder="Telefone" defaultValue={conversation?.contact_phone} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginBottom: '16px', maxHeight: '50vh', overflowY: 'auto', paddingRight: '12px' }}>
+                                <input type="text" placeholder="Nome Completo / Razão Social" defaultValue={conversation?.contact_name} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+
+                                <div style={{ display: 'flex', gap: '10px' }}>
+                                    <input type="text" placeholder="Telefone 1" defaultValue={conversation?.contact_phone} style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    {cadastroMode === 'completo' && (
+                                        <input type="text" placeholder="Telefone 2 (Opcional)" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    )}
+                                </div>
+
                                 {cadastroMode === 'completo' && (
                                     <>
-                                        <input type="email" placeholder="E-mail" defaultValue={conversation?.contact_email} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                        <input type="text" placeholder="CPF / CNPJ" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                        <input type="text" placeholder="Endereço Completo" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input type="text" placeholder="CPF / CNPJ" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                            <input type="text" placeholder="RG / Inscrição Estudual" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                        </div>
+                                        <div style={{ display: 'flex', gap: '10px' }}>
+                                            <input type="email" placeholder="E-mail Principal" defaultValue={conversation?.contact_email} style={{ flex: 2, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                            <input type="date" title="Data de Nascimento" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }} />
+                                        </div>
+
+                                        <div style={{ borderTop: '1px solid #333', margin: '4px 0', paddingTop: '10px' }}>
+                                            <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Endereço de Viabilidade / Faturamento</label>
+                                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
+                                                <input type="text" placeholder="CEP" style={{ width: '120px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                                <input type="text" placeholder="Logradouro" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                                <input type="text" placeholder="Nº" style={{ width: '80px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <input type="text" placeholder="Complemento" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                                <input type="text" placeholder="Bairro" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                            </div>
+                                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+                                                <input type="text" placeholder="Cidade" style={{ flex: 2, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                                <input type="text" placeholder="UF" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                            </div>
+                                        </div>
+
+                                        <div style={{ borderTop: '1px solid #333', margin: '4px 0', paddingTop: '10px' }}>
+                                            <div style={{ display: 'flex', gap: '10px' }}>
+                                                <select style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }}>
+                                                    <option>Forma de Pgto. Preferencial</option>
+                                                    <option>Boleto Bancário</option>
+                                                    <option>Cartão de Crédito</option>
+                                                    <option>PIX (Recorrente)</option>
+                                                </select>
+                                                <select style={{ width: '150px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }}>
+                                                    <option>Vencimento</option>
+                                                    <option>Dia 05</option>
+                                                    <option>Dia 10</option>
+                                                    <option>Dia 15</option>
+                                                    <option>Dia 20</option>
+                                                </select>
+                                            </div>
+                                        </div>
                                     </>
                                 )}
                             </div>
 
                             <div style={{ textAlign: 'left', marginBottom: '20px', padding: '10px', border: '1px solid #333', borderRadius: '6px', background: 'var(--bg-deep)' }}>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Em caso de informações já existentes:</label>
+                                <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Comportamento de Ingestão de Dados:</label>
                                 <div style={{ display: 'flex', gap: '16px', fontSize: '0.9rem', color: '#ddd' }}>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                        <input type="radio" name="conflict" checked={conflictMode === 'add'} onChange={() => setConflictMode('add')} /> Adicionar / Preservar
+                                        <input type="radio" name="conflict" checked={conflictMode === 'add'} onChange={() => setConflictMode('add')} /> Agrupar / Preservar antigas
                                     </label>
                                     <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                        <input type="radio" name="conflict" checked={conflictMode === 'overwrite'} onChange={() => setConflictMode('overwrite')} /> Sobrescrever Dados
+                                        <input type="radio" name="conflict" checked={conflictMode === 'overwrite'} onChange={() => setConflictMode('overwrite')} /> Sobrescrever Banco ERP
                                     </label>
                                 </div>
                             </div>
 
                             <div className="ca-modal-actions">
                                 <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={() => { alert(conflictMode === 'overwrite' ? 'Dados sobrescritos com sucesso!' : 'Novos dados adicionados ao cadastro atual!'); setShowCadastroModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Configurações</button>
+                                <button className="ca-confirm" onClick={() => { alert(conflictMode === 'overwrite' ? 'Dados forçados no ERP com sucesso!' : 'Integração de novos dados finalizada de forma segura!'); setShowCadastroModal(false); }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Ficha Completa</button>
                             </div>
                         </motion.div>
                     </div>
