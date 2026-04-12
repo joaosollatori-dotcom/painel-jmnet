@@ -361,10 +361,10 @@ const LeadsManager: React.FC = () => {
                                                     <div className="lead-avatar">
                                                         {lead.nomeCompleto.charAt(0)}
                                                     </div>
-                                                    <div className="lead-info">
-                                                        <div className="lead-name" onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.nomeCompleto, 'Nome'); }} title="Clique para copiar">
+                                                    <div className="lead-info-text">
+                                                        <div className="lead-name" onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.nomeCompleto, 'Nome'); }} title={lead.nomeCompleto}>
                                                             {lead.nomeCompleto}
-                                                            <span className={`badge-p${lead.tipoPessoa}`}>{lead.tipoPessoa}</span>
+                                                            <span className={`badge-p${lead.tipoPessoa}`} style={{ marginLeft: '8px' }}>{lead.tipoPessoa}</span>
                                                         </div>
                                                         <div className="lead-meta">Entrada: {new Date(lead.dataEntrada).toLocaleDateString()}</div>
                                                     </div>
@@ -373,12 +373,12 @@ const LeadsManager: React.FC = () => {
                                             <td>
                                                 <div className="contact-cell">
                                                     <div className="contact-main" onClick={() => copyToClipboard(lead.telefonePrincipal, 'Telefone')} title="Clique para copiar">
-                                                        <PhoneCall size={14} /> {lead.telefonePrincipal}
+                                                        <PhoneCall size={18} /> {lead.telefonePrincipal}
                                                         <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                            <WhatsappLogo size={18} weight="fill" color="#25D366" />
+                                                            <WhatsappLogo size={20} weight="fill" color="#25D366" />
                                                         </a>
                                                     </div>
-                                                    <div className="contact-sub">
+                                                    <div className="lead-meta" style={{ marginTop: '2px' }}>
                                                         {lead.canalEntrada} • {lead.campanha || 'Direto'}
                                                     </div>
                                                 </div>
@@ -563,13 +563,14 @@ const LeadsManager: React.FC = () => {
 
                 .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
                 .stat-card { 
-                    background: var(--bg-surface); border: 1px solid var(--border); padding: 1.5rem;
+                    background: var(--bg-surface); border: 1px solid var(--border); padding: 1.25rem 1.5rem;
                     border-radius: 16px; cursor: pointer; transition: all 0.2s;
+                    display: flex; align-items: center; gap: 12px;
                 }
                 .stat-card:hover { border-color: #444; background: rgba(255,255,255,0.02); }
                 .stat-card.active { border-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
-                .stat-value { font-size: 2.2rem; font-weight: 900; line-height: 1; margin-bottom: 8px; }
-                .stat-label { font-size: 0.85rem; color: #888; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+                .stat-value { font-size: 2.2rem; font-weight: 900; line-height: 1; }
+                .stat-label { font-size: 0.75rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2; }
                 
                 .stat-value.warning { color: #f59e0b; }
                 .stat-value.purple { color: #8b5cf6; }
@@ -591,20 +592,23 @@ const LeadsManager: React.FC = () => {
                 .lead-row:hover { background: rgba(255,255,255,0.02); }
                 .lead-row td { padding: 1.25rem 1.5rem; vertical-align: middle; }
                 
-                .lead-id-cell { display: flex; align-items: center; gap: 14px; }
+                .lead-id-cell { display: flex; align-items: center; gap: 14px; white-space: nowrap; min-width: 280px; }
                 .lead-avatar { 
                     width: 44px; height: 44px; border-radius: 12px; background: #3b82f622; color: #3b82f6;
-                    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem;
+                    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
                 }
-                .lead-name:hover { color: var(--primary-color); text-decoration: underline; }
-                .lead-meta { font-size: 0.75rem; color: #666; margin-top: 4px; }
+                .lead-info-text { display: flex; flex-direction: column; overflow: hidden; }
+                .lead-name { font-weight: 700; color: #f8fafc; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; }
+                .lead-name:hover { color: var(--primary-color); }
+                .lead-meta { font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
                 
                 .badge-pPF { font-size: 9px; padding: 2px 6px; background: #10b98122; color: #10b981; border-radius: 4px; }
                 .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }
 
-                .contact-cell { min-width: 220px; }
-                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 600; color: #ccc; cursor: pointer; white-space: nowrap; }
-                .contact-cell .contact-main:hover { color: var(--primary-color); }
+                .contact-cell { min-width: 240px; }
+                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--primary-color); cursor: pointer; white-space: nowrap; font-size: 1.15rem; letter-spacing: -0.02em; }
+                .contact-cell .contact-main:hover { filter: brightness(1.2); }
+                .contact-cell .lead-meta { color: #444; font-size: 0.65rem; opacity: 0.7; }
                 
                 .stage-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
                 .stage-sla { font-size: 0.7rem; color: #666; margin-top: 6px; }
@@ -713,18 +717,36 @@ const LeadsManager: React.FC = () => {
                 .btn-bulk.error:hover { background: #ef444411; }
                 .btn-cancel-bulk { background: transparent; border: 1px solid #333; color: #555; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; }
 
-                /* Modal Adjustments */
-                .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); backdrop-filter: blur(8px); display: flex; align-items: center; justify-content: center; z-index: 2000; }
-                .lead-modal { background: var(--bg-surface); width: 100%; max-width: 600px; border-radius: 24px; border: 1px solid var(--border); overflow: hidden; }
-                .modal-header { padding: 1.5rem 2rem; border-bottom: 1px solid var(--border); display: flex; justify-content: space-between; align-items: center; }
-                .modal-section { padding: 2rem; }
-                .modal-section h3 { font-size: 0.9rem; text-transform: uppercase; color: #555; margin-bottom: 1.5rem; letter-spacing: 0.05em; }
-                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
-                .form-group label { display: block; font-size: 11px; color: #888; font-weight: 700; margin-bottom: 8px; text-transform: uppercase; }
-                .form-group input, .form-group select { width: 100%; background: var(--bg-deep); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; outline: none; transition: border-color 0.2s; }
-                .form-group input:focus { border-color: var(--primary-color); }
-                .modal-footer { padding: 1.5rem 2rem; background: rgba(0,0,0,0.1); display: flex; justify-content: flex-end; gap: 1rem; border-top: 1px solid var(--border); }
-                .btn-secondary { background: transparent; border: 1px solid var(--border); color: #888; padding: 10px 20px; border-radius: 12px; font-weight: 600; cursor: pointer; }
+                /* Modal Elite Pattern */
+                .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
+                .lead-modal { background: #131313; width: 100%; max-width: 650px; border-radius: 28px; border: 1px solid #222; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
+                .modal-header { padding: 2rem 2.5rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); }
+                .modal-header h2 { margin: 0; font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 12px; font-weight: 800; }
+                .btn-close { background: #1c1c1c; border: 1px solid #333; color: #666; cursor: pointer; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
+                .btn-close:hover { color: #fff; border-color: #555; transform: rotate(90deg); }
+
+                .modal-content { padding: 2.5rem; }
+                .modal-section h3 { font-size: 0.75rem; text-transform: uppercase; color: #444; margin-bottom: 2rem; letter-spacing: 0.1em; font-weight: 900; }
+                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
+                .form-group label { display: block; font-size: 11px; color: #777; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+                .form-group input, .form-group select { 
+                    width: 100%; background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 14px 16px; 
+                    border-radius: 14px; outline: none; transition: all 0.2s; font-size: 0.95rem; font-weight: 500;
+                }
+                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: #000; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
+                .form-group input::placeholder { color: #333; }
+
+                .modal-footer { padding: 2rem 2.5rem; background: #0e0e0e; display: flex; justify-content: flex-end; gap: 1.5rem; border-top: 1px solid #222; }
+                .btn-secondary { background: transparent; border: 1px solid #333; color: #888; padding: 12px 24px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; }
+                .btn-secondary:hover { color: #fff; border-color: #555; background: #1a1a1a; }
+                
+                .btn-primary { 
+                    background: var(--primary-color); color: #fff; border: none; padding: 12px 32px; border-radius: 14px; 
+                    font-weight: 800; cursor: pointer; transition: all 0.2s; font-size: 0.95rem;
+                    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+                }
+                .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3); background: #2563eb; }
+                .btn-primary:active { transform: translateY(0); }
             `}</style>
         </div>
     );

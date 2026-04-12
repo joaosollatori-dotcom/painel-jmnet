@@ -64,78 +64,60 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
             label: 'ATENDIMENTO',
             items: [
-                { id: 'chats', icon: Headset, label: 'Atendimento' },
-                { id: 'internal_chat', icon: Hash, label: 'Chat Interno' },
-                { id: 'agents', icon: Lightning, label: 'Agentes IA' },
+                { id: 'chats', icon: Headset, label: 'Atendimento Central' },
+                { id: 'internal_chat', icon: Hash, label: 'Comunicação Interna' },
+                { id: 'agents', icon: Lightning, label: 'Agentes Inteligentes' },
             ]
         },
         {
-            label: 'GESTÃO',
+            label: 'COMERCIAL & VENDAS',
             items: [
                 {
                     id: 'crm_module',
                     icon: TrendUp,
-                    label: 'Leads e Vendas',
+                    label: 'CRM de Leads',
                     subItems: [
-                        {
-                            id: 'crm',
-                            label: 'CRM',
-                            subItems: [
-                                { id: 'crm_leads', label: 'Gestão de Leads' },
-                                { id: 'crm_tasks', label: 'Tarefas e Lembretes' },
-                                { id: 'crm_contratos', label: 'Contratos' },
-                                { id: 'crm_consultas', label: 'Consultas' },
-                            ]
-                        },
-                        {
-                            id: 'analytics',
-                            label: 'Analytics',
-                            subItems: [
-                                { id: 'ana_conversa', label: 'Taxa de Conversão' },
-                                { id: 'ana_performance', label: 'Performance Editorial' },
-                            ]
-                        },
-                        {
-                            id: 'clientes',
-                            label: 'Clientes',
-                            subItems: [
-                                { id: 'client_new', label: 'Novo cliente' },
-                                { id: 'client_search', label: 'Consultar cliente' },
-                                { id: 'client_delete', label: 'Apagar cliente' },
-                            ]
-                        },
-                        {
-                            id: 'kanban',
-                            label: 'Kanban',
-                            subItems: [
-                                { id: 'kanban_view', label: 'Visualizar Funil' },
-                                { id: 'kanban_config', label: 'Configurar Etapas' },
-                            ]
-                        },
+                        { id: 'crm_leads', label: 'Gestão de Leads' },
+                        { id: 'crm_tasks', label: 'Agendamentos' },
+                        { id: 'crm_contratos', label: 'Contratos' },
+                        { id: 'crm_indicadores', label: 'Dashboard de Vendas' },
                     ]
                 },
+                {
+                    id: 'clientes',
+                    icon: Users,
+                    label: 'Base de Clientes',
+                    subItems: [
+                        { id: 'client_search', label: 'Consultar Cliente' },
+                        { id: 'client_new', label: 'Novo Cadastro' },
+                    ]
+                },
+                { id: 'kanban_view', icon: SquaresFour, label: 'Funil Kanban' },
+            ]
+        },
+        {
+            label: 'OPERAÇÕES',
+            items: [
                 {
                     id: 'financeiro',
                     icon: CurrencyDollar,
                     label: 'Financeiro',
                     subItems: [
-                        { id: 'fin_analytics', label: 'Analytics' },
-                        { id: 'fin_nfs', label: 'Nfs' },
-                        { id: 'fin_recebiveis', label: 'Recebíveis' },
-                        { id: 'fin_cobrancas', label: 'Cobranças' },
+                        { id: 'fin_recebiveis', label: 'Contas a Receber' },
+                        { id: 'fin_nfs', label: 'Notas Fiscais' },
+                        { id: 'fin_cobrancas', label: 'Régua de Cobrança' },
                     ]
                 },
                 { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
                 { id: 'ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
-                { id: 'estoque', icon: Package, label: 'Estoque' },
+                { id: 'estoque', icon: Package, label: 'Estoque de Rede' },
             ]
         },
         {
-            label: 'INFRA & BI',
+            label: 'INFRAESTRUTURA',
             items: [
-                { id: 'rede', icon: Globe, label: 'Rede ISP' },
-                { id: 'mapa', icon: MapTrifold, label: 'Mapa de Rede' },
-                { id: 'dashboard', icon: SquaresFour, label: 'Dashboard BI' },
+                { id: 'rede', icon: Globe, label: 'Topologia de Rede' },
+                { id: 'mapa', icon: MapTrifold, label: 'Mapa Geo-ISP' },
             ]
         }
     ];
