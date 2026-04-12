@@ -112,18 +112,25 @@ const InternalChat: React.FC = () => {
         // Simular tempo de busca real
         await new Promise(r => setTimeout(r, 1200 + Math.random() * 800));
 
-        let reportText = '';
-        if (mode === 'mention') {
-            reportText = `Cliente: ${client.contact_name}\nTelefone: ${client.contact_phone || 'N/A'}\nE-mail: ${client.contact_email || 'N/A'}\nPlataforma: ${client.platform}\nStatus: ${client.is_closed ? 'Encerrado' : 'Ativo'}`;
-        } else if (mode === 'summary') {
-            reportText = await getClientSummary(client.id);
-        } else if (mode === 'equip') {
-            reportText = await getEquipmentReport(client.contact_phone || '');
-        } else if (mode === 'contract') {
-            reportText = await getContractReport(client.contact_phone || '');
-        } else if (mode === 'conn') {
-            reportText = await getConnectionStatus(client.contact_phone || '');
-        }
+        const reportText = await (async () => {
+            try {
+                if (mode === 'mention') {
+                    return `Cliente: ${client.contact_name}\nTelefone: ${client.contact_phone || 'N/A'}\nE-mail: ${client.contact_email || 'N/A'}\nPlataforma: ${client.platform}\nStatus: ${client.is_closed ? 'Encerrado' : 'Ativo'}`;
+                } else if (mode === 'summary') {
+                    return await getClientSummary(client.id);
+                } else if (mode === 'equip') {
+                    return await getEquipmentReport(client.contact_phone || '');
+                } else if (mode === 'contract') {
+                    return await getContractReport(client.contact_phone || '');
+                } else if (mode === 'conn') {
+                    return await getConnectionStatus(client.contact_phone || '');
+                }
+                return '';
+            } catch (err) {
+                console.error('Error generating report:', err);
+                return 'Erro ao gerar relatório. Tente novamente.';
+            }
+        })();
 
         setIsLoadingReport(null);
 
@@ -134,15 +141,26 @@ const InternalChat: React.FC = () => {
                 icon: MODE_ICONS[mode] || '📎',
                 clientName: client.contact_name
             });
+            showToastMsg("Anexo gerado com sucesso!");
             // Focus no input para o usuário digitar mensagem
             setTimeout(() => inputRef.current?.focus(), 100);
         }
     };
 
     const openClientPicker = async (mode: any) => {
-        const data = await getConversations();
-        setClients(data);
-        setShowClientPicker({ mode });
+        try {
+            // Fecha o menu de plus imediatamente
+            setIsMenuOpen(false);
+            // Abre o modal de seleção com lista vazia (ou anterior) mas indica carregamento
+            setShowClientPicker({ mode });
+
+            const data = await getConversations();
+            setClients(data);
+        } catch (err) {
+            console.error('Error opening client picker:', err);
+            showToastMsg("Erro ao carregar lista de clientes");
+            setShowClientPicker(null);
+        }
     };
 
     const filteredClients = clients.filter(c =>
