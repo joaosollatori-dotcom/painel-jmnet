@@ -37,12 +37,27 @@ export interface Message {
 //   Conversations
 // ──────────────────────────────
 
-export const getConversations = async (): Promise<Conversation[]> => {
-    const { data, error } = await supabase
+export const getConversations = async (options?: { search?: string; status?: 'active' | 'archived' | 'closed' }): Promise<Conversation[]> => {
+    let query = supabase
         .from('conversations')
-        .select('*')
+        .select('*');
+
+    if (options?.search) {
+        query = query.ilike('contact_name', `%${options.search}%`);
+    }
+
+    if (options?.status === 'active') {
+        query = query.eq('is_archived', false).eq('is_closed', false);
+    } else if (options?.status === 'archived') {
+        query = query.eq('is_archived', true).eq('is_closed', false);
+    } else if (options?.status === 'closed') {
+        query = query.eq('is_closed', true);
+    }
+
+    const { data, error } = await query
         .order('is_pinned', { ascending: false })
         .order('last_message_at', { ascending: false });
+
     if (error) throw error;
     return data ?? [];
 };

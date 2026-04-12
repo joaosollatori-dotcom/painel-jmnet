@@ -27,21 +27,20 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
     const [loading, setLoading] = useState(true);
 
     const [showNewChatModal, setShowNewChatModal] = useState(false);
-    const [newChatData, setNewChatData] = useState({ name: '', phone: '', email: '', platform: 'whatsapp', ai_active: false });
+    const [newChatData, setNewChatData] = useState({ name: '', phone: '', platform: 'whatsapp', ai_active: false });
     const [isCreating, setIsCreating] = useState(false);
 
     useEffect(() => {
-        loadChats();
-        const subscription = subscribeToConversations((updatedChat) => {
-            setChats(prev => {
-                const index = prev.findIndex(c => c.id === updatedChat.id);
-                if (index > -1) {
-                    const newChats = [...prev];
-                    newChats[index] = updatedChat;
-                    return newChats;
-                }
-                return [updatedChat, ...prev];
-            });
+        const delayDebounceFn = setTimeout(() => {
+            loadChats();
+        }, 500);
+
+        return () => clearTimeout(delayDebounceFn);
+    }, [searchTerm, view]);
+
+    useEffect(() => {
+        const subscription = subscribeToConversations(() => {
+            loadChats();
         });
 
         return () => {
@@ -52,7 +51,16 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
     const loadChats = async () => {
         try {
             setLoading(true);
-            const data = await getConversations();
+            const statusMap = {
+                main: 'active',
+                archived: 'archived',
+                ended: 'closed'
+            } as const;
+
+            const data = await getConversations({
+                search: searchTerm.trim(),
+                status: statusMap[view]
+            });
             setChats(data);
         } catch (err) {
             console.error('Error loading chats:', err);
@@ -73,7 +81,6 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
             const newConv = await createConversation({
                 contact_name: newChatData.name.trim(),
                 contact_phone: newChatData.phone.trim(),
-                contact_email: newChatData.email.trim(),
                 platform: newChatData.platform as 'whatsapp' | 'instagram' | 'web',
                 status: 'active',
                 is_pinned: false,
@@ -87,7 +94,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                 is_closed: false
             });
             setShowNewChatModal(false);
-            setNewChatData({ name: '', phone: '', email: '', platform: 'whatsapp', ai_active: false });
+            setNewChatData({ name: '', phone: '', platform: 'whatsapp', ai_active: false });
             onSelectChat(newConv.id);
             showToast("Conversa criada com sucesso");
         } catch (err) {
@@ -110,7 +117,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
 
             switch (action) {
                 case 'pin':
-                    const pinnedCount = chats.filter(c => c.is_pinned && !c.is_archived).length;
+                    const pinnedCount = chats.filter(c => c.is_pinned).length;
                     if (!chat.is_pinned && pinnedCount >= 3) {
                         showToast("Limite de conversas fixadas atingido (máx. 3)");
                         return;
@@ -153,18 +160,6 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
     };
 
     const sortedChats = [...chats]
-        .filter(c => {
-            const matchesSearch = c.contact_name.toLowerCase().includes(searchTerm.toLowerCase());
-            let isTargetView = false;
-            if (view === 'main') {
-                isTargetView = !c.is_archived && !c.is_closed;
-            } else if (view === 'archived') {
-                isTargetView = c.is_archived && !c.is_closed;
-            } else if (view === 'ended') {
-                isTargetView = c.is_closed;
-            }
-            return matchesSearch && isTargetView;
-        })
         .sort((a, b) => {
             if (a.is_pinned && !b.is_pinned) return -1;
             if (!a.is_pinned && b.is_pinned) return 1;
@@ -410,16 +405,6 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                                         value={newChatData.phone}
                                         onChange={e => setNewChatData({ ...newChatData, phone: e.target.value })}
                                         placeholder="Ex: +55 11 99999-9999"
-                                        style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }}
-                                    />
-                                </div>
-                                <div className="form-group" style={{ display: 'flex', flexDirection: 'column', gap: '0.3rem', textAlign: 'left' }}>
-                                    <label style={{ fontSize: '0.9rem', color: '#ccc' }}>E-mail</label>
-                                    <input
-                                        type="email"
-                                        value={newChatData.email}
-                                        onChange={e => setNewChatData({ ...newChatData, email: e.target.value })}
-                                        placeholder="Ex: joao@email.com"
                                         style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }}
                                     />
                                 </div>
