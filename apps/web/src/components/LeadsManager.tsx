@@ -221,7 +221,7 @@ const LeadsManager: React.FC = () => {
     };
 
     return (
-        <div className="manager-container" style={{ padding: '2rem', height: '100%', overflowY: 'auto', background: 'var(--bg-deep)' }}>
+        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)' }}>
             {/* Barra Superior */}
             <header className="listing-header">
                 <div>
@@ -321,14 +321,14 @@ const LeadsManager: React.FC = () => {
                 <table className="leads-table">
                     <thead>
                         <tr>
-                            <th style={{ width: '40px' }}>
+                            <th style={{ width: '40px', padding: '1rem' }}>
                                 <input type="checkbox" checked={selectedIds.length === processedLeads.length && processedLeads.length > 0} onChange={toggleSelectAll} />
                             </th>
-                            <th onClick={() => handleSort('nomeCompleto')} className="sortable">
+                            <th onClick={() => handleSort('nomeCompleto')} className="sortable" style={{ width: '25%' }}>
                                 Lead {sortConfig?.key === 'nomeCompleto' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
                             </th>
-                            <th>Contato e Canal</th>
-                            <th onClick={() => handleSort('statusQualificacao')} className="sortable">Etapa {sortConfig?.key === 'statusQualificacao' && (sortConfig.direction === 'asc' ? '↑' : '↓')}</th>
+                            <th style={{ width: '20%' }}>Contato e Canal</th>
+                            <th onClick={() => handleSort('statusQualificacao')} className="sortable" style={{ width: '12%' }}>Etapa</th>
                             <th onClick={() => handleSort('statusQualificacao')} className="sortable">Qualificação</th>
                             <th onClick={() => handleSort('statusViabilidade')} className="sortable">Viabilidade</th>
                             <th onClick={() => handleSort('dataProximoContato')} className="sortable">Próxima Ação</th>
@@ -558,12 +558,12 @@ const LeadsManager: React.FC = () => {
             </AnimatePresence>
 
             <style>{`
-                .listing-header { display: flex; justify-content: space-between; align-items: flex-end; margin-bottom: 2rem; }
-                .main-title { font-size: 1.7rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
-                .results-counter { margin-top: 4px; color: #666; font-size: 0.9rem; }
+                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); }
+                .main-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
+                .results-counter { margin-top: 4px; color: #666; font-size: 0.85rem; }
                 .results-counter span { color: var(--primary-color); font-weight: 700; }
                 
-                .header-actions { display: flex; gap: 1rem; align-items: center; }
+                .header-actions { display: flex; gap: var(--space-md); align-items: center; }
                 .search-box { position: relative; width: 350px; display: flex; align-items: center; }
                 .search-icon { position: absolute; left: 16px; color: #666; pointer-events: none; display: flex; align-items: center; }
                 .search-box input { 
@@ -601,24 +601,25 @@ const LeadsManager: React.FC = () => {
                     background: var(--bg-surface); border: 1px solid var(--border); 
                     border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
                 }
-                .leads-table { width: 100%; border-collapse: collapse; table-layout: fixed; }
+                .leads-table { width: 100%; border-collapse: separate; border-spacing: 0; }
+                .leads-table thead { position: sticky; top: 0; z-index: 100; }
                 .leads-table th { 
-                    padding: 1.25rem 1.5rem; text-align: left; color: #555; font-size: 0.75rem;
-                    text-transform: uppercase; font-weight: 700; letter-spacing: 0.1em;
+                    padding: 1rem 12px; text-align: left; color: #555; font-size: 0.7rem;
+                    text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;
                     border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1);
                 }
                 
                 .lead-row { border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer; }
                 .lead-row:hover { background: rgba(255,255,255,0.02); }
-                .lead-row td { padding: 1.25rem 1.5rem; vertical-align: middle; }
+                .lead-row td { padding: 1.25rem 1rem; vertical-align: middle; }
                 
-                .lead-id-cell { display: flex; align-items: center; gap: 14px; white-space: nowrap; min-width: 280px; }
+                .lead-id-cell { display: flex; align-items: center; gap: 12px; min-width: 200px; }
                 .lead-avatar { 
                     width: 44px; height: 44px; border-radius: 12px; background: #3b82f622; color: #3b82f6;
                     display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
                 }
                 .lead-info-text { display: flex; flex-direction: column; overflow: hidden; }
-                .lead-name { font-weight: 700; color: #f8fafc; font-size: 1rem; overflow: hidden; text-overflow: ellipsis; }
+                .lead-name { font-weight: 700; color: #f8fafc; font-size: 0.85rem; line-height: 1.2; word-break: break-all; }
                 .lead-name:hover { color: var(--primary-color); }
                 .lead-meta { font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
                 
@@ -626,7 +627,7 @@ const LeadsManager: React.FC = () => {
                 .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }
 
                 .contact-cell { min-width: 240px; }
-                .contact-cell .contact-main { display: flex; align-items: center; gap: 8px; font-weight: 800; color: var(--primary-color); cursor: pointer; white-space: nowrap; font-size: 1.15rem; letter-spacing: -0.02em; }
+                .contact-cell .contact-main { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--primary-color); cursor: pointer; white-space: nowrap; font-size: 0.95rem; letter-spacing: -0.01em; }
                 .contact-cell .contact-main:hover { filter: brightness(1.2); }
                 .contact-cell .lead-meta { color: #444; font-size: 0.65rem; opacity: 0.7; }
                 
@@ -634,7 +635,7 @@ const LeadsManager: React.FC = () => {
                 .stage-sla { font-size: 0.7rem; color: #666; margin-top: 6px; }
                 .stage-sla.over { color: #ef4444; font-weight: 600; }
 
-                .badge-status { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 700; }
+                .badge-status { padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
                 .decisor-flag { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #666; margin-top: 6px; }
                 
                 .viab-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #666; margin-top: 6px; }
@@ -645,12 +646,31 @@ const LeadsManager: React.FC = () => {
                 .next-task.overdue { color: #ef4444; }
                 .no-task { font-size: 0.75rem; color: #444; font-style: italic; }
 
-                .actions-inline { display: flex; gap: 4px; justify-content: flex-end; opacity: 0; transition: opacity 0.2s; }
-                .lead-row:hover .actions-inline { opacity: 1; }
-                .actions-inline button { 
-                    background: transparent; border: none; color: #555; padding: 6px; cursor: pointer; border-radius: 6px;
+                .actions-inline { position: relative; display: flex; justify-content: flex-end; }
+                .btn-options { 
+                    background: var(--bg-surface-light); border: 1px solid var(--border); 
+                    color: var(--text-secondary); padding: 6px 14px; cursor: pointer; border-radius: 8px;
+                    font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
+                    transition: all 0.2s;
                 }
-                .actions-inline button:hover { background: rgba(255,255,255,0.05); color: #fff; }
+                .btn-options:hover, .btn-options.active { background: var(--border); color: #fff; }
+
+                .options-dropdown {
+                    position: absolute; top: 100%; right: 0; margin-top: 8px;
+                    background: #1a1a1a; border: 1px solid #333; border-radius: 12px;
+                    padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+                    z-index: 1000; width: 180px; display: flex; flex-direction: column; gap: 4px;
+                    text-align: left; animation: fadeIn 0.2s ease-out;
+                }
+                @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
+                
+                .dropdown-item {
+                    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
+                    border-radius: 8px; font-size: 0.85rem; color: #aaa; cursor: pointer; transition: all 0.2s;
+                }
+                .dropdown-item:hover { background: rgba(59, 130, 246, 0.1); color: var(--primary-color); }
+                .dropdown-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
+                .dropdown-item svg { color: inherit; }
 
                 .empty-state { padding: 100px 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: #555; }
                 .empty-state h2 { color: #888; margin: 0; }

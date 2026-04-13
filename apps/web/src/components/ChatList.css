@@ -188,7 +188,7 @@
 
 .chat-name {
     font-weight: 600;
-    font-size: 1rem;
+    font-size: 0.9rem;
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -199,7 +199,7 @@
 .last-message {
     grid-column: 2;
     grid-row: 2;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
