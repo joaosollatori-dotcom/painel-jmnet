@@ -38,6 +38,33 @@ Estes botões executam ações visuais ou mandam mensagens "fake" no chat, mas n
 - **InternalChat**: Os botões de BI (Info Equipamento, Contrato, Conexão) utilizam strings fixas retornadas pelo `chatService` (ex: "Huawei HG8245H5", "-19.5 dBm").
 - **LeadsManager**: Botões de ação rápida na tabela (Telefone, Agenda, Avançar) em grande parte apenas abrem modais ou não possuem lógica de persistência para todas as variantes de clique.
 
-## 5. Resumo de Teste de Botões
+## 5. Auditoria de Botões Sem Handler (Seção CRM)
+Identificamos botões que não possuem o atributo `onClick` definido, o que significa que não executam nenhuma função ao serem clicados:
+
+### Gestão de Leads (`LeadsManager.tsx`)
+- Botão "Registrar Contato" (Ação inline na tabela)
+- Botão "Agendar" (Ação inline na tabela)
+- Botão "Avançar" (Ação inline na tabela)
+
+### Detalhes do Lead (`LeadDetail.tsx`)
+- Botão "Transferir" (`btn-transfer`)
+- Botão "Avançar Etapa" (`btn-advance`)
+- Botão "Concluir" (`btn-done`)
+- Botão "Reagendar" (`btn-reschedule`)
+- Botão "Salvar Nota" (`btn-save-note`)
+- Botões de Atalho: "Ligar", "WhatsApp" e "Tarefa" (`sc-call`, `sc-whatsapp`, `sc-task`)
+- Botão "Reenviar Proposta" (`btn-resend`)
+- Botão "Visualizar PDF" (`btn-view-pdf`)
+- Botão "Salvar Alterações" (`btn-primary`)
+
+### Centro de Automações (`AutomationsDashboard.tsx`)
+- Botão "Configurações Gerais" (`btn-secondary`)
+- Botão "Nova Regra" (`btn-primary`)
+
+### Controle de Operações (`AppointmentManager.tsx`)
+- Botão "Ver Caminho" (Google Maps)
+- Botão "Finalizar e Gerar Protocolo" (`btn-confirm-action`)
+
+## 6. Resumo de Teste de Botões
 - **Sidebar**: 100% dos links funcionam (navegam), mas ~20% resultam em 404.
 - **Modais**: A maioria dos modais de confirmação abre e fecha corretamente, mas a "confirmação" muitas vezes apenas fecha o modal com um `alert()` ou mensagem de texto no chat.
