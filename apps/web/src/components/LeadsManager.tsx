@@ -1,4 +1,5 @@
 import React, { useState, useEffect, useMemo } from 'react';
+import { useNavigate } from 'react-router-dom';
 import {
     Users, Plus, MagnifyingGlass, Funnel,
     IdentificationCard, Phone, MapPin,
@@ -19,17 +20,17 @@ import LeadDetail from './LeadDetail';
 import './Dashboard.css';
 
 const LeadsManager: React.FC = () => {
+    const navigate = useNavigate();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [viewingDetail, setViewingDetail] = useState<Lead | null>(null);
     const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability'>('none');
     const [currentQuickFilter, setCurrentQuickFilter] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: keyof Lead, direction: 'asc' | 'desc' } | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
+    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, leadId: string } | null>(null);
 
     // Filtros de Chips
     const [stageFilter, setStageFilter] = useState<string | null>(null);
@@ -47,6 +48,12 @@ const LeadsManager: React.FC = () => {
         tentativasContato: 0,
         isFrio: false
     });
+
+    useEffect(() => {
+        const handleClickOutside = () => setContextMenu(null);
+        window.addEventListener('click', handleClickOutside);
+        return () => window.removeEventListener('click', handleClickOutside);
+    }, []);
 
     useEffect(() => {
         loadLeads();
@@ -180,6 +187,17 @@ const LeadsManager: React.FC = () => {
     const getDaysInStage = (updatedAt: string) => {
         const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24));
         return days;
+    };
+
+    const handleContextMenu = (e: React.MouseEvent, leadId: string) => {
+        if (e.ctrlKey) {
+            e.preventDefault();
+            setContextMenu({
+                x: e.clientX,
+                y: e.clientY,
+                leadId
+            });
+        }
     };
 
     const getStatusStyles = (status: string) => {
@@ -332,17 +350,17 @@ const LeadsManager: React.FC = () => {
                             <th onClick={() => handleSort('statusQualificacao')} className="sortable">Qualificação</th>
                             <th onClick={() => handleSort('statusViabilidade')} className="sortable">Viabilidade</th>
                             <th onClick={() => handleSort('dataProximoContato')} className="sortable">Próxima Ação</th>
-                            <th style={{ textAlign: 'right' }}>Ações</th>
+
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={8} className="td-loading">Sincronizando com TITÃ Cloud...</td></tr>
+                            <tr><td colSpan={7} className="td-loading">Sincronizando com TITÃ Cloud...</td></tr>
                         ) : Object.entries(groupedLeads).map(([groupName, groupLeads]) => (
                             <React.Fragment key={groupName}>
                                 {groupBy !== 'none' && (
                                     <tr className="group-header-row">
-                                        <td colSpan={8}>
+                                        <td colSpan={7}>
                                             <div className="group-header">
                                                 <CaretDown size={14} /> {groupName} <span>({groupLeads.length})</span>
                                             </div>
@@ -355,9 +373,13 @@ const LeadsManager: React.FC = () => {
                                     const daysInStage = getDaysInStage(lead.updatedAt);
 
                                     return (
-                                        <tr key={lead.id} className={`lead-row ${selectedIds.includes(lead.id) ? 'selected' : ''}`}>
+                                        <tr
+                                            key={lead.id}
+                                            className={`lead-row ${selectedIds.includes(lead.id) ? 'selected' : ''}`}
+                                            onContextMenu={(e) => handleContextMenu(e, lead.id)}
+                                        >
                                             <td><input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelect(lead.id)} /></td>
-                                            <td onClick={() => setViewingDetail(lead)}>
+                                            <td onClick={() => navigate(`/crm/lead/${lead.id}`)}>
                                                 <div className="lead-id-cell">
                                                     <div className="lead-avatar">
                                                         {lead.nomeCompleto.charAt(0)}
@@ -426,33 +448,6 @@ const LeadsManager: React.FC = () => {
                                                     )}
                                                 </div>
                                             </td>
-                                            <td style={{ textAlign: 'right' }}>
-                                                <div className="actions-inline">
-                                                    <button
-                                                        className={`btn-options ${openMenuId === lead.id ? 'active' : ''}`}
-                                                        onClick={(e) => { e.stopPropagation(); setOpenMenuId(openMenuId === lead.id ? null : lead.id); }}
-                                                    >
-                                                        Opções <CaretDown size={14} weight="bold" />
-                                                    </button>
-
-                                                    {openMenuId === lead.id && (
-                                                        <div className="options-dropdown" onClick={e => e.stopPropagation()}>
-                                                            <div className="dropdown-item">
-                                                                <ChatCircleDots size={18} weight="duotone" /> Novo Registro
-                                                            </div>
-                                                            <div className="dropdown-item">
-                                                                <CalendarPlus size={18} weight="duotone" /> Nova Tarefa
-                                                            </div>
-                                                            <div className="dropdown-item">
-                                                                <ArrowSquareOut size={18} weight="duotone" /> Mover Etapa
-                                                            </div>
-                                                            <div className="dropdown-item danger" onClick={() => { handleDelete(lead.id); setOpenMenuId(null); }}>
-                                                                <Archive size={18} weight="duotone" /> Arquivar Lead
-                                                            </div>
-                                                        </div>
-                                                    )}
-                                                </div>
-                                            </td>
                                         </tr>
                                     );
                                 })}
@@ -463,99 +458,121 @@ const LeadsManager: React.FC = () => {
                 {renderEmptyState()}
             </div>
 
-            <AnimatePresence>
-                {viewingDetail && (
-                    <LeadDetail
-                        lead={viewingDetail}
-                        onClose={() => setViewingDetail(null)}
-                        onUpdate={() => { loadLeads(); }}
-                    />
-                )}
-            </AnimatePresence>
+            {contextMenu && (
+                <div
+                    className="options-dropdown context-menu"
+                    style={{
+                        position: 'fixed',
+                        top: contextMenu.y,
+                        left: contextMenu.x,
+                        margin: 0,
+                        zIndex: 3000
+                    }}
+                    onClick={e => e.stopPropagation()}
+                >
+                    <div className="dropdown-header">Ações Rápidas</div>
+                    <div className="dropdown-item">
+                        <ChatCircleDots size={18} weight="duotone" /> Novo Registro
+                    </div>
+                    <div className="dropdown-item">
+                        <CalendarPlus size={18} weight="duotone" /> Nova Tarefa
+                    </div>
+                    <div className="dropdown-item">
+                        <ArrowSquareOut size={18} weight="duotone" /> Mover Etapa
+                    </div>
+                    <div className="divider" />
+                    <div className="dropdown-item danger" onClick={() => { handleDelete(contextMenu.leadId); setContextMenu(null); }}>
+                        <Archive size={18} weight="duotone" /> Arquivar Lead
+                    </div>
+                </div>
+            )}
+
+            {/* LeadDetail é gerenciado pela rota /crm/lead/:id */}
 
             {/* Bulk Actions Bar */}
-            <AnimatePresence>
-                {selectedIds.length > 0 && (
-                    <motion.div
-                        initial={{ y: 100 }}
-                        animate={{ y: 0 }}
-                        exit={{ y: 100 }}
-                        className="bulk-action-bar"
-                    >
-                        <div className="bulk-info">
-                            <span className="count">{selectedIds.length}</span>
-                            <span>leads selecionados</span>
-                        </div>
-                        <div className="bulk-actions">
-                            <button className="btn-bulk"><User size={18} /> Mudar Vendedor</button>
-                            <button className="btn-bulk"><TrendUp size={18} /> Mover Estágio</button>
-                            <button className="btn-bulk warning"><Warning size={18} /> Marcar como Frio</button>
-                            <button className="btn-bulk error" onClick={() => {
-                                if (window.confirm(`Deseja excluir ${selectedIds.length} leads permanentemente?`)) {
-                                    Promise.all(selectedIds.map(id => deleteLead(id))).then(() => {
-                                        setSelectedIds([]);
-                                        loadLeads();
-                                    });
-                                }
-                            }}><Trash size={18} /> Excluir em Lote</button>
-                        </div>
-                        <button className="btn-cancel-bulk" onClick={() => setSelectedIds([])}>Cancelar</button>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {selectedIds.length > 0 && (
+                <motion.div
+                    initial={{ y: 100 }}
+                    animate={{ y: 0 }}
+                    exit={{ y: 100 }}
+                    className="bulk-action-bar"
+                >
+                    <div className="bulk-info">
+                        <span className="count">{selectedIds.length}</span>
+                        <span>leads selecionados</span>
+                    </div>
+                    <div className="bulk-actions">
+                        <button className="btn-bulk"><User size={18} /> Mudar Vendedor</button>
+                        <button className="btn-bulk"><TrendUp size={18} /> Mover Estágio</button>
+                        <button className="btn-bulk warning"><Warning size={18} /> Marcar como Frio</button>
+                        <button className="btn-bulk error" onClick={() => {
+                            if (window.confirm(`Deseja excluir ${selectedIds.length} leads permanentemente?`)) {
+                                Promise.all(selectedIds.map(id => deleteLead(id))).then(() => {
+                                    setSelectedIds([]);
+                                    loadLeads();
+                                });
+                            }
+                        }}><Trash size={18} /> Excluir em Lote</button>
+                    </div>
+                    <button className="btn-cancel-bulk" onClick={() => setSelectedIds([])}>Cancelar</button>
+                </motion.div>
+            )}
+
 
             {/* Novo Lead Modal */}
             <AnimatePresence>
-                {showModal && (
-                    <div className="modal-overlay">
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.9 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className="lead-modal"
-                        >
-                            <header className="modal-header">
-                                <h2><UserPlus size={24} weight="duotone" /> Novo Lead Comercial</h2>
-                                <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={32} /></button>
-                            </header>
-                            <form onSubmit={handleSubmit} className="modal-content">
-                                <section className="modal-section">
-                                    <h3>Informações Básicas</h3>
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label>Nome Completo</label>
-                                            <input required type="text" placeholder="Ex: João da Silva"
-                                                onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
+                {
+                    showModal && (
+                        <div className="modal-overlay">
+                            <motion.div
+                                initial={{ opacity: 0, scale: 0.9 }}
+                                animate={{ opacity: 1, scale: 1 }}
+                                className="lead-modal"
+                            >
+                                <header className="modal-header">
+                                    <h2><UserPlus size={24} weight="duotone" /> Novo Lead Comercial</h2>
+                                    <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={32} /></button>
+                                </header>
+                                <form onSubmit={handleSubmit} className="modal-content">
+                                    <section className="modal-section">
+                                        <h3>Informações Básicas</h3>
+                                        <div className="form-grid">
+                                            <div className="form-group">
+                                                <label>Nome Completo</label>
+                                                <input required type="text" placeholder="Ex: João da Silva"
+                                                    onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Telefone Principal</label>
+                                                <input required type="text" placeholder="(00) 00000-0000"
+                                                    onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>E-mail</label>
+                                                <input type="email" placeholder="cliente@email.com"
+                                                    onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                            </div>
+                                            <div className="form-group">
+                                                <label>Origem / Canal</label>
+                                                <select onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
+                                                    <option value="WhatsApp">WhatsApp</option>
+                                                    <option value="Instagram">Instagram</option>
+                                                    <option value="Indicação">Indicação</option>
+                                                    <option value="Site/Formulário">Site/Formulário</option>
+                                                </select>
+                                            </div>
                                         </div>
-                                        <div className="form-group">
-                                            <label>Telefone Principal</label>
-                                            <input required type="text" placeholder="(00) 00000-0000"
-                                                onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>E-mail</label>
-                                            <input type="email" placeholder="cliente@email.com"
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Origem / Canal</label>
-                                            <select onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
-                                                <option value="WhatsApp">WhatsApp</option>
-                                                <option value="Instagram">Instagram</option>
-                                                <option value="Indicação">Indicação</option>
-                                                <option value="Site/Formulário">Site/Formulário</option>
-                                            </select>
-                                        </div>
-                                    </div>
-                                </section>
-                                <footer className="modal-footer">
-                                    <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                    <button type="submit" className="btn-primary">Registrar Lead no Sistema</button>
-                                </footer>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+                                    </section>
+                                    <footer className="modal-footer">
+                                        <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
+                                        <button type="submit" className="btn-primary">Registrar Lead no Sistema</button>
+                                    </footer>
+                                </form>
+                            </motion.div>
+                        </div>
+                    )
+                }
+            </AnimatePresence >
 
             <style>{`
                 .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); }
@@ -788,8 +805,19 @@ const LeadsManager: React.FC = () => {
                 }
                 .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3); background: #2563eb; }
                 .btn-primary:active { transform: translateY(0); }
+                .options-dropdown {
+                     position: fixed; background: #181818; border: 1px solid #333; border-radius: 14px;
+                     padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
+                     z-index: 3000; width: 200px; display: flex; flex-direction: column; gap: 4px;
+                     text-align: left; animation: fadeCtx 0.12s ease-out;
+                     backdrop-filter: blur(12px);
+                 }
+                 .options-dropdown.context-menu { border-color: var(--primary-color); }
+                 .dropdown-header { padding: 8px 12px; font-size: 10px; text-transform: uppercase; color: #555; font-weight: 800; letter-spacing: 0.06em; }
+                 .divider { height: 1px; background: #2a2a2a; margin: 4px 8px; }
+                 @keyframes fadeCtx { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
             `}</style>
-        </div>
+        </div >
     );
 };
 

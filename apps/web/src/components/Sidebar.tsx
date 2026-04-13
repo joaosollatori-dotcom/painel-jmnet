@@ -1,4 +1,5 @@
 import React from 'react';
+import { useLocation, useNavigate, useMatch } from 'react-router-dom';
 import {
     ChatCircleDots,
     SquaresFour,
@@ -27,8 +28,6 @@ import {
 import './Sidebar.css';
 
 interface SidebarProps {
-    activeTab: string;
-    onTabChange: (tab: string) => void;
     isRetracted: boolean;
     onToggleRetraction: () => void;
     theme: 'light' | 'dark';
@@ -36,18 +35,18 @@ interface SidebarProps {
 }
 
 const Sidebar: React.FC<SidebarProps> = ({
-    activeTab,
-    onTabChange,
     isRetracted,
     onToggleRetraction,
     theme,
     onToggleTheme
 }) => {
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const [status, setStatus] = React.useState<'Online' | 'Banheiro' | 'Almoço' | 'Offline'>('Online');
     const [statusStartTime, setStatusStartTime] = React.useState<number>(Date.now());
-    const [isStatusMenuOpen, setIsStatusMenuOpen] = React.useState(false);
     const [timer, setTimer] = React.useState('00:00:00');
-    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set(['GESTÃO']));
+    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set(['GESTÃO', 'COMERCIAL & VENDAS', 'ATENDIMENTO']));
 
     const toggleExpand = (id: string, e: React.MouseEvent) => {
         e.stopPropagation();
@@ -64,9 +63,9 @@ const Sidebar: React.FC<SidebarProps> = ({
         {
             label: 'ATENDIMENTO',
             items: [
-                { id: 'chats', icon: Headset, label: 'Atendimento Central' },
-                { id: 'internal_chat', icon: Hash, label: 'Comunicação Interna' },
-                { id: 'agents', icon: Lightning, label: 'Agentes Inteligentes' },
+                { id: '/atendimento', icon: Headset, label: 'Atendimento Central' },
+                { id: '/interno', icon: Hash, label: 'Comunicação Interna' },
+                { id: '/agentes', icon: Lightning, label: 'Agentes Inteligentes' },
             ]
         },
         {
@@ -77,10 +76,9 @@ const Sidebar: React.FC<SidebarProps> = ({
                     icon: TrendUp,
                     label: 'CRM de Leads',
                     subItems: [
-                        { id: 'crm_leads', label: 'Gestão de Leads' },
-                        { id: 'crm_tasks', label: 'Agendamentos' },
-                        { id: 'crm_contratos', label: 'Contratos' },
-                        { id: 'crm_indicadores', label: 'Dashboard de Vendas' },
+                        { id: '/crm', label: 'Gestão de Leads' },
+                        { id: '/crm_tasks', label: 'Agendamentos' }, // Placeholder
+                        { id: '/crm_contratos', label: 'Contratos' }, // Placeholder
                     ]
                 },
                 {
@@ -88,42 +86,39 @@ const Sidebar: React.FC<SidebarProps> = ({
                     icon: Users,
                     label: 'Base de Clientes',
                     subItems: [
-                        { id: 'client_search', label: 'Consultar Cliente' },
-                        { id: 'client_new', label: 'Novo Cadastro' },
+                        { id: '/client_search', label: 'Consultar Cliente' },
                     ]
                 },
-                { id: 'kanban_view', icon: SquaresFour, label: 'Funil Kanban' },
+                { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
             ]
         },
         {
             label: 'OPERAÇÕES',
             items: [
                 {
-                    id: 'financeiro',
+                    id: 'financeiro_group',
                     icon: CurrencyDollar,
                     label: 'Financeiro',
                     subItems: [
-                        { id: 'fin_recebiveis', label: 'Contas a Receber' },
-                        { id: 'fin_nfs', label: 'Notas Fiscais' },
-                        { id: 'fin_cobrancas', label: 'Régua de Cobrança' },
+                        { id: '/financeiro', label: 'Gestão Financeira' },
                     ]
                 },
-                { id: 'os', icon: Wrench, label: 'Ordens de Serviço' },
-                { id: 'ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
-                { id: 'estoque', icon: Package, label: 'Estoque de Rede' },
+                { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
+                { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
+                { id: '/estoque', icon: Package, label: 'Estoque de Rede' },
             ]
         },
         {
             label: 'INFRAESTRUTURA',
             items: [
-                { id: 'rede', icon: Globe, label: 'Topologia de Rede' },
-                { id: 'mapa', icon: MapTrifold, label: 'Mapa Geo-ISP' },
+                { id: '/dashboard', icon: TrendUp, label: 'Dashboard Resumo' },
+                { id: '/rede', icon: Globe, label: 'Topologia de Rede' },
             ]
         }
     ];
 
     const isItemActive = (item: any): boolean => {
-        if (activeTab === item.id) return true;
+        if (location.pathname.startsWith(item.id)) return true;
         if (item.subItems) {
             return item.subItems.some((subItem: any) => isItemActive(subItem));
         }
@@ -142,8 +137,8 @@ const Sidebar: React.FC<SidebarProps> = ({
                     onClick={() => {
                         if (hasSubItems && !isRetracted) {
                             toggleExpand(item.id, { stopPropagation: () => { } } as any);
-                        } else {
-                            onTabChange(item.id);
+                        } else if (item.id.startsWith('/')) {
+                            navigate(item.id);
                         }
                     }}
                     title={item.label}
@@ -185,21 +180,6 @@ const Sidebar: React.FC<SidebarProps> = ({
         return () => clearInterval(interval);
     }, [statusStartTime]);
 
-    const handleStatusChange = (newStatus: typeof status) => {
-        setStatus(newStatus);
-        setStatusStartTime(Date.now());
-        setIsStatusMenuOpen(false);
-    };
-
-    const getStatusColor = (s: string) => {
-        switch (s) {
-            case 'Online': return '#10b981';
-            case 'Banheiro': return '#f59e0b';
-            case 'Almoço': return '#3b82f6';
-            default: return '#6b7280';
-        }
-    };
-
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
             <div className="sidebar-header">
@@ -238,7 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({
                     <button className="footer-item" onClick={onToggleTheme} title={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}>
                         {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
                     </button>
-                    <button className="footer-item" title="Ajustes" onClick={() => onTabChange('settings')}>
+                    <button className="footer-item" title="Ajustes" onClick={() => navigate('/ajustes')}>
                         <Gear size={22} weight="duotone" />
                     </button>
                     <button className="footer-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>

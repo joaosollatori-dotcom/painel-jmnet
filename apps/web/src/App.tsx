@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import ChatList from './components/ChatList';
 import ChatArea from './components/ChatArea';
@@ -10,8 +11,11 @@ import NetworkManager from './components/NetworkManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
 import LeadsManager from './components/LeadsManager';
 import SalesPipeline from './components/SalesPipeline';
+import LeadDetail from './components/LeadDetail';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
+import { getLeads } from './services/leadService';
+import { AnimatePresence } from 'framer-motion';
 import './App.css';
 
 /* ====== Agents Page ====== */
@@ -47,42 +51,55 @@ const AgentsPage: React.FC = () => {
   );
 };
 
-/* ====== CRM Page ====== */
-const CRMPage: React.FC = () => {
-  const [clients, setClients] = useState<Conversation[]>([]);
-  const [search, setSearch] = useState('');
-  useEffect(() => { getConversations().then(setClients); }, []);
-  const filtered = clients.filter(c => c.contact_name.toLowerCase().includes(search.toLowerCase()) || c.contact_phone?.includes(search));
+/* ====== Atendimento Wrap ====== */
+const Atendimento: React.FC = () => {
+  const { chatId } = useParams();
+  const navigate = useNavigate();
+
   return (
-    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
-      <h1 style={{ marginBottom: '0.5rem' }}>Clientes CRM</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Base de clientes carregada do Supabase em tempo real.</p>
-      <input type="text" placeholder="Buscar por nome ou telefone..." value={search} onChange={e => setSearch(e.target.value)}
-        style={{ width: '100%', maxWidth: '400px', padding: '10px 14px', borderRadius: 'var(--radius-md)', background: 'var(--bg-surface)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '1rem', outline: 'none', marginBottom: '1.5rem' }} />
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '12px' }}>
-        {filtered.map(c => (
-          <div key={c.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem', display: 'flex', gap: '12px', alignItems: 'center' }}>
-            <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--accent)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold', flexShrink: 0 }}>{c.contact_name.charAt(0)}</div>
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <strong style={{ display: 'block', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{c.contact_name}</strong>
-              <span style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{c.contact_phone || 'Sem telefone'}</span>
-              <div style={{ display: 'flex', gap: '8px', marginTop: '6px' }}>
-                <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', background: c.is_closed ? '#ef444420' : '#10b98120', color: c.is_closed ? '#ef4444' : '#10b981', fontWeight: 600 }}>
-                  {c.is_closed ? 'Encerrado' : 'Ativo'}
-                </span>
-                <span style={{ fontSize: '0.75rem', padding: '2px 8px', borderRadius: '999px', background: 'var(--accent-soft)', color: 'var(--accent)', fontWeight: 600 }}>{c.platform}</span>
-              </div>
-            </div>
+    <>
+      <ChatList selectedChatId={chatId} onSelectChat={(id) => navigate(`/atendimento/${id}`)} />
+      {chatId ? (
+        <ChatArea chatId={chatId} />
+      ) : (
+        <div className="welcome-screen">
+          <div className="welcome-content">
+            <h2>Bem-vindo ao TITÃ | ISP</h2>
+            <p>Gestão completa de atendimento e infraestrutura.</p>
           </div>
-        ))}
-        {filtered.length === 0 && <p style={{ color: 'var(--text-secondary)' }}>Nenhum cliente encontrado.</p>}
-      </div>
-    </div>
+        </div>
+      )}
+    </>
   );
 };
 
-/* ====== Settings Page ====== */
-const SettingsPage: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => void }> = ({ theme, onToggleTheme }) => {
+/* ====== CRM Lead View ====== */
+const LeadView: React.FC = () => {
+  const { id } = useParams();
+  const navigate = useNavigate();
+  const [lead, setLead] = useState<any>(null);
+
+  useEffect(() => {
+    if (id) {
+      getLeads().then(leads => {
+        const found = leads.find(l => l.id === id);
+        if (found) setLead(found);
+      });
+    }
+  }, [id]);
+
+  if (!lead) return null;
+
+  return (
+    <LeadDetail
+      lead={lead}
+      onClose={() => navigate('/crm')}
+      onUpdate={() => { }}
+    />
+  );
+};
+
+const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => void }> = ({ theme, onToggleTheme }) => {
   const [notif, setNotif] = useState(true);
   const [sound, setSound] = useState(true);
   const [autoAI, setAutoAI] = useState(true);
@@ -121,45 +138,10 @@ const SettingsPage: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => voi
   );
 };
 
-/* ====== Financeiro Page Gerenciado por components/FinanceManager.tsx ====== */
-
-
-/* ====== OS Page Gerenciado por components/OSManager.tsx ====== */
-
-
-/* ====== Rede Page Gerenciado por components/NetworkManager.tsx ====== */
-
-
 const App: React.FC = () => {
-  const [activeTab, setActiveTab] = useState('chats');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isRetracted, setIsRetracted] = useState(true);
-  const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-  const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
-
-  // Routing Logic - Native History API
-  useEffect(() => {
-    const handleLocation = () => {
-      const path = window.location.pathname.slice(1);
-      if (path) {
-        setActiveTab(path);
-      } else {
-        setActiveTab('chats');
-        window.history.replaceState(null, '', '/chats');
-      }
-    };
-
-    handleLocation();
-    window.addEventListener('popstate', handleLocation);
-    return () => window.removeEventListener('popstate', handleLocation);
-  }, []);
-
-  useEffect(() => {
-    const currentPath = window.location.pathname.slice(1);
-    if (activeTab && activeTab !== currentPath) {
-      window.history.pushState(null, '', `/${activeTab}`);
-    }
-  }, [activeTab]);
+  const location = useLocation();
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -173,12 +155,10 @@ const App: React.FC = () => {
 
   React.useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Atalho Ctrl + . para Sidebar
       if (e.ctrlKey && e.key === '.') {
         e.preventDefault();
         toggleSidebar();
       }
-      // Atalho Ctrl + Space para Tema
       if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
         toggleTheme();
@@ -192,89 +172,41 @@ const App: React.FC = () => {
     <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
       <div className="sidebar-placeholder" onClick={retractSidebar} />
       <Sidebar
-        activeTab={activeTab}
-        onTabChange={setActiveTab}
         isRetracted={isRetracted}
         onToggleRetraction={toggleSidebar}
         theme={theme}
         onToggleTheme={toggleTheme}
       />
       <main className="main-layout" onClick={retractSidebar}>
-        {activeTab === 'chats' ? (
-          <>
-            <ChatList selectedChatId={selectedChatId} onSelectChat={setSelectedChatId} />
-            {selectedChatId ? (
-              <ChatArea chatId={selectedChatId} />
-            ) : (
-              <div className="welcome-screen">
-                <div className="welcome-content">
-                  <h2>Bem-vindo ao TITÃ | ISP</h2>
-                  <p>Gestão completa de atendimento e infraestrutura.</p>
-                </div>
+        <Routes>
+          <Route path="/" element={<Navigate to="/atendimento" replace />} />
+
+          <Route path="/atendimento" element={<Atendimento />} />
+          <Route path="/atendimento/:chatId" element={<Atendimento />} />
+
+          <Route path="/interno" element={<InternalChat />} />
+          <Route path="/agentes" element={<AgentsPage />} />
+          <Route path="/dashboard" element={<Dashboard />} />
+
+          <Route path="/crm" element={<LeadsManager />} />
+          <Route path="/crm/lead/:id" element={<LeadView />} />
+
+          <Route path="/kanban" element={<SalesPipeline />} />
+          <Route path="/financeiro" element={<FinanceManager />} />
+          <Route path="/os" element={<OSManager />} />
+          <Route path="/ocorrencias" element={<OcorrenciasManager />} />
+          <Route path="/rede" element={<NetworkManager />} />
+          <Route path="/ajustes" element={<SettingsPageWrapper theme={theme} onToggleTheme={toggleTheme} />} />
+
+          <Route path="*" element={
+            <div className="welcome-screen">
+              <div className="welcome-content">
+                <h2>Página não encontrada</h2>
+                <p>O módulo solicitado não está disponível no momento.</p>
               </div>
-            )}
-          </>
-        ) : activeTab === 'dashboard' ? (
-          <Dashboard />
-        ) : activeTab === 'internal_chat' ? (
-          <InternalChat />
-        ) : activeTab === 'agents' ? (
-          <AgentsPage />
-        ) : (activeTab.startsWith('crm') || activeTab.startsWith('kanban') || activeTab.startsWith('client') || activeTab.startsWith('ana')) ? (
-          <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ padding: 'var(--space-md) var(--space-lg) 0', background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)', display: 'flex', gap: 'var(--space-lg)' }}>
-              <button
-                onClick={() => setViewMode('list')}
-                style={{ padding: '12px 0', border: 'none', background: 'transparent', color: viewMode === 'list' ? 'var(--primary-color)' : '#666', fontWeight: 600, borderBottom: viewMode === 'list' ? '2px solid var(--primary-color)' : 'none', cursor: 'pointer' }}
-              >Lista de Leads</button>
-              <button
-                onClick={() => setViewMode('pipeline')}
-                style={{ padding: '12px 0', border: 'none', background: 'transparent', color: viewMode === 'pipeline' ? 'var(--primary-color)' : '#666', fontWeight: 600, borderBottom: viewMode === 'pipeline' ? '2px solid var(--primary-color)' : 'none', cursor: 'pointer' }}
-              >Funil (Kanban)</button>
             </div>
-            <div style={{ flex: 1, overflow: 'hidden' }}>
-              {viewMode === 'list' ? <LeadsManager /> : <SalesPipeline />}
-            </div>
-          </div>
-        ) : activeTab === 'financeiro' ? (
-          <FinanceManager />
-        ) : activeTab === 'os' ? (
-          <OSManager />
-        ) : activeTab === 'ocorrencias' ? (
-          <OcorrenciasManager />
-        ) : activeTab === 'rede' ? (
-          <NetworkManager />
-        ) : activeTab === 'mapa' ? (
-          <div className="welcome-screen">
-            <div className="welcome-content">
-              <h2>Mapa de Rede</h2>
-              <p>Visualização geo-espacial da malha de fibra óptica.</p>
-            </div>
-          </div>
-        ) : activeTab === 'dashboard_bi' ? (
-          <div className="welcome-screen">
-            <div className="welcome-content">
-              <h2>Dashboard BI</h2>
-              <p>Análise de dados e métricas de desempenho ISP.</p>
-            </div>
-          </div>
-        ) : activeTab === 'estoque' ? (
-          <div className="welcome-screen">
-            <div className="welcome-content">
-              <h2>Gestão de Estoque</h2>
-              <p>Controle de ONUs, Roteadores e insumos de rede.</p>
-            </div>
-          </div>
-        ) : activeTab === 'settings' ? (
-          <SettingsPage theme={theme} onToggleTheme={toggleTheme} />
-        ) : (
-          <div className="welcome-screen">
-            <div className="welcome-content">
-              <h2>Módulo {activeTab.toUpperCase()}</h2>
-              <p>Esta seção está sendo configurada com os dados do seu provedor.</p>
-            </div>
-          </div>
-        )}
+          } />
+        </Routes>
       </main>
     </div>
   );
