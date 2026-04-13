@@ -86,25 +86,26 @@
 .chats-scroll-area {
     flex: 1;
     overflow-y: auto;
-    padding: var(--space-sm);
+    padding: var(--space-sm) var(--space-md);
     display: flex;
     flex-direction: column;
-    gap: var(--space-xs);
+    gap: 12px;
+    /* Espaçamento entre cards */
 }
 
 .chat-card {
     display: grid;
     grid-template-columns: auto 1fr;
     grid-template-rows: auto auto;
-    gap: 4px var(--space-md);
-    padding: 12px var(--space-md);
+    gap: 6px var(--space-md);
+    padding: 16px var(--space-md);
     cursor: pointer;
-    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
-    border-radius: var(--radius-md);
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+    border-radius: var(--radius-lg);
     background-color: var(--bg-surface-light);
-    margin: 0 4px;
+    margin: 0;
     border: 1px solid transparent;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
     position: relative;
 }
 

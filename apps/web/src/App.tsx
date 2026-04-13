@@ -23,7 +23,7 @@ const AgentsPage: React.FC = () => {
   ];
   const [states, setStates] = useState(agents.map(a => a.active));
   return (
-    <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
       <h1 style={{ marginBottom: '0.5rem' }}>Agentes IA</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Gerencie os bots e automações da JMnet Telecom.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '700px' }}>
@@ -54,7 +54,7 @@ const CRMPage: React.FC = () => {
   useEffect(() => { getConversations().then(setClients); }, []);
   const filtered = clients.filter(c => c.contact_name.toLowerCase().includes(search.toLowerCase()) || c.contact_phone?.includes(search));
   return (
-    <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
       <h1 style={{ marginBottom: '0.5rem' }}>Clientes CRM</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>Base de clientes carregada do Supabase em tempo real.</p>
       <input type="text" placeholder="Buscar por nome ou telefone..." value={search} onChange={e => setSearch(e.target.value)}
@@ -101,7 +101,7 @@ const SettingsPage: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => voi
     { label: theme === 'dark' ? 'Modo Escuro' : 'Modo Claro', desc: 'Alternar aparência da plataforma', value: theme === 'dark', toggle: onToggleTheme },
   ];
   return (
-    <div style={{ padding: '2rem', flex: 1, overflowY: 'auto' }}>
+    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
       <h1 style={{ marginBottom: '0.5rem' }}>Ajustes</h1>
       <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Preferências de notificação, aparência e automação.</p>
       <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px' }}>
@@ -135,8 +135,31 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isRetracted, setIsRetracted] = useState(true);
   const [selectedChatId, setSelectedChatId] = useState<string | null>(null);
-
   const [viewMode, setViewMode] = useState<'list' | 'pipeline'>('list');
+
+  // Routing Logic - Native History API
+  useEffect(() => {
+    const handleLocation = () => {
+      const path = window.location.pathname.slice(1);
+      if (path) {
+        setActiveTab(path);
+      } else {
+        setActiveTab('chats');
+        window.history.replaceState(null, '', '/chats');
+      }
+    };
+
+    handleLocation();
+    window.addEventListener('popstate', handleLocation);
+    return () => window.removeEventListener('popstate', handleLocation);
+  }, []);
+
+  useEffect(() => {
+    const currentPath = window.location.pathname.slice(1);
+    if (activeTab && activeTab !== currentPath) {
+      window.history.pushState(null, '', `/${activeTab}`);
+    }
+  }, [activeTab]);
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -199,7 +222,7 @@ const App: React.FC = () => {
           <AgentsPage />
         ) : (activeTab.startsWith('crm') || activeTab.startsWith('kanban') || activeTab.startsWith('client') || activeTab.startsWith('ana')) ? (
           <div style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-            <div style={{ padding: '1rem 2rem 0', background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)', display: 'flex', gap: '2rem' }}>
+            <div style={{ padding: 'var(--space-md) var(--space-lg) 0', background: 'var(--bg-deep)', borderBottom: '1px solid var(--border)', display: 'flex', gap: 'var(--space-lg)' }}>
               <button
                 onClick={() => setViewMode('list')}
                 style={{ padding: '12px 0', border: 'none', background: 'transparent', color: viewMode === 'list' ? 'var(--primary-color)' : '#666', fontWeight: 600, borderBottom: viewMode === 'list' ? '2px solid var(--primary-color)' : 'none', cursor: 'pointer' }}

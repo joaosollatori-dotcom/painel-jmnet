@@ -29,6 +29,7 @@ const LeadsManager: React.FC = () => {
     const [currentQuickFilter, setCurrentQuickFilter] = useState<string | null>(null);
     const [sortConfig, setSortConfig] = useState<{ key: keyof Lead, direction: 'asc' | 'desc' } | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
+    const [openMenuId, setOpenMenuId] = useState<string | null>(null);
 
     // Filtros de Chips
     const [stageFilter, setStageFilter] = useState<string | null>(null);
