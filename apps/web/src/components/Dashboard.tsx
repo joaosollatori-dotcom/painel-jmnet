@@ -2,12 +2,14 @@ import React, { useEffect, useState } from 'react';
 import { Users, ChatCircleDots, Clock, TrendUp, CheckCircle } from '@phosphor-icons/react';
 import { getConversations, getMessages } from '../services/chatService';
 import type { Conversation } from '../services/chatService';
+import LoadingScreen from './LoadingScreen';
 import './Dashboard.css';
 
 const Dashboard: React.FC = () => {
     const [conversations, setConversations] = useState<Conversation[]>([]);
     const [avgTime, setAvgTime] = useState('--');
     const [activities, setActivities] = useState<{ text: string; color: string }[]>([]);
+    const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         loadDashboardData();
@@ -15,6 +17,7 @@ const Dashboard: React.FC = () => {
 
     const loadDashboardData = async () => {
         try {
+            setLoading(true);
             const convs = await getConversations();
             setConversations(convs);
 
@@ -50,6 +53,8 @@ const Dashboard: React.FC = () => {
             setActivities(recentActivities);
         } catch (err) {
             console.error('Erro ao carregar dados do dashboard:', err);
+        } finally {
+            setLoading(false);
         }
     };
 
@@ -71,6 +76,8 @@ const Dashboard: React.FC = () => {
         { label: 'Novos Clientes', value: String(newClients), icon: Users, color: '#f59e0b' },
         { label: 'Concluídos', value: String(closedCount), icon: CheckCircle, color: '#8b5cf6' },
     ];
+
+    if (loading) return <LoadingScreen message="Inicializando Painel de Performance..." />;
 
     return (
         <div className="dashboard-container">

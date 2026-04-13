@@ -10,6 +10,7 @@ import {
 } from '@phosphor-icons/react';
 import { Appointment, getAppointments, createAppointment, updateAppointment, deleteAppointment } from '../services/leadService';
 import { useToast } from '../contexts/ToastContext';
+import LoadingScreen from './LoadingScreen';
 
 const AppointmentManager: React.FC = () => {
     const { showToast } = useToast();
@@ -86,9 +87,8 @@ const AppointmentManager: React.FC = () => {
 
             <div className="appointment-grid">
                 {loading ? (
-                    <div className="loading-state">
-                        <div className="spinner-elite" />
-                        <span>Sincronizando agenda...</span>
+                    <div style={{ gridColumn: '1 / -1', padding: '100px 0' }}>
+                        <LoadingScreen fullScreen={false} message="Sincronizando Agenda Jurídica..." />
                     </div>
                 ) : appointments.length === 0 ? (
                     <div className="empty-state">

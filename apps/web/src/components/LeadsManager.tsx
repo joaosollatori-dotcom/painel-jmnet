@@ -16,6 +16,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lead, getLeads, deleteLead, updateLead, createLead } from '../services/leadService';
 import { genericFilter } from '../utils/filterUtils';
+import LoadingScreen from './LoadingScreen';
 import LeadDetail from './LeadDetail';
 import { useToast } from '../contexts/ToastContext';
 import './Dashboard.css';
@@ -364,7 +365,7 @@ const LeadsManager: React.FC = () => {
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} className="td-loading">Sincronizando com TITÃ Cloud...</td></tr>
+                            <tr><td colSpan={7} style={{ padding: '4rem 0' }}><LoadingScreen fullScreen={false} message="Sincronizando Leads..." /></td></tr>
                         ) : Object.entries(groupedLeads).map(([groupName, groupLeads]) => (
                             <React.Fragment key={groupName}>
                                 {groupBy !== 'none' && (

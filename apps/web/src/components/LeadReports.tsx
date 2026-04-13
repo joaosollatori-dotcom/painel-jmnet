@@ -8,11 +8,21 @@ import {
     FileText, MapTrifold, CaretRight,
     CaretLeft, DownloadSimple, User
 } from '@phosphor-icons/react';
+import LoadingScreen from './LoadingScreen';
 
 type TabType = 'dashboard' | 'operacional' | 'estrategico';
 
 const LeadReports: React.FC = () => {
     const [activeTab, setActiveTab] = useState<TabType>('dashboard');
+    const [loading, setLoading] = useState(true);
+
+    React.useEffect(() => {
+        // Simular carregamento de dados pesados de telemetria/relatórios
+        const timer = setTimeout(() => setLoading(false), 1500);
+        return () => clearTimeout(timer);
+    }, []);
+
+    if (loading) return <LoadingScreen message="Gerando Inteligência de Dados..." />;
 
     const renderDashboard = () => (
         <motion.div
