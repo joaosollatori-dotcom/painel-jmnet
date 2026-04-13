@@ -19,6 +19,187 @@ import LoadingScreen from './LoadingScreen';
 
 type ViewMode = 'list' | 'day' | 'week' | 'month';
 
+// --- SUB-COMPONENTE: DETALHE DO AGENDAMENTO ---
+const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> = ({ apptId, onClose }) => {
+    return (
+        <div className="modal-overlay">
+            <motion.div
+                className="detail-panel ic-sidebar-scroll"
+                initial={{ opacity: 0, x: 400 }}
+                animate={{ opacity: 1, x: 0 }}
+                exit={{ opacity: 0, x: 400 }}
+            >
+                <header className="detail-header">
+                    <div className="header-labels">
+                        <span className="type-pill">VISTORIA TÉCNICA</span>
+                        <h2>Instalação Residencial - Prédio Solar</h2>
+                        <div className="status-selector">
+                            <span className="status-current em-andamento">Em Andamento</span>
+                            <CaretDown size={14} />
+                        </div>
+                    </div>
+                    <button className="btn-close-circle" onClick={onClose}><X /></button>
+                </header>
+
+                <div className="detail-grid">
+                    {/* COLUNA ESQUERDA - INFOS E EXECUÇÃO */}
+                    <div className="detail-col main">
+                        <section className="detail-section card">
+                            <div className="section-title">
+                                <Clock size={18} /> Tempo de Execução
+                            </div>
+                            <div className="timer-block">
+                                <div className="timer-val">00:42:15</div>
+                                <div className="timer-label">Tempo decorrido desde o check-in</div>
+                            </div>
+                        </section>
+
+                        <section className="detail-section card">
+                            <div className="section-title">
+                                <MapPin size={18} /> Endereço de Atendimento
+                            </div>
+                            <div className="address-display">
+                                <p>Rua das Flores, 123 - Ap 402</p>
+                                <p className="sub">Bairro Jardim - São Paulo/SP</p>
+                                <div className="map-placeholder">
+                                    <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=400" alt="Map View" />
+                                    <button className="btn-open-maps"><GoogleLogo size={20} weight="bold" /> Abrir no Google Maps</button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="detail-section card">
+                            <div className="section-title">
+                                <Checks size={18} /> Resultado do Agendamento
+                            </div>
+                            <div className="form-group-modern">
+                                <label>Obrigatório para conclusão</label>
+                                <select className="modern-select">
+                                    <option value="">Selecione o desfecho...</option>
+                                    <option value="SUCESSO">Realizado com Sucesso</option>
+                                    <option value="AUSENTE">Cliente não estava no local</option>
+                                    <option value="NAO_LOCALIZADO">Endereço não localizado</option>
+                                    <option value="RECUSADO">Cliente desistiu na hora</option>
+                                    <option value="TECNICO">Problema técnico/Viabilidade</option>
+                                </select>
+                            </div>
+                            <textarea className="modern-textarea" placeholder="Observações adicionais da execução..."></textarea>
+                            <button className="btn-confirm-action">Finalizar Atendimento</button>
+                        </section>
+                    </div>
+
+                    {/* COLUNA DIREITA - RESPONSÁVEIS E HISTÓRICO */}
+                    <div className="detail-col side">
+                        <section className="detail-section">
+                            <div className="section-title small">Responsáveis</div>
+                            <div className="resp-card">
+                                <div className="resp-item">
+                                    <img src="https://ui-avatars.com/api/?name=Vendedor+Carlos" alt="" />
+                                    <div>
+                                        <strong>Carlos (Comercial)</strong>
+                                        <span>Responsável Origem</span>
+                                    </div>
+                                </div>
+                                <div className="resp-divider" />
+                                <div className="resp-item">
+                                    <img src="https://ui-avatars.com/api/?name=Tecnico+Andre" alt="" />
+                                    <div>
+                                        <strong>André (Técnico)</strong>
+                                        <span>Executor designado</span>
+                                    </div>
+                                    <button className="btn-swap"><ArrowsClockwise /></button>
+                                </div>
+                            </div>
+                        </section>
+
+                        <section className="detail-section">
+                            <div className="section-title small">Histórico Timeline</div>
+                            <div className="timeline-container">
+                                {[
+                                    { t: '14:20', e: 'Check-in realizado por André via App Técnico' },
+                                    { t: '11:00', e: 'Confirmado via WhatsApp (Cliente deu OK)' },
+                                    { t: '09:15', e: 'Agendamento criado por Carlos' }
+                                ].map((step, i) => (
+                                    <div key={i} className="timeline-item">
+                                        <div className="time">{step.t}</div>
+                                        <div className="dot" />
+                                        <div className="event">{step.e}</div>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    </div>
+                </div>
+
+                <style>{`
+                    .detail-panel {
+                        position: fixed; top: 0; right: 0; width: 600px; height: 100vh;
+                        background: #0c0f16; border-left: 1px solid #1e2430;
+                        z-index: 3000; box-shadow: -20px 0 50px rgba(0,0,0,0.5);
+                        padding: 2.5rem; display: flex; flex-direction: column; gap: 2.5rem;
+                        overflow-y: auto;
+                    }
+                    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; }
+                    .header-labels h2 { font-size: 1.5rem; color: #fff; margin: 8px 0 12px; font-weight: 800; }
+                    .type-pill { font-size: 0.7rem; font-weight: 900; color: #3b82f6; background: #3b82f615; padding: 4px 10px; border-radius: 6px; }
+                    .status-selector {
+                        display: flex; align-items: center; gap: 10px; color: #fff; background: #22c55e15; border: 1px solid #22c55e20;
+                        padding: 6px 14px; border-radius: 999px; width: fit-content; cursor: pointer;
+                    }
+                    .status-current { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
+
+                    .btn-close-circle {
+                        width: 40px; height: 40px; border-radius: 50%; background: #1a1e2a; border: none; color: #64748b;
+                        display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
+                    }
+                    .btn-close-circle:hover { background: #ef444420; color: #ef4444; }
+
+                    .detail-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
+                    .detail-section.card { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; padding: 1.5rem; }
+                    .section-title { font-size: 0.9rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
+                    .section-title.small { font-size: 0.75rem; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; }
+
+                    .timer-val { font-size: 2.5rem; font-weight: 900; color: #fff; font-family: monospace; letter-spacing: -2px; }
+                    .timer-label { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
+
+                    .address-display p { color: #fff; font-weight: 600; margin: 0; }
+                    .address-display p.sub { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
+                    .map-placeholder { margin-top: 1rem; border-radius: 12px; overflow: hidden; position: relative; height: 120px; }
+                    .map-placeholder img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: grayscale(1); }
+                    .btn-open-maps {
+                        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
+                        background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 8px;
+                        font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.8rem;
+                    }
+
+                    .modern-select, .modern-textarea {
+                        width: 100%; background: #080a0f; border: 1px solid #1e2430; color: #fff;
+                        padding: 12px; border-radius: 12px; outline: none; transition: all 0.2s;
+                    }
+                    .modern-textarea { height: 80px; resize: none; margin: 12px 0; }
+                    .btn-confirm-action {
+                        width: 100%; background: #2563eb; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer;
+                    }
+
+                    .resp-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; overflow: hidden; }
+                    .resp-item { padding: 1rem; display: flex; align-items: center; gap: 12px; }
+                    .resp-item img { width: 36px; height: 36px; border-radius: 8px; }
+                    .resp-item strong { display: block; color: #fff; font-size: 0.9rem; }
+                    .resp-item span { font-size: 0.7rem; color: #64748b; }
+                    .resp-divider { height: 1px; background: #1e2430; }
+                    .btn-swap { margin-left: auto; background: transparent; border: none; color: #3b82f6; cursor: pointer; }
+
+                    .timeline-container { border-left: 1px solid #1e2430; margin-left: 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 1.5rem; }
+                    .timeline-item { position: relative; }
+                    .timeline-item .dot { position: absolute; left: -25px; top: 6px; width: 9px; height: 9px; background: #3b82f6; border-radius: 50%; border: 2px solid #0c0f16; }
+                    .timeline-item .time { font-size: 0.7rem; color: #475569; font-weight: 800; margin-bottom: 4px; }
+                    .timeline-item .event { color: #94a3b8; font-size: 0.85rem; line-height: 1.4; }
+                `}</style>
+            </motion.div>
+        </div>
+    );
+};
+
 const AppointmentManager: React.FC = () => {
     const { showToast } = useToast();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -28,6 +209,7 @@ const AppointmentManager: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [filterStatus, setFilterStatus] = useState<string>('all');
     const [selectedApptId, setSelectedApptId] = useState<string | null>(null);
+    const [currentDate, setCurrentDate] = useState(new Date());
 
     useEffect(() => {
         loadAppointments();
@@ -116,8 +298,53 @@ const AppointmentManager: React.FC = () => {
         return { top, height };
     };
 
-    const handleDragEnd = async (apptId: string, info: any) => {
-        showToast('Agendamento atualizado localmente (Draft)', 'info');
+    const handleDragEnd = async (appt: Appointment, info: any) => {
+        // Delta Y dividido por altura da hora (80px)
+        const hourDelta = Math.round(info.offset.y / 80 * 4) / 4; // Step de 15 min
+
+        const newStart = new Date(appt.dataInicio);
+        newStart.setMinutes(newStart.getMinutes() + (hourDelta * 60));
+
+        const newEnd = appt.dataFim ? new Date(appt.dataFim) : new Date(newStart.getTime() + 3600000);
+        if (appt.dataFim) {
+            newEnd.setMinutes(newEnd.getMinutes() + (hourDelta * 60));
+        }
+
+        try {
+            await updateAppointment(appt.id, {
+                dataInicio: newStart.toISOString(),
+                dataFim: newEnd.toISOString()
+            });
+            showToast('Horário atualizado com sucesso', 'success');
+            loadAppointments();
+        } catch (err) {
+            showToast('Erro ao reagendar', 'error');
+        }
+    };
+
+    const handleResize = async (appt: Appointment, deltaHeight: number) => {
+        const extraMinutes = (deltaHeight / 80) * 60;
+        const currentDuration = appt.duracaoEstimada || 60;
+        const newDuration = Math.max(15, currentDuration + extraMinutes);
+
+        try {
+            await updateAppointment(appt.id, {
+                duracaoEstimada: Math.round(newDuration),
+                dataFim: new Date(new Date(appt.dataInicio).getTime() + newDuration * 60000).toISOString()
+            });
+            loadAppointments();
+        } catch (err) {
+            showToast('Erro ao ajustar duração', 'error');
+        }
+    };
+
+    const changeDate = (direction: 'prev' | 'next') => {
+        const newDate = new Date(currentDate);
+        const isForward = direction === 'next';
+        if (viewMode === 'day' || viewMode === 'list') newDate.setDate(newDate.getDate() + (isForward ? 1 : -1));
+        else if (viewMode === 'week') newDate.setDate(newDate.getDate() + (isForward ? 7 : -7));
+        else if (viewMode === 'month') newDate.setMonth(newDate.getMonth() + (isForward ? 1 : -1));
+        setCurrentDate(newDate);
     };
 
     return (
@@ -128,6 +355,19 @@ const AppointmentManager: React.FC = () => {
                     <div className="title-group">
                         <h1>Gestão de Agenda</h1>
                         <span className="count-badge">{filteredAppointments.length} agendamentos</span>
+                    </div>
+                    <div className="date-nav-controls">
+                        <div className="nav-buttons">
+                            <button onClick={() => changeDate('prev')} className="nav-btn"><CaretDown size={20} style={{ transform: 'rotate(90deg)' }} /></button>
+                            <button onClick={() => setCurrentDate(new Date())} className="nav-btn today">Hoje</button>
+                            <button onClick={() => changeDate('next')} className="nav-btn"><CaretDown size={20} style={{ transform: 'rotate(-90deg)' }} /></button>
+                        </div>
+                        <h2 className="current-date-label">
+                            {viewMode === 'month'
+                                ? currentDate.toLocaleDateString('pt-BR', { month: 'long', year: 'numeric' })
+                                : currentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })
+                            }
+                        </h2>
                     </div>
                     <div className="view-selector">
                         <button className={viewMode === 'list' ? 'active' : ''} onClick={() => setViewMode('list')}><List /> Lista</button>
@@ -291,7 +531,7 @@ const AppointmentManager: React.FC = () => {
                                                 <div className="action-pill">
                                                     {!appt.dataConfirmacao && <button title="Confirmar Presença" className="action-item ok"><Checks /></button>}
                                                     <button title="Reagendar" className="action-item"><ArrowsClockwise /></button>
-                                                    <button title="Abrir Detalhe" className="action-item"><ArrowSquareOut /></button>
+                                                    <button title="Abrir Detalhe" className="action-item" onClick={() => setSelectedApptId(appt.id)}><ArrowSquareOut /></button>
                                                     <div className="action-divider" />
                                                     <button className="action-more"><DotsThreeVertical weight="bold" /></button>
                                                 </div>
@@ -306,19 +546,15 @@ const AppointmentManager: React.FC = () => {
                     <div className="calendar-view-pane">
                         <div className="lane-header">
                             <div className="time-col" />
-                            {/* Lanes por Responsável */}
-                            <div className="lane-col">
-                                <img src="https://ui-avatars.com/api/?name=Vendedor+Carlos" alt="" />
-                                <span>Carlos (Comercial)</span>
-                            </div>
-                            <div className="lane-col">
-                                <img src="https://ui-avatars.com/api/?name=Equipe+Alpha" alt="" />
-                                <span>Equipe Alpha</span>
-                            </div>
-                            <div className="lane-col">
-                                <img src="https://ui-avatars.com/api/?name=Equipe+Bravo" alt="" />
-                                <span>Equipe Bravo</span>
-                            </div>
+                            {lanes.map(lane => (
+                                <div key={lane.id} className="lane-col">
+                                    <img src={`https://ui-avatars.com/api/?name=${lane.name}&background=random`} alt="" />
+                                    <span>{lane.name}</span>
+                                    <div className="occupancy-bar" title="Ocupação do Dia">
+                                        <div className="occupancy-fill" style={{ width: '45%' }} />
+                                    </div>
+                                </div>
+                            ))}
                         </div>
                         <div className="lane-grid ic-sidebar-scroll">
                             <div className="time-labels">
@@ -327,26 +563,52 @@ const AppointmentManager: React.FC = () => {
                                 ))}
                             </div>
                             <div className="grid-content">
-                                {/* Linhas de grade */}
-                                {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(h => (
+                                {/* Linhas de grade horárias */}
+                                {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(h => (
                                     <div key={h} className="grid-row" />
                                 ))}
 
-                                {/* Blocos de Agendamento (Posicionamento absoluto calculado) */}
-                                <motion.div
-                                    className="appt-block"
-                                    style={{ top: '100px', left: '10%', width: '25%', height: '80px' }}
-                                    drag="y"
-                                    dragConstraints={{ top: 0, bottom: 800 }}
-                                    whileHover={{ scale: 1.02, zIndex: 10 }}
-                                >
-                                    <div className="block-tag tint-blue" />
-                                    <div className="block-info">
-                                        <strong>Instalação Residencial</strong>
-                                        <span>João Silva</span>
-                                    </div>
-                                    <div className="block-warning"><Warning size={14} /> Conflito</div>
-                                </motion.div>
+                                {/* Blocos Dinâmicos */}
+                                {filteredAppointments.map(appt => {
+                                    const laneIndex = lanes.findIndex(l => l.id === (appt.vendedorId || 'S/R'));
+                                    if (laneIndex === -1) return null;
+
+                                    const { top, height } = calculateBlockPos(appt.dataInicio, appt.duracaoEstimada || 60);
+                                    const left = (100 / lanes.length) * laneIndex + 0.5;
+                                    const width = (100 / lanes.length) - 1;
+
+                                    return (
+                                        <motion.div
+                                            key={appt.id}
+                                            className="appt-block"
+                                            style={{ top, left: `${left}%`, width: `${width}%`, height }}
+                                            drag="y"
+                                            dragMomentum={false}
+                                            onDragEnd={(_, info) => handleDragEnd(appt, info)}
+                                            onClick={(e) => {
+                                                e.stopPropagation();
+                                                setSelectedApptId(appt.id);
+                                            }}
+                                            whileHover={{ scale: 1.02, zIndex: 10 }}
+                                        >
+                                            <div className="block-tag tint-blue" style={{ background: getStatusStyle(appt.status).color }} />
+                                            <div className="block-info">
+                                                <strong>{appt.titulo}</strong>
+                                                <span>{new Date(appt.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                            </div>
+
+                                            {/* Indicador de Conflito */}
+                                            {filteredAppointments.some(a2 =>
+                                                a2.id !== appt.id &&
+                                                a2.vendedorId === appt.vendedorId &&
+                                                new Date(appt.dataInicio) < new Date(a2.dataFim || a2.dataInicio) &&
+                                                new Date(a2.dataInicio) < new Date(appt.dataFim || appt.dataInicio)
+                                            ) && (
+                                                    <div className="block-warning"><Warning size={14} /> Conflito</div>
+                                                )}
+                                        </motion.div>
+                                    );
+                                })}
                             </div>
                         </div>
                     </div>
@@ -594,224 +856,87 @@ const AppointmentManager: React.FC = () => {
                     border-right: 1px solid #1e2430; font-weight: 700; color: #fff; font-size: 0.9rem;
                 }
                 .lane-col img { width: 32px; height: 32px; border-radius: 10px; }
+                .occupancy-bar {
+                    width: 40px; height: 4px; background: #1e2430; border-radius: 2px;
+                    margin-left: auto; overflow: hidden;
+                }
+                .occupancy-fill { height: 100%; background: #3b82f6; border-radius: 2px; }
 
                 .lane-grid {
                     display: grid; grid-template-columns: 80px 1fr; overflow-y: auto; flex: 1; position: relative;
                 }
-                .time-labels { border-right: 1px solid #1e2430; background: #0c0f16; }
+                .time-labels { border-right: 1px solid #1e2430; background: #0c0f16; z-index: 5; }
                 .time-slot-label {
                     height: 80px; display: flex; align-items: flex-start; justify-content: center;
-                    padding-top: 10px; font-size: 0.7rem; color: #475569; font-weight: 800; border-bottom: 1px solid #1e2430;
+                    padding-top: 10px; font-size: 0.7rem; color: #475569; font-weight: 800; border-bottom: 1px solid #1e243020;
                 }
                 
-                .grid-content { position: relative; background: #11141d; min-height: 880px; }
-                .grid-row { height: 80px; border-bottom: 1px solid #1e243020; }
+                .grid-content { position: relative; background: #11141d; min-height: 1040px; }
+                .grid-row { height: 80px; border-bottom: 1px solid #1e243020; pointer-events: none; }
+                
+                .lane-dividers { position: absolute; inset: 0; pointer-events: none; }
+                .lane-vertical-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #1e243040; }
 
                 /* APPT BLOCKS */
                 .appt-block {
-                    position: absolute; background: #1a1e2a; border: 1px solid #1e2430;
+                    position: absolute; background: #1a202c; border: 1px solid #1e2430;
                     border-radius: 12px; display: flex; overflow: hidden;
                     box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left-width: 4px;
-                    cursor: grab;
+                    cursor: grab; z-index: 10;
+                    transition: border-color 0.2s;
                 }
-                .appt-block:active { cursor: grabbing; box-shadow: 0 10px 30px rgba(0,0,0,0.5); }
+                .appt-block:hover { border-color: #3b82f680; }
+                .appt-block:active { cursor: grabbing; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
                 
                 .block-tag { width: 4px; height: 100%; }
-                .block-tag.tint-blue { background: #3b82f6; }
                 
-                .block-info { padding: 10px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
-                .block-info strong { font-size: 0.8rem; color: #fff; }
-                .block-info span { font-size: 0.7rem; color: #64748b; }
+                .block-info { padding: 8px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
+                .block-info strong { font-size: 0.75rem; color: #fff; line-height: 1.2; }
+                .block-info span { font-size: 0.65rem; color: #64748b; font-weight: 700; }
                 
                 .block-warning {
-                    background: #f59e0b; color: #000; font-size: 0.6rem; font-weight: 900;
-                    padding: 2px 6px; position: absolute; top: 8px; right: 8px; border-radius: 4px;
-                    display: flex; align-items: center; gap: 4px; text-transform: uppercase;
+                    background: #f59e0b; color: #000; font-size: 0.55rem; font-weight: 900;
+                    padding: 2px 4px; position: absolute; top: 4px; right: 4px; border-radius: 3px;
+                    display: flex; align-items: center; gap: 2px; text-transform: uppercase;
+                }
+
+                .resize-handle:hover { background: #3b82f640; }
+
+                /* MONTH VIEW */
+                .month-grid-container {
+                    background: #11141d; border-radius: 16px; border: 1px solid #1e2430;
+                    display: flex; flex-direction: column; overflow: hidden;
+                    flex: 1;
+                }
+                .month-header {
+                    display: grid; grid-template-columns: repeat(7, 1fr);
+                    background: #0c0f16; border-bottom: 1px solid #1e2430;
+                }
+                .month-day-name {
+                    padding: 12px; text-align: center; color: #475569;
+                    font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
+                }
+                .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; }
+                .month-day-cell {
+                    min-height: 100px; border-right: 1px solid #1e243020; border-bottom: 1px solid #1e243020;
+                    padding: 10px; cursor: pointer; transition: background 0.2s;
+                    display: flex; flex-direction: column; gap: 8px;
+                }
+                .month-day-cell:hover { background: #1e243040; }
+                .month-day-cell.inactive { opacity: 0.3; pointer-events: none; }
+                .month-day-cell.today { background: #3b82f605; border: 1px inset #3b82f640; }
+                .day-num { font-size: 0.8rem; font-weight: 800; color: #475569; }
+                .month-day-cell.today .day-num { color: #3b82f6; }
+                .count-dot {
+                    background: #3b82f6; color: #fff; font-size: 0.6rem;
+                    padding: 2px 6px; border-radius: 4px; font-weight: 800;
+                    white-space: nowrap;
                 }
             `}</style>
         </div>
     );
 };
 
-// --- SUB-COMPONENTE: DETALHE DO AGENDAMENTO ---
-const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> = ({ apptId, onClose }) => {
-    return (
-        <div className="modal-overlay">
-            <motion.div
-                className="detail-panel ic-sidebar-scroll"
-                initial={{ opacity: 0, x: 400 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 400 }}
-            >
-                <header className="detail-header">
-                    <div className="header-labels">
-                        <span className="type-pill">VISTORIA TÉCNICA</span>
-                        <h2>Instalação Residencial - Prédio Solar</h2>
-                        <div className="status-selector">
-                            <span className="status-current em-andamento">Em Andamento</span>
-                            <CaretDown size={14} />
-                        </div>
-                    </div>
-                    <button className="btn-close-circle" onClick={onClose}><X /></button>
-                </header>
 
-                <div className="detail-grid">
-                    {/* COLUNA ESQUERDA - INFOS E EXECUÇÃO */}
-                    <div className="detail-col main">
-                        <section className="detail-section card">
-                            <div className="section-title">
-                                <Clock size={18} /> Tempo de Execução
-                            </div>
-                            <div className="timer-block">
-                                <div className="timer-val">00:42:15</div>
-                                <div className="timer-label">Tempo decorrido desde o check-in</div>
-                            </div>
-                        </section>
-
-                        <section className="detail-section card">
-                            <div className="section-title">
-                                <MapPin size={18} /> Endereço de Atendimento
-                            </div>
-                            <div className="address-display">
-                                <p>Rua das Flores, 123 - Ap 402</p>
-                                <p className="sub">Bairro Jardim - São Paulo/SP</p>
-                                <div className="map-placeholder">
-                                    <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=400" alt="Map View" />
-                                    <button className="btn-open-maps"><GoogleLogo size={20} weight="bold" /> Abrir no Google Maps</button>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="detail-section card">
-                            <div className="section-title">
-                                <Checks size={18} /> Resultado do Agendamento
-                            </div>
-                            <div className="form-group-modern">
-                                <label>Obrigatório para conclusão</label>
-                                <select className="modern-select">
-                                    <option value="">Selecione o desfecho...</option>
-                                    <option value="SUCESSO">Realizado com Sucesso</option>
-                                    <option value="AUSENTE">Cliente não estava no local</option>
-                                    <option value="NAO_LOCALIZADO">Endereço não localizado</option>
-                                    <option value="RECUSADO">Cliente desistiu na hora</option>
-                                    <option value="TECNICO">Problema técnico/Viabilidade</option>
-                                </select>
-                            </div>
-                            <textarea className="modern-textarea" placeholder="Observações adicionais da execução..."></textarea>
-                            <button className="btn-confirm-action">Finalizar Atendimento</button>
-                        </section>
-                    </div>
-
-                    {/* COLUNA DIREITA - RESPONSÁVEIS E HISTÓRICO */}
-                    <div className="detail-col side">
-                        <section className="detail-section">
-                            <div className="section-title small">Responsáveis</div>
-                            <div className="resp-card">
-                                <div className="resp-item">
-                                    <img src="https://ui-avatars.com/api/?name=Vendedor+Carlos" alt="" />
-                                    <div>
-                                        <strong>Carlos (Comercial)</strong>
-                                        <span>Responsável Origem</span>
-                                    </div>
-                                </div>
-                                <div className="resp-divider" />
-                                <div className="resp-item">
-                                    <img src="https://ui-avatars.com/api/?name=Tecnico+Andre" alt="" />
-                                    <div>
-                                        <strong>André (Técnico)</strong>
-                                        <span>Executor designado</span>
-                                    </div>
-                                    <button className="btn-swap"><ArrowsClockwise /></button>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="detail-section">
-                            <div className="section-title small">Histórico Timeline</div>
-                            <div className="timeline-container">
-                                {[
-                                    { t: '14:20', e: 'Check-in realizado por André via App Técnico' },
-                                    { t: '11:00', e: 'Confirmado via WhatsApp (Cliente deu OK)' },
-                                    { t: '09:15', e: 'Agendamento criado por Carlos' }
-                                ].map((step, i) => (
-                                    <div key={i} className="timeline-item">
-                                        <div className="time">{step.t}</div>
-                                        <div className="dot" />
-                                        <div className="event">{step.e}</div>
-                                    </div>
-                                ))}
-                            </div>
-                        </section>
-                    </div>
-                </div>
-
-                <style>{`
-                    .detail-panel {
-                        position: fixed; top: 0; right: 0; width: 600px; height: 100vh;
-                        background: #0c0f16; border-left: 1px solid #1e2430;
-                        z-index: 3000; box-shadow: -20px 0 50px rgba(0,0,0,0.5);
-                        padding: 2.5rem; display: flex; flex-direction: column; gap: 2.5rem;
-                        overflow-y: auto;
-                    }
-                    .detail-header { display: flex; justify-content: space-between; align-items: flex-start; }
-                    .header-labels h2 { font-size: 1.5rem; color: #fff; margin: 8px 0 12px; font-weight: 800; }
-                    .type-pill { font-size: 0.7rem; font-weight: 900; color: #3b82f6; background: #3b82f615; padding: 4px 10px; border-radius: 6px; }
-                    .status-selector {
-                        display: flex; align-items: center; gap: 10px; color: #fff; background: #22c55e15; border: 1px solid #22c55e20;
-                        padding: 6px 14px; border-radius: 999px; width: fit-content; cursor: pointer;
-                    }
-                    .status-current { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
-
-                    .btn-close-circle {
-                        width: 40px; height: 40px; border-radius: 50%; background: #1a1e2a; border: none; color: #64748b;
-                        display: flex; align-items: center; justify-content: center; cursor: pointer; transition: all 0.2s;
-                    }
-                    .btn-close-circle:hover { background: #ef444420; color: #ef4444; }
-
-                    .detail-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
-                    .detail-section.card { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; padding: 1.5rem; }
-                    .section-title { font-size: 0.9rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 1.5rem; }
-                    .section-title.small { font-size: 0.75rem; color: #475569; text-transform: uppercase; letter-spacing: 0.1em; }
-
-                    .timer-val { font-size: 2.5rem; font-weight: 900; color: #fff; font-family: monospace; letter-spacing: -2px; }
-                    .timer-label { font-size: 0.75rem; color: #64748b; margin-top: 4px; }
-
-                    .address-display p { color: #fff; font-weight: 600; margin: 0; }
-                    .address-display p.sub { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
-                    .map-placeholder { margin-top: 1rem; border-radius: 12px; overflow: hidden; position: relative; height: 120px; }
-                    .map-placeholder img { width: 100%; height: 100%; object-fit: cover; opacity: 0.4; filter: grayscale(1); }
-                    .btn-open-maps {
-                        position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%);
-                        background: #3b82f6; color: #fff; border: none; padding: 8px 16px; border-radius: 8px;
-                        font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 10px; font-size: 0.8rem;
-                    }
-
-                    .modern-select, .modern-textarea {
-                        width: 100%; background: #080a0f; border: 1px solid #1e2430; color: #fff;
-                        padding: 12px; border-radius: 12px; outline: none; transition: all 0.2s;
-                    }
-                    .modern-textarea { height: 80px; resize: none; margin: 12px 0; }
-                    .btn-confirm-action {
-                        width: 100%; background: #2563eb; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer;
-                    }
-
-                    .resp-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; overflow: hidden; }
-                    .resp-item { padding: 1rem; display: flex; align-items: center; gap: 12px; }
-                    .resp-item img { width: 36px; height: 36px; border-radius: 8px; }
-                    .resp-item strong { display: block; color: #fff; font-size: 0.9rem; }
-                    .resp-item span { font-size: 0.7rem; color: #64748b; }
-                    .resp-divider { height: 1px; background: #1e2430; }
-                    .btn-swap { margin-left: auto; background: transparent; border: none; color: #3b82f6; cursor: pointer; }
-
-                    .timeline-container { border-left: 1px solid #1e2430; margin-left: 8px; padding-left: 20px; display: flex; flex-direction: column; gap: 1.5rem; }
-                    .timeline-item { position: relative; }
-                    .timeline-item .dot { position: absolute; left: -25px; top: 6px; width: 9px; height: 9px; background: #3b82f6; border-radius: 50%; border: 2px solid #0c0f16; }
-                    .timeline-item .time { font-size: 0.7rem; color: #475569; font-weight: 800; margin-bottom: 4px; }
-                    .timeline-item .event { color: #94a3b8; font-size: 0.85rem; line-height: 1.4; }
-                `}</style>
-            </motion.div>
-        </div>
-    );
-};
 
 export default AppointmentManager;
