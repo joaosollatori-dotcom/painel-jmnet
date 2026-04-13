@@ -102,6 +102,57 @@ export interface LeadHistory {
     metadata?: any;
 }
 
+export interface Appointment {
+    id: string;
+    leadId?: string;
+    clienteId?: string;
+    tipo: 'VISITA_COMERCIAL' | 'INSTALACAO' | 'DEMONSTRACAO' | 'LIGACAO' | 'RETORNO_PROPOSTA' | 'VISTORIA_TECNICA';
+    titulo: string;
+
+    // Temporal
+    dataInicio: string;
+    dataFim?: string;
+    duracaoEstimada?: number; // minutos
+    fusoHorario?: string;
+    isDiaInteiro: boolean;
+
+    // Responsáveis
+    vendedorId?: string;
+    tecnicoId?: string;
+    equipeIds?: string[];
+    supervisorId?: string;
+
+    // Localização
+    cep?: string;
+    logradouro?: string;
+    numero?: string;
+    complemento?: string;
+    bairro?: string;
+    cidade?: string;
+    pontoReferencia?: string;
+    latitude?: number;
+    longitude?: number;
+    linkGoogleMaps?: string;
+
+    // Status e Controle
+    status: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
+    motivoCancelamento?: string;
+    reagendamentosContagem: number;
+    dataConfirmacao?: string;
+    canalConfirmacao?: 'WHATSAPP' | 'TELEFONE' | 'EMAIL';
+
+    // Vinculações
+    funnelStageId?: string;
+    propostaId?: string;
+    erpOrderId?: string;
+    protocoloOrigem?: string;
+
+    createdAt: string;
+    updatedAt: string;
+    createdBy?: string;
+    updatedBy?: string;
+}
+
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
         .from('Lead')
@@ -135,6 +186,51 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<vo
 export const deleteLead = async (id: string): Promise<void> => {
     const { error } = await supabase
         .from('Lead')
+        .delete()
+        .eq('id', id);
+
+    if (error) throw error;
+};
+
+/* ====== Appointments Services ====== */
+
+export const getAppointments = async (): Promise<Appointment[]> => {
+    const { data, error } = await supabase
+        .from('Appointment')
+        .select('*')
+        .order('dataInicio', { ascending: true });
+
+    if (error) throw error;
+    return data || [];
+};
+
+export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
+    const { data, error } = await supabase
+        .from('Appointment')
+        .insert([{
+            ...appointment,
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
+    const { error } = await supabase
+        .from('Appointment')
+        .update({ ...updates, updatedAt: new Date().toISOString() })
+        .eq('id', id);
+
+    if (error) throw error;
+};
+
+export const deleteAppointment = async (id: string): Promise<void> => {
+    const { error } = await supabase
+        .from('Appointment')
         .delete()
         .eq('id', id);
 

@@ -6,7 +6,7 @@ import {
     Funnel, MapPin, Target,
     Handshake, Warning, Calendar,
     FileText, MapTrifold, CaretRight,
-    CaretLeft, DownloadSimple
+    CaretLeft, DownloadSimple, User
 } from '@phosphor-icons/react';
 
 type TabType = 'dashboard' | 'operacional' | 'estrategico';

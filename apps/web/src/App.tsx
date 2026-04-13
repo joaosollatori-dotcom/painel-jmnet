@@ -14,6 +14,7 @@ import SalesPipeline from './components/SalesPipeline';
 import LeadDetail from './components/LeadDetail';
 import AutomationsDashboard from './components/AutomationsDashboard';
 import LeadReports from './components/LeadReports';
+import AppointmentManager from './components/AppointmentManager';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import { getLeads } from './services/leadService';
@@ -222,6 +223,7 @@ const App: React.FC = () => {
 
           <Route path="/crm" element={<LeadsManager />} />
           <Route path="/crm/lead/:id" element={<LeadView />} />
+          <Route path="/crm_tasks" element={<AppointmentManager />} />
 
           <Route path="/kanban" element={<SalesPipeline />} />
           <Route path="/automacoes" element={<AutomationsDashboard />} />
