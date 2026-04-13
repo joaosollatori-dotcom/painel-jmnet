@@ -18,15 +18,10 @@
 .sidebar-placeholder {
     width: 72px;
     flex-shrink: 0;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    transition: width 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-.sidebar.expanded+.main-layout,
-.sidebar-expanded .sidebar-placeholder {
-    width: 280px;
-}
-
-/* Quando não está retraída (está expandida) */
+/* Sidebar expandida = app-container sem a classe sidebar-retracted */
 :not(.sidebar-retracted) .sidebar-placeholder {
     width: 280px;
 }
