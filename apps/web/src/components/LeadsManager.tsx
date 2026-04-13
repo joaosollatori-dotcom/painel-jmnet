@@ -832,7 +832,7 @@ const LeadsManager: React.FC = () => {
                 
                 .form-group select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23666' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 20px center; padding-right: 50px; }
 
-                .modal-footer { padding: 2.5rem 3rem; background: #0a0a0a; display: flex; justify-content: flex-end; align-items: center; gap: 2rem; border-top: 1px solid #1a1a1a; }
+
                 .btn-secondary { background: transparent; border: 1.5px solid #222; color: #888; padding: 0 32px; height: 56px; border-radius: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; }
                 .btn-secondary:hover { color: #fff; border-color: #444; background: rgba(255,255,255,0.02); }
                 
