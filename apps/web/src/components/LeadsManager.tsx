@@ -239,7 +239,7 @@ const LeadsManager: React.FC = () => {
     };
 
     return (
-        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)' }}>
+        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)', flex: 1 }}>
             {/* Barra Superior */}
             <header className="listing-header">
                 <div>
@@ -575,7 +575,8 @@ const LeadsManager: React.FC = () => {
             </AnimatePresence >
 
             <style>{`
-                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); }
+                .manager-container { padding: 2rem 2.5rem 3rem; box-sizing: border-box; }
+                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-top: 0.25rem; }
                 .main-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
                 .results-counter { margin-top: 4px; color: #666; font-size: 0.85rem; }
                 .results-counter span { color: var(--primary-color); font-weight: 700; }
@@ -598,7 +599,7 @@ const LeadsManager: React.FC = () => {
                 }
                 .btn-new-lead:hover { background: #2563eb; transform: translateY(-2px); }
 
-                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; margin-bottom: 2.5rem; }
+                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem; width: 100%; }
                 .stat-card { 
                     background: var(--bg-surface); border: 1px solid var(--border); padding: 1.25rem 1.5rem;
                     border-radius: 16px; cursor: pointer; transition: all 0.2s;
@@ -617,6 +618,7 @@ const LeadsManager: React.FC = () => {
                 .table-container { 
                     background: var(--bg-surface); border: 1px solid var(--border); 
                     border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+                    width: 100%;
                 }
                 .leads-table { width: 100%; border-collapse: separate; border-spacing: 0; }
                 .leads-table thead { position: sticky; top: 0; z-index: 100; }

@@ -1,7 +1,7 @@
 import React from 'react';
-import { useLocation, useNavigate, useMatch } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
+import { motion, AnimatePresence } from 'framer-motion';
 import {
-    ChatCircleDots,
     SquaresFour,
     Gear,
     Users,
@@ -16,13 +16,9 @@ import {
     Wrench,
     Package,
     Globe,
-    MapTrifold,
     Headset,
-    ShoppingCart,
     TrendUp,
-    CaretDown,
     CaretRight,
-    Clock,
     WarningCircle
 } from '@phosphor-icons/react';
 import './Sidebar.css';
@@ -34,29 +30,28 @@ interface SidebarProps {
     onToggleTheme: () => void;
 }
 
-const Sidebar: React.FC<SidebarProps> = ({
-    isRetracted,
-    onToggleRetraction,
-    theme,
-    onToggleTheme
-}) => {
+const accordionVariants = {
+    open: { height: 'auto', opacity: 1, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } },
+    closed: { height: 0, opacity: 0, transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } }
+};
+
+const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, theme, onToggleTheme }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
-    const [status, setStatus] = React.useState<'Online' | 'Banheiro' | 'Almoço' | 'Offline'>('Online');
-    const [statusStartTime, setStatusStartTime] = React.useState<number>(Date.now());
-    const [timer, setTimer] = React.useState('00:00:00');
-    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set(['GESTÃO', 'COMERCIAL & VENDAS', 'ATENDIMENTO']));
+    const [statusStartTime] = React.useState<number>(Date.now());
+    const [, setTimer] = React.useState('00:00:00');
+    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
+        new Set(['ATENDIMENTO', 'COMERCIAL & VENDAS', 'OPERAÇÕES', 'INFRAESTRUTURA'])
+    );
 
-    const toggleExpand = (id: string, e: React.MouseEvent) => {
-        e.stopPropagation();
-        const newExpanded = new Set(expandedItems);
-        if (newExpanded.has(id)) {
-            newExpanded.delete(id);
-        } else {
-            newExpanded.add(id);
-        }
-        setExpandedItems(newExpanded);
+    const toggleExpand = (id: string, e?: React.MouseEvent) => {
+        e?.stopPropagation();
+        setExpandedItems(prev => {
+            const next = new Set(prev);
+            next.has(id) ? next.delete(id) : next.add(id);
+            return next;
+        });
     };
 
     const menuGroups = [
@@ -72,22 +67,16 @@ const Sidebar: React.FC<SidebarProps> = ({
             label: 'COMERCIAL & VENDAS',
             items: [
                 {
-                    id: 'crm_module',
-                    icon: TrendUp,
-                    label: 'CRM de Leads',
+                    id: 'crm_module', icon: TrendUp, label: 'CRM de Leads',
                     subItems: [
                         { id: '/crm', label: 'Gestão de Leads' },
-                        { id: '/crm_tasks', label: 'Agendamentos' }, // Placeholder
-                        { id: '/crm_contratos', label: 'Contratos' }, // Placeholder
+                        { id: '/crm_tasks', label: 'Agendamentos' },
+                        { id: '/crm_contratos', label: 'Contratos' },
                     ]
                 },
                 {
-                    id: 'clientes',
-                    icon: Users,
-                    label: 'Base de Clientes',
-                    subItems: [
-                        { id: '/client_search', label: 'Consultar Cliente' },
-                    ]
+                    id: 'clientes', icon: Users, label: 'Base de Clientes',
+                    subItems: [{ id: '/client_search', label: 'Consultar Cliente' }]
                 },
                 { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
             ]
@@ -96,12 +85,8 @@ const Sidebar: React.FC<SidebarProps> = ({
             label: 'OPERAÇÕES',
             items: [
                 {
-                    id: 'financeiro_group',
-                    icon: CurrencyDollar,
-                    label: 'Financeiro',
-                    subItems: [
-                        { id: '/financeiro', label: 'Gestão Financeira' },
-                    ]
+                    id: 'financeiro_group', icon: CurrencyDollar, label: 'Financeiro',
+                    subItems: [{ id: '/financeiro', label: 'Gestão Financeira' }]
                 },
                 { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
                 { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
@@ -118,10 +103,8 @@ const Sidebar: React.FC<SidebarProps> = ({
     ];
 
     const isItemActive = (item: any): boolean => {
-        if (location.pathname.startsWith(item.id)) return true;
-        if (item.subItems) {
-            return item.subItems.some((subItem: any) => isItemActive(subItem));
-        }
+        if (item.id?.startsWith('/') && location.pathname.startsWith(item.id)) return true;
+        if (item.subItems) return item.subItems.some((s: any) => isItemActive(s));
         return false;
     };
 
@@ -135,55 +118,67 @@ const Sidebar: React.FC<SidebarProps> = ({
                 <button
                     className={`nav-item ${isActive ? 'active' : ''} ${depth > 0 ? 'sub-item' : ''}`}
                     onClick={() => {
-                        if (hasSubItems && !isRetracted) {
-                            toggleExpand(item.id, { stopPropagation: () => { } } as any);
-                        } else if (item.id.startsWith('/')) {
-                            navigate(item.id);
-                        }
+                        if (hasSubItems && !isRetracted) toggleExpand(item.id);
+                        else if (item.id?.startsWith('/')) navigate(item.id);
                     }}
                     title={item.label}
                     style={{ paddingLeft: !isRetracted ? `${depth * 16 + 16}px` : undefined }}
                 >
-                    {item.icon ? (
-                        <item.icon size={22} weight={isActive ? "fill" : "regular"} className="nav-icon" />
-                    ) : (
-                        depth > 0 && !isRetracted && <div className="sub-item-bullet" />
-                    )}
+                    {item.icon
+                        ? <item.icon size={22} weight={isActive ? 'fill' : 'regular'} className="nav-icon" />
+                        : depth > 0 && !isRetracted && <div className="sub-item-bullet" />
+                    }
                     {!isRetracted && (
                         <>
                             <span className="nav-label">{item.label}</span>
                             {hasSubItems && (
-                                <div className="expand-icon-wrapper" onClick={(e) => toggleExpand(item.id, e)}>
-                                    {isExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                                </div>
+                                <motion.div
+                                    className="expand-icon-wrapper"
+                                    animate={{ rotate: isExpanded ? 90 : 0 }}
+                                    transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                                    onClick={e => { e.stopPropagation(); toggleExpand(item.id); }}
+                                >
+                                    <CaretRight size={13} />
+                                </motion.div>
                             )}
                         </>
                     )}
                 </button>
-                {hasSubItems && isExpanded && !isRetracted && (
-                    <div className="sub-items-container">
-                        {item.subItems.map((subItem: any) => renderMenuItem(subItem, depth + 1))}
-                    </div>
-                )}
+
+                <AnimatePresence initial={false}>
+                    {hasSubItems && isExpanded && !isRetracted && (
+                        <motion.div
+                            className="sub-items-container"
+                            initial="closed"
+                            animate="open"
+                            exit="closed"
+                            variants={accordionVariants}
+                            style={{ overflow: 'hidden' }}
+                        >
+                            {item.subItems.map((sub: any) => renderMenuItem(sub, depth + 1))}
+                        </motion.div>
+                    )}
+                </AnimatePresence>
             </div>
         );
     };
 
     React.useEffect(() => {
-        const interval = setInterval(() => {
+        const iv = setInterval(() => {
             const diff = Date.now() - statusStartTime;
             const h = Math.floor(diff / 3600000);
             const m = Math.floor((diff % 3600000) / 60000);
             const s = Math.floor((diff % 60000) / 1000);
-            setTimer(`${h.toString().padStart(2, '0')}:${m.toString().padStart(2, '0')}:${s.toString().padStart(2, '0')}`);
+            setTimer(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
         }, 1000);
-        return () => clearInterval(interval);
+        return () => clearInterval(iv);
     }, [statusStartTime]);
 
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
             <div className="sidebar-header">
-                <button className="toggle-btn" onClick={onToggleRetraction} title={isRetracted ? "Expandir" : "Recolher"}>
+                <button className="toggle-btn" onClick={onToggleRetraction}
+                    title={isRetracted ? 'Expandir' : 'Recolher'}>
                     {isRetracted ? <CaretDoubleRight size={20} /> : <CaretDoubleLeft size={20} />}
                 </button>
                 {!isRetracted && <span className="logo-text">TITÃ</span>}
@@ -195,19 +190,31 @@ const Sidebar: React.FC<SidebarProps> = ({
                     return (
                         <div key={gIdx} className="nav-group">
                             {!isRetracted && (
-                                <div
-                                    className="nav-group-header"
-                                    onClick={(e) => toggleExpand(group.label, e)}
-                                >
+                                <div className="nav-group-header" onClick={() => toggleExpand(group.label)}>
                                     <span className="nav-group-label">{group.label}</span>
-                                    <div className="group-expand-icon">
-                                        {isGroupExpanded ? <CaretDown size={14} /> : <CaretRight size={14} />}
-                                    </div>
+                                    <motion.div
+                                        className="group-expand-icon"
+                                        animate={{ rotate: isGroupExpanded ? 90 : 0 }}
+                                        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                                    >
+                                        <CaretRight size={13} />
+                                    </motion.div>
                                 </div>
                             )}
-                            {(!isRetracted ? isGroupExpanded : true) && (
-                                group.items.map((item) => renderMenuItem(item))
-                            )}
+                            <AnimatePresence initial={false}>
+                                {(isRetracted || isGroupExpanded) && (
+                                    <motion.div
+                                        key={group.label + '-items'}
+                                        initial={isRetracted ? false : 'closed'}
+                                        animate="open"
+                                        exit="closed"
+                                        variants={accordionVariants}
+                                        style={{ overflow: 'hidden' }}
+                                    >
+                                        {group.items.map(item => renderMenuItem(item))}
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </div>
                     );
                 })}
@@ -215,13 +222,15 @@ const Sidebar: React.FC<SidebarProps> = ({
 
             <div className="sidebar-footer">
                 <div className="footer-toolbar">
-                    <button className="footer-item" onClick={onToggleTheme} title={theme === 'dark' ? "Modo Claro" : "Modo Escuro"}>
+                    <button className="footer-item" onClick={onToggleTheme}
+                        title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}>
                         {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
                     </button>
                     <button className="footer-item" title="Ajustes" onClick={() => navigate('/ajustes')}>
                         <Gear size={22} weight="duotone" />
                     </button>
-                    <button className="footer-item logout" title="Sair" onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
+                    <button className="footer-item logout" title="Sair"
+                        onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
                         <SignOut size={22} weight="duotone" />
                     </button>
                 </div>
