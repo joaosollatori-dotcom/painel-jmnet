@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Lead, LeadHistory, updateLead } from '../services/leadService';
+import { useToast } from '../contexts/ToastContext';
 
 interface LeadDetailProps {
     lead: Lead;
@@ -22,6 +23,7 @@ interface LeadDetailProps {
 }
 
 const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
+    const { showToast } = useToast();
     const [activeTab, setActiveTab] = useState<'dados' | 'qualificacao' | 'viabilidade' | 'timeline' | 'proposta' | 'agendamento'>('timeline');
     const [isEditing, setIsEditing] = useState<string | null>(null);
 
@@ -137,7 +139,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     title="Avançar Etapa"
                     onClick={() => {
                         if (lead.statusQualificacao !== 'QUALIFICADO' || lead.statusViabilidade !== 'APROVADA') {
-                            alert('Atenção: O lead deve estar Qualificado e com Viabilidade Aprovada para avançar para Proposta.');
+                            showToast('Atenção: O lead deve estar Qualificado e com Viabilidade Aprovada.', 'warning');
                         } else {
                             // Lógica de avanço
                         }

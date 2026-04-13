@@ -231,17 +231,23 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
 
             <div className="sidebar-footer">
                 <div className="footer-toolbar">
-                    <button className="footer-item" onClick={onToggleTheme}
-                        title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}>
-                        {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
-                    </button>
+                    {!isRetracted && (
+                        <button className="footer-item" onClick={onToggleTheme}
+                            title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}>
+                            {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
+                        </button>
+                    )}
+
                     <button className="footer-item" title="Ajustes" onClick={() => navigate('/ajustes')}>
-                        <Gear size={22} weight="duotone" />
+                        {isRetracted ? <User size={22} weight="duotone" /> : <Gear size={22} weight="duotone" />}
                     </button>
-                    <button className="footer-item logout" title="Sair"
-                        onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
-                        <SignOut size={22} weight="duotone" />
-                    </button>
+
+                    {!isRetracted && (
+                        <button className="footer-item logout" title="Sair"
+                            onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
+                            <SignOut size={22} weight="duotone" />
+                        </button>
+                    )}
                 </div>
             </div>
         </aside>

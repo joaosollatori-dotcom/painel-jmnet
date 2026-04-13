@@ -14,12 +14,14 @@ import {
     CalendarPlus
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Lead, getLeads, deleteLead, updateLead } from '../services/leadService';
+import { Lead, getLeads, deleteLead, updateLead, createLead } from '../services/leadService';
 import { genericFilter } from '../utils/filterUtils';
 import LeadDetail from './LeadDetail';
+import { useToast } from '../contexts/ToastContext';
 import './Dashboard.css';
 
 const LeadsManager: React.FC = () => {
+    const { showToast } = useToast();
     const navigate = useNavigate();
     const [leads, setLeads] = useState<Lead[]>([]);
     const [loading, setLoading] = useState(true);
@@ -76,13 +78,16 @@ const LeadsManager: React.FC = () => {
         try {
             if (selectedLead) {
                 await updateLead(selectedLead.id, formData);
+                showToast('Lead atualizado com sucesso!', 'success');
             } else {
                 await createLead(formData);
+                showToast('Novo lead registrado com sucesso!', 'success');
             }
             setShowModal(false);
             setSelectedLead(null);
             loadLeads();
         } catch (err) {
+            showToast('Erro ao salvar lead. Tente novamente.', 'error');
             console.error('Error saving lead:', err);
         }
     };
@@ -91,8 +96,10 @@ const LeadsManager: React.FC = () => {
         if (!window.confirm("Atenção: Esta ação é irreversível. Deseja excluir este lead?")) return;
         try {
             await deleteLead(id);
+            showToast('Lead excluído permanentemente.', 'success');
             loadLeads();
         } catch (err) {
+            showToast('Erro ao excluir lead.', 'error');
             console.error('Error deleting lead:', err);
         }
     };
@@ -181,7 +188,7 @@ const LeadsManager: React.FC = () => {
 
     const copyToClipboard = (text: string, label: string) => {
         navigator.clipboard.writeText(text);
-        alert(`${label} copiado: ${text}`);
+        showToast(`${label} copiado: ${text}`, 'success');
     };
 
     const getDaysInStage = (updatedAt: string) => {
@@ -210,14 +217,8 @@ const LeadsManager: React.FC = () => {
     };
 
     const renderEmptyState = () => {
-        if (loading) {
-            return (
-                <div className="loading-state">
-                    <div className="spinner-premium"></div>
-                    <p>Sincronizando Leads Titã...</p>
-                </div>
-            );
-        }
+        if (loading || processedLeads.length > 0) return null;
+
         if (leads.length === 0) {
             return (
                 <div className="empty-state">
@@ -228,14 +229,22 @@ const LeadsManager: React.FC = () => {
                 </div>
             );
         }
-        return (
-            <div className="empty-state">
-                <MagnifyingGlass size={64} weight="duotone" />
-                <h2>Nada encontrado</h2>
-                <p>Não encontramos resultados para "{searchTerm || currentQuickFilter}".</p>
-                <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); }} className="btn-secondary">Limpar filtros</button>
-            </div>
-        );
+
+        // Só mostra "Nada encontrado" se houver algum filtro ativo
+        const hasActiveFilter = searchTerm || currentQuickFilter || stageFilter || viabilityFilter;
+
+        if (hasActiveFilter) {
+            return (
+                <div className="empty-state">
+                    <MagnifyingGlass size={64} weight="duotone" />
+                    <h2>Nada encontrado</h2>
+                    <p>Não encontramos resultados para os filtros selecionados.</p>
+                    <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); setStageFilter(null); setViabilityFilter(null); }} className="btn-secondary">Limpar filtros</button>
+                </div>
+            );
+        }
+
+        return null;
     };
 
     return (
@@ -525,13 +534,17 @@ const LeadsManager: React.FC = () => {
                     showModal && (
                         <div className="modal-overlay">
                             <motion.div
-                                initial={{ opacity: 0, scale: 0.9 }}
-                                animate={{ opacity: 1, scale: 1 }}
+                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
+                                animate={{ opacity: 1, scale: 1, y: 0 }}
+                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
                                 className="lead-modal"
                             >
                                 <header className="modal-header">
-                                    <h2><UserPlus size={24} weight="duotone" /> Novo Lead Comercial</h2>
-                                    <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={32} /></button>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                                        <h2><UserPlus size={28} weight="duotone" color="var(--primary-color)" /> Novo Lead Comercial</h2>
+                                        <p style={{ color: '#555', margin: 0, fontSize: '0.9rem', fontWeight: 500, paddingLeft: '44px' }}>Cadastre um novo potencial cliente no seu funil de vendas</p>
+                                    </div>
+                                    <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={28} weight="fill" /></button>
                                 </header>
                                 <form onSubmit={handleSubmit} className="modal-content">
                                     <section className="modal-section">
@@ -540,21 +553,24 @@ const LeadsManager: React.FC = () => {
                                             <div className="form-group">
                                                 <label>Nome Completo</label>
                                                 <input required type="text" placeholder="Ex: João da Silva"
+                                                    value={formData.nomeCompleto}
                                                     onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
                                             </div>
                                             <div className="form-group">
                                                 <label>Telefone Principal</label>
                                                 <input required type="text" placeholder="(00) 00000-0000"
+                                                    value={formData.telefonePrincipal}
                                                     onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
                                             </div>
                                             <div className="form-group">
                                                 <label>E-mail</label>
                                                 <input type="email" placeholder="cliente@email.com"
+                                                    value={formData.email}
                                                     onChange={e => setFormData({ ...formData, email: e.target.value })} />
                                             </div>
                                             <div className="form-group">
                                                 <label>Origem / Canal</label>
-                                                <select onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
+                                                <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
                                                     <option value="WhatsApp">WhatsApp</option>
                                                     <option value="Instagram">Instagram</option>
                                                     <option value="Indicação">Indicação</option>
@@ -778,35 +794,40 @@ const LeadsManager: React.FC = () => {
 
                 /* Modal Elite Pattern */
                 .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-                .lead-modal { background: #131313; width: 100%; max-width: 650px; border-radius: 28px; border: 1px solid #222; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
-                .modal-header { padding: 2rem 2.5rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); }
-                .modal-header h2 { margin: 0; font-size: 1.4rem; color: #fff; display: flex; align-items: center; gap: 12px; font-weight: 800; }
-                .btn-close { background: #1c1c1c; border: 1px solid #333; color: #666; cursor: pointer; border-radius: 50%; width: 36px; height: 36px; display: flex; align-items: center; justify-content: center; transition: all 0.2s; }
-                .btn-close:hover { color: #fff; border-color: #555; transform: rotate(90deg); }
+                .lead-modal { background: #111; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #222; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
+                .modal-header { padding: 2.5rem 3rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); }
+                .modal-header h2 { margin: 0; font-size: 1.6rem; color: #fff; display: flex; align-items: center; gap: 16px; font-weight: 800; letter-spacing: -0.02em; }
+                .btn-close { background: #1a1a1a; border: none; color: #666; cursor: pointer; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
+                .btn-close:hover { color: #fff; background: #333; transform: rotate(90deg); }
 
-                .modal-content { padding: 2.5rem; }
-                .modal-section h3 { font-size: 0.75rem; text-transform: uppercase; color: #444; margin-bottom: 2rem; letter-spacing: 0.1em; font-weight: 900; }
-                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; }
-                .form-group label { display: block; font-size: 11px; color: #777; font-weight: 800; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; }
+                .modal-content { padding: 3rem; }
+                .modal-section h3 { font-size: 0.8rem; text-transform: uppercase; color: #555; margin-bottom: 2.5rem; letter-spacing: 0.15em; font-weight: 900; display: flex; align-items: center; gap: 10px; }
+                .modal-section h3::after { content: ''; flex: 1; height: 1px; background: #222; }
+                
+                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
+                .form-group label { display: block; font-size: 0.7rem; color: #888; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
                 .form-group input, .form-group select { 
-                    width: 100%; background: #0a0a0a; border: 1px solid #222; color: #fff; padding: 14px 16px; 
-                    border-radius: 14px; outline: none; transition: all 0.2s; font-size: 0.95rem; font-weight: 500;
+                    width: 100%; background: #000; border: 1.5px solid #222; color: #fff; padding: 18px 20px; 
+                    border-radius: 18px; outline: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1rem; font-weight: 500;
+                    box-sizing: border-box;
                 }
-                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: #000; box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-                .form-group input::placeholder { color: #333; }
+                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: #000; box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.15); }
+                .form-group input::placeholder { color: #3a3a3a; }
+                
+                .form-group select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23666' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 20px center; padding-right: 50px; }
 
-                .modal-footer { padding: 2rem 2.5rem; background: #0e0e0e; display: flex; justify-content: flex-end; align-items: center; gap: 1.5rem; border-top: 1px solid #222; }
-                .btn-secondary { background: transparent; border: 1px solid #333; color: #888; padding: 0 24px; height: 48px; border-radius: 14px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.9rem; display: flex; align-items: center; justify-content: center; }
-                .btn-secondary:hover { color: #fff; border-color: #555; background: #1a1a1a; }
+                .modal-footer { padding: 2.5rem 3rem; background: #0a0a0a; display: flex; justify-content: flex-end; align-items: center; gap: 2rem; border-top: 1px solid #1a1a1a; }
+                .btn-secondary { background: transparent; border: 1.5px solid #222; color: #888; padding: 0 32px; height: 56px; border-radius: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; }
+                .btn-secondary:hover { color: #fff; border-color: #444; background: rgba(255,255,255,0.02); }
                 
                 .btn-primary { 
-                    background: var(--primary-color); color: #fff; border: none; padding: 0 32px; height: 48px; border-radius: 14px; 
-                    font-weight: 800; cursor: pointer; transition: all 0.2s; font-size: 0.95rem;
-                    box-shadow: 0 8px 16px rgba(59, 130, 246, 0.2);
+                    background: var(--primary-color); color: #fff; border: none; padding: 0 40px; height: 56px; border-radius: 18px; 
+                    font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1rem;
+                    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.25);
                     display: flex; align-items: center; justify-content: center;
                 }
-                .btn-primary:hover { transform: translateY(-2px); box-shadow: 0 12px 24px rgba(59, 130, 246, 0.3); background: #2563eb; }
-                .btn-primary:active { transform: translateY(0); }
+                .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(59, 130, 246, 0.35); background: #2563eb; }
+                .btn-primary:active { transform: translateY(-1px); }
                 .options-dropdown {
                      position: fixed; background: #181818; border: 1px solid #333; border-radius: 14px;
                      padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);

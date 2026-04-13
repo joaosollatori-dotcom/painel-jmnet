@@ -133,8 +133,38 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: ()
             </button>
           </div>
         ))}
+
+        {/* Logout Section */}
+        <div style={{
+          marginTop: '2rem',
+          padding: '1.5rem',
+          background: 'rgba(239, 68, 68, 0.05)',
+          border: '1px solid rgba(239, 68, 68, 0.2)',
+          borderRadius: 'var(--radius-lg)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <strong style={{ color: '#ef4444' }}>Deseja sair da conta?</strong>
+            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0' }}>Sua sessão será encerrada com segurança.</p>
+          </div>
+          <button
+            onClick={() => { if (window.confirm('Deseja realmente sair?')) window.location.reload(); }}
+            style={{
+              padding: '10px 24px',
+              background: '#ef4444',
+              color: '#fff',
+              borderRadius: 'var(--radius-md)',
+              fontWeight: 700,
+              fontSize: '0.9rem'
+            }}
+          >
+            Encerrar Sessão
+          </button>
+        </div>
       </div>
-    </div>
+    </div >
   );
 };
 
