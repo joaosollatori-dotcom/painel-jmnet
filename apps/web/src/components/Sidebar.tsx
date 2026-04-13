@@ -115,7 +115,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
 
         return (
             <div key={item.id} className="nav-item-container">
-                <button
+                <motion.button
+                    whileTap={{ scale: 0.97 }}
                     className={`nav-item ${isActive ? 'active' : ''} ${depth > 0 ? 'sub-item' : ''}`}
                     onClick={() => {
                         if (hasSubItems && !isRetracted) toggleExpand(item.id);
@@ -143,7 +144,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                             )}
                         </>
                     )}
-                </button>
+                </motion.button>
 
                 <AnimatePresence initial={false}>
                     {hasSubItems && isExpanded && !isRetracted && (
@@ -177,10 +178,14 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
             <div className="sidebar-header">
-                <button className="toggle-btn" onClick={onToggleRetraction}
+                <motion.button
+                    whileTap={{ scale: 0.9 }}
+                    whileHover={{ backgroundColor: 'var(--border)' }}
+                    className="toggle-btn"
+                    onClick={onToggleRetraction}
                     title={isRetracted ? 'Expandir' : 'Recolher'}>
                     {isRetracted ? <CaretDoubleRight size={20} /> : <CaretDoubleLeft size={20} />}
-                </button>
+                </motion.button>
                 {!isRetracted && <span className="logo-text">TITÃ</span>}
             </div>
 
@@ -190,7 +195,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                     return (
                         <div key={gIdx} className="nav-group">
                             {!isRetracted && (
-                                <div className="nav-group-header" onClick={() => toggleExpand(group.label)}>
+                                <motion.div
+                                    className="nav-group-header"
+                                    onClick={() => toggleExpand(group.label)}
+                                    whileTap={{ opacity: 0.7 }}
+                                >
                                     <span className="nav-group-label">{group.label}</span>
                                     <motion.div
                                         className="group-expand-icon"
@@ -199,7 +208,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                                     >
                                         <CaretRight size={13} />
                                     </motion.div>
-                                </div>
+                                </motion.div>
                             )}
                             <AnimatePresence initial={false}>
                                 {(isRetracted || isGroupExpanded) && (

@@ -73,7 +73,7 @@ const SalesPipeline: React.FC = () => {
     if (loading) return <div style={{ padding: '2rem' }}>Carregando Pipeline...</div>;
 
     return (
-        <div style={{ padding: '1.5rem', height: '100%', display: 'flex', flexDirection: 'column' }}>
+        <div style={{ padding: 'var(--space-lg)', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
             {/* Header com Stats */}
             <header style={{ marginBottom: '2rem' }}>
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
@@ -100,14 +100,14 @@ const SalesPipeline: React.FC = () => {
 
             {/* Kanban Board */}
             <div style={{
-                flex: 1, display: 'flex', gap: '1rem', overflowX: 'auto', paddingBottom: '1rem',
+                flex: 1, display: 'flex', gap: '1.5rem', overflowX: 'auto', paddingBottom: '1rem',
                 scrollbarWidth: 'thin', scrollbarColor: '#444 transparent'
             }}>
                 {stages.map(stage => {
                     const stageLeads = leads.filter(l => l.stageId === stage.id || (!l.stageId && stage.ordem === 0));
                     return (
                         <div key={stage.id} style={{
-                            minWidth: '280px', width: '280px', display: 'flex', flexDirection: 'column',
+                            flex: 1, minWidth: '320px', display: 'flex', flexDirection: 'column',
                             background: 'rgba(255,255,255,0.01)', borderRadius: '12px'
                         }}>
                             {/* Stage Header */}

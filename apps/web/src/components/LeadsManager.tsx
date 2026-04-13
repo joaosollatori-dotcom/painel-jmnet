@@ -239,7 +239,7 @@ const LeadsManager: React.FC = () => {
     };
 
     return (
-        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)', flex: 1 }}>
+        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)', flex: 1, padding: 'var(--space-lg)' }}>
             {/* Barra Superior */}
             <header className="listing-header">
                 <div>
@@ -575,8 +575,8 @@ const LeadsManager: React.FC = () => {
             </AnimatePresence >
 
             <style>{`
-                .manager-container { padding: 2rem 2.5rem 3rem; box-sizing: border-box; }
-                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-top: 0.25rem; }
+                .manager-container { box-sizing: border-box; }
+                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-top: 0.5rem; }
                 .main-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
                 .results-counter { margin-top: 4px; color: #666; font-size: 0.85rem; }
                 .results-counter span { color: var(--primary-color); font-weight: 700; }

@@ -63,6 +63,8 @@
 .toggle-btn:hover {
     border-color: var(--primary-color);
     color: var(--primary-color);
+    background: var(--bg-surface);
+    transform: scale(1.1);
 }
 
 .sidebar-nav {
@@ -81,6 +83,12 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.nav-group-header:hover .nav-group-label {
+    color: var(--primary-color);
 }
 
 .nav-group-label {
@@ -109,8 +117,10 @@
 }
 
 .nav-item:hover {
-    background: rgba(255, 255, 255, 0.03);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
+    transform: translateX(4px);
+    box-shadow: 4px 0 15px rgba(0, 0, 0, 0.1);
 }
 
 .nav-item.active {
