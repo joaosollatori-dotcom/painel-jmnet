@@ -11,7 +11,7 @@ import {
     ChatCircleDots, CalendarBlank, ArrowSquareOut,
     Archive, MapTrifold, Warning, CaretDown,
     PhoneCall, DeviceMobile, HardDrives, MapPinLine,
-    CalendarPlus
+    CalendarPlus, X
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lead, getLeads, deleteLead, updateLead, createLead } from '../services/leadService';
