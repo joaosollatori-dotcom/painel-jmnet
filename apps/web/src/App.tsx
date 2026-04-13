@@ -12,6 +12,8 @@ import OcorrenciasManager from './components/OcorrenciasManager';
 import LeadsManager from './components/LeadsManager';
 import SalesPipeline from './components/SalesPipeline';
 import LeadDetail from './components/LeadDetail';
+import AutomationsDashboard from './components/AutomationsDashboard';
+import LeadReports from './components/LeadReports';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import { getLeads } from './services/leadService';
@@ -58,7 +60,7 @@ const Atendimento: React.FC = () => {
 
   return (
     <>
-      <ChatList selectedChatId={chatId} onSelectChat={(id) => navigate(`/atendimento/${id}`)} />
+      <ChatList selectedChatId={chatId || null} onSelectChat={(id) => navigate(`/atendimento/${id}`)} />
       {chatId ? (
         <ChatArea chatId={chatId} />
       ) : (
@@ -222,6 +224,8 @@ const App: React.FC = () => {
           <Route path="/crm/lead/:id" element={<LeadView />} />
 
           <Route path="/kanban" element={<SalesPipeline />} />
+          <Route path="/automacoes" element={<AutomationsDashboard />} />
+          <Route path="/relatorios" element={<LeadReports />} />
           <Route path="/financeiro" element={<FinanceManager />} />
           <Route path="/os" element={<OSManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />

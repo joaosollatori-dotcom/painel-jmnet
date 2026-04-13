@@ -20,7 +20,8 @@ import {
     TrendUp,
     CaretRight,
     WarningCircle,
-    User
+    User,
+    ChartLine
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
@@ -80,6 +81,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                     subItems: [{ id: '/client_search', label: 'Consultar Cliente' }]
                 },
                 { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
+                { id: '/automacoes', icon: Lightning, label: 'Automações' },
+                { id: '/relatorios', icon: ChartLine, label: 'Relatórios' },
             ]
         },
         {
