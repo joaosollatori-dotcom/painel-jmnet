@@ -541,48 +541,63 @@ const LeadsManager: React.FC = () => {
                                 className="lead-modal"
                             >
                                 <header className="modal-header">
-                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <h2><UserPlus size={28} weight="duotone" color="var(--primary-color)" /> Novo Lead Comercial</h2>
-                                        <p style={{ color: '#555', margin: 0, fontSize: '0.9rem', fontWeight: 500, paddingLeft: '44px' }}>Cadastre um novo potencial cliente no seu funil de vendas</p>
+                                    <div className="header-left">
+                                        <div className="header-icon-box">
+                                            <UserPlus size={24} weight="bold" />
+                                        </div>
+                                        <div className="header-text">
+                                            <h2>Novo Lead Comercial</h2>
+                                            <p>Cadastre um novo potencial cliente no funil de vendas</p>
+                                        </div>
                                     </div>
-                                    <button className="btn-close" onClick={() => setShowModal(false)}><XCircle size={28} weight="fill" /></button>
+                                    <button className="btn-close" onClick={() => setShowModal(false)}><X size={18} /></button>
                                 </header>
-                                <form onSubmit={handleSubmit} className="modal-content">
-                                    <section className="modal-section">
-                                        <h3>Informações Básicas</h3>
-                                        <div className="form-grid">
-                                            <div className="form-group">
-                                                <label>Nome Completo</label>
-                                                <input required type="text" placeholder="Ex: João da Silva"
-                                                    value={formData.nomeCompleto}
-                                                    onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Telefone Principal</label>
-                                                <input required type="text" placeholder="(00) 00000-0000"
-                                                    value={formData.telefonePrincipal}
-                                                    onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>E-mail</label>
-                                                <input type="email" placeholder="cliente@email.com"
-                                                    value={formData.email}
-                                                    onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                                            </div>
-                                            <div className="form-group">
-                                                <label>Origem / Canal</label>
+
+                                <form onSubmit={handleSubmit} className="modal-body">
+                                    <div className="section-divider">
+                                        <span>INFORMAÇÕES BÁSICAS</span>
+                                        <div className="line" />
+                                    </div>
+
+                                    <div className="form-grid">
+                                        <div className="form-group">
+                                            <label>Nome Completo</label>
+                                            <input required type="text" placeholder="Ex: João da Silva"
+                                                value={formData.nomeCompleto}
+                                                onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Telefone Principal</label>
+                                            <input required type="text" placeholder="(00) 00000-0000"
+                                                value={formData.telefonePrincipal}
+                                                onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>E-mail</label>
+                                            <input type="email" placeholder="cliente@email.com"
+                                                value={formData.email}
+                                                onChange={e => setFormData({ ...formData, email: e.target.value })} />
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Origem / Canal</label>
+                                            <div className="select-wrapper">
                                                 <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
                                                     <option value="WhatsApp">WhatsApp</option>
                                                     <option value="Instagram">Instagram</option>
                                                     <option value="Indicação">Indicação</option>
                                                     <option value="Site/Formulário">Site/Formulário</option>
                                                 </select>
+                                                <CaretDown className="select-icon" />
                                             </div>
                                         </div>
-                                    </section>
+                                    </div>
+
                                     <footer className="modal-footer">
-                                        <button type="button" className="btn-secondary" onClick={() => setShowModal(false)}>Cancelar</button>
-                                        <button type="submit" className="btn-primary">Registrar Lead no Sistema</button>
+                                        <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
+                                        <button type="submit" className="btn-submit">
+                                            <UserPlus size={20} weight="bold" />
+                                            Registrar Lead
+                                        </button>
                                     </footer>
                                 </form>
                             </motion.div>
@@ -840,6 +855,191 @@ const LeadsManager: React.FC = () => {
                  .dropdown-header { padding: 8px 12px; font-size: 10px; text-transform: uppercase; color: #555; font-weight: 800; letter-spacing: 0.06em; }
                  .divider { height: 1px; background: #2a2a2a; margin: 4px 8px; }
                  @keyframes fadeCtx { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
+
+                /* Lead Modal Styled per Reference Image */
+                .modal-overlay {
+                    position: fixed;
+                    inset: 0;
+                    background: rgba(0, 0, 0, 0.7);
+                    backdrop-filter: blur(8px);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    z-index: 2000;
+                    padding: 20px;
+                }
+                .lead-modal {
+                    background: #10141d;
+                    width: 100%;
+                    max-width: 680px;
+                    border-radius: 24px;
+                    border: 1px solid #1e2430;
+                    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
+                    overflow: hidden;
+                    display: flex;
+                    flex-direction: column;
+                }
+                .modal-header {
+                    padding: 24px 32px;
+                    display: flex;
+                    justify-content: space-between;
+                    align-items: center;
+                    border-bottom: 1px solid #1e2430;
+                }
+                .header-left {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                }
+                .header-icon-box {
+                    width: 48px;
+                    height: 48px;
+                    background: #24314c;
+                    color: #3b82f6;
+                    border-radius: 14px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                }
+                .header-text h2 {
+                    margin: 0;
+                    font-size: 1.25rem;
+                    font-weight: 700;
+                    color: #fff;
+                }
+                .header-text p {
+                    margin: 4px 0 0;
+                    font-size: 0.85rem;
+                    color: #64748b;
+                }
+                .btn-close {
+                    width: 36px;
+                    height: 36px;
+                    background: #1e2430;
+                    border: none;
+                    color: #64748b;
+                    border-radius: 10px;
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-close:hover {
+                    background: #2d3748;
+                    color: #fff;
+                }
+
+                .modal-body {
+                    padding: 32px;
+                }
+                .section-divider {
+                    display: flex;
+                    align-items: center;
+                    gap: 16px;
+                    margin-bottom: 24px;
+                }
+                .section-divider span {
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                    color: #475569;
+                    letter-spacing: 0.1em;
+                }
+                .section-divider .line {
+                    flex: 1;
+                    height: 1px;
+                    background: #1e2430;
+                }
+
+                .form-grid {
+                    display: grid;
+                    grid-template-columns: 1fr 1fr;
+                    gap: 24px;
+                }
+                .form-group {
+                    display: flex;
+                    flex-direction: column;
+                    gap: 8px;
+                }
+                .form-group label {
+                    font-size: 0.7rem;
+                    font-weight: 800;
+                    color: #64748b;
+                    letter-spacing: 0.05em;
+                    text-transform: uppercase;
+                }
+                .form-group input, .form-group select {
+                    background: #0d0f14;
+                    border: 1px solid #1e2430;
+                    color: #cbd5e1;
+                    padding: 14px 16px;
+                    border-radius: 12px;
+                    font-size: 0.95rem;
+                    outline: none;
+                    transition: border-color 0.2s;
+                }
+                .form-group input::placeholder {
+                    color: #334155;
+                }
+                .form-group input:focus, .form-group select:focus {
+                    border-color: #3b82f6;
+                }
+
+                .select-wrapper {
+                    position: relative;
+                }
+                .select-wrapper select {
+                    width: 100%;
+                    appearance: none;
+                }
+                .select-icon {
+                    position: absolute;
+                    right: 16px;
+                    top: 50%;
+                    transform: translateY(-50%);
+                    pointer-events: none;
+                    color: #64748b;
+                }
+
+                .modal-footer {
+                    margin-top: 40px;
+                    display: flex;
+                    justify-content: flex-end;
+                    gap: 12px;
+                }
+                .btn-cancel {
+                    background: #1e2430;
+                    border: 1px solid #2d3748;
+                    color: #94a3b8;
+                    padding: 12px 24px;
+                    border-radius: 12px;
+                    font-weight: 600;
+                    cursor: pointer;
+                    font-size: 0.9rem;
+                    transition: all 0.2s;
+                }
+                .btn-cancel:hover {
+                    background: #2d3748;
+                    color: #fff;
+                }
+                .btn-submit {
+                    background: #2563eb;
+                    border: none;
+                    color: #fff;
+                    padding: 12px 28px;
+                    border-radius: 12px;
+                    font-weight: 700;
+                    font-size: 0.95rem;
+                    display: flex;
+                    align-items: center;
+                    gap: 12px;
+                    cursor: pointer;
+                    transition: all 0.2s;
+                }
+                .btn-submit:hover {
+                    background: #3b82f6;
+                    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
+                }
             `}</style>
         </div >
     );

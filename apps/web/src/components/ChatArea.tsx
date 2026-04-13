@@ -15,6 +15,7 @@ import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConve
 import { createLead } from '../services/leadService';
 import type { Message, Conversation } from '../services/chatService';
 import CameraCaptureModal from './CameraCaptureModal';
+import LoadingScreen from './LoadingScreen';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -324,26 +325,8 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     if (loading) {
         return (
-            <div className="chat-area loading-skeleton-wrapper">
-                <header className="chat-header skeleton-header">
-                    <div className="skeleton-avatar skeleton-pulse"></div>
-                    <div className="skeleton-info">
-                        <div className="skeleton-line title skeleton-pulse"></div>
-                        <div className="skeleton-line sub skeleton-pulse"></div>
-                    </div>
-                </header>
-                <div className="chat-main-content">
-                    <div className="chat-conversation skeleton-conversation">
-                        <div className="skeleton-msg received skeleton-pulse"></div>
-                        <div className="skeleton-msg sent skeleton-pulse"></div>
-                        <div className="skeleton-msg received skeleton-pulse" style={{ width: '45%' }}></div>
-                    </div>
-                    <footer className="chat-input-area skeleton-footer">
-                        <div className="skeleton-icon skeleton-pulse"></div>
-                        <div className="skeleton-input-box skeleton-pulse"></div>
-                        <div className="skeleton-icon-large skeleton-pulse"></div>
-                    </footer>
-                </div>
+            <div className="chat-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                <LoadingScreen fullScreen={false} message="Sincronizando Transmissão TITÃ..." />
             </div>
         );
     }

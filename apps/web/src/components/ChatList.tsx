@@ -11,6 +11,7 @@ import { getConversations, updateConversation, deleteConversation, subscribeToCo
 import { CheckSquareOffset } from '@phosphor-icons/react';
 import type { Conversation } from '../services/chatService';
 import { genericFilter } from '../utils/filterUtils';
+import LoadingScreen from './LoadingScreen';
 import './ChatList.css';
 
 interface ChatListProps {
@@ -231,16 +232,8 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
 
             <div className="chats-scroll-area">
                 {loading ? (
-                    <div className="chats-skeleton-list">
-                        {[...Array(6)].map((_, i) => (
-                            <div key={i} className="chat-card skeleton-pulse" style={{ display: 'grid', gridTemplateColumns: 'auto 1fr', padding: '12px 16px', gap: '16px', cursor: 'default', pointerEvents: 'none' }}>
-                                <div style={{ width: '44px', height: '44px', borderRadius: '50%', backgroundColor: 'var(--bg-deep)' }}></div>
-                                <div style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center', gap: '10px' }}>
-                                    <div style={{ width: '50%', height: '14px', borderRadius: '4px', backgroundColor: 'var(--bg-deep)' }}></div>
-                                    <div style={{ width: '85%', height: '12px', borderRadius: '4px', backgroundColor: 'var(--bg-deep)', opacity: 0.7 }}></div>
-                                </div>
-                            </div>
-                        ))}
+                    <div style={{ padding: '80px 0' }}>
+                        <LoadingScreen fullScreen={false} message="Sincronizando Mensagens..." />
                     </div>
                 ) : sortedChats.length === 0 ? (
                     <div className="empty-state">Nenhuma conversa encontrada.</div>

@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel } from '@phosphor-icons/react';
 import { genericFilter } from '../utils/filterUtils';
+import LoadingScreen from './LoadingScreen';
 
 interface OS {
     id: string;
@@ -95,9 +96,8 @@ const OSManager: React.FC = () => {
 
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))', gap: '20px' }}>
                 {loading ? (
-                    <div className="loading-state" style={{ gridColumn: '1/-1' }}>
-                        <div className="spinner-premium"></div>
-                        <p>Sincronizando Ordens de Serviço...</p>
+                    <div style={{ gridColumn: '1 / -1', padding: '100px 0' }}>
+                        <LoadingScreen fullScreen={false} message="Sincronizando Ordens de Serviço..." />
                     </div>
                 ) : filteredOSS.map(os => (
                     <div key={os.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
