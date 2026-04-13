@@ -280,6 +280,7 @@ const AppointmentManager: React.FC = () => {
         if (mins < 1440) return `Em ${Math.floor(mins / 60)}h`;
         return `${Math.floor(mins / 1440)} dias`;
     };
+
     // --- LÓGICA DE CALENDÁRIO ---
     const lanes = useMemo(() => {
         const uniqueResps = Array.from(new Set(appointments.map(a => a.vendedorId || 'S/R')));
@@ -290,7 +291,7 @@ const AppointmentManager: React.FC = () => {
         const date = new Date(dateStr);
         const hour = date.getHours();
         const mins = date.getMinutes();
-        const startHour = 8; // Agenda começa às 08:00
+        const startHour = 8;
 
         const top = (hour - startHour) * 80 + (mins / 60) * 80;
         const height = (durationMins / 60) * 80;
@@ -299,9 +300,7 @@ const AppointmentManager: React.FC = () => {
     };
 
     const handleDragEnd = async (appt: Appointment, info: any) => {
-        // Delta Y dividido por altura da hora (80px)
-        const hourDelta = Math.round(info.offset.y / 80 * 4) / 4; // Step de 15 min
-
+        const hourDelta = Math.round(info.offset.y / 80 * 4) / 4;
         const newStart = new Date(appt.dataInicio);
         newStart.setMinutes(newStart.getMinutes() + (hourDelta * 60));
 
@@ -322,22 +321,6 @@ const AppointmentManager: React.FC = () => {
         }
     };
 
-    const handleResize = async (appt: Appointment, deltaHeight: number) => {
-        const extraMinutes = (deltaHeight / 80) * 60;
-        const currentDuration = appt.duracaoEstimada || 60;
-        const newDuration = Math.max(15, currentDuration + extraMinutes);
-
-        try {
-            await updateAppointment(appt.id, {
-                duracaoEstimada: Math.round(newDuration),
-                dataFim: new Date(new Date(appt.dataInicio).getTime() + newDuration * 60000).toISOString()
-            });
-            loadAppointments();
-        } catch (err) {
-            showToast('Erro ao ajustar duração', 'error');
-        }
-    };
-
     const changeDate = (direction: 'prev' | 'next') => {
         const newDate = new Date(currentDate);
         const isForward = direction === 'next';
@@ -349,7 +332,6 @@ const AppointmentManager: React.FC = () => {
 
     return (
         <div className="appt-dashboard">
-            {/* BARRA SUPERIOR E CONTROLES */}
             <header className="appt-header">
                 <div className="header-left">
                     <div className="title-group">
@@ -392,7 +374,6 @@ const AppointmentManager: React.FC = () => {
                 </div>
             </header>
 
-            {/* PAINEL DE ATENÇÃO */}
             <section className="attention-panel">
                 <div className="stat-card">
                     <div className="stat-icon blue"><Calendar /></div>
@@ -419,12 +400,11 @@ const AppointmentManager: React.FC = () => {
                     <div className="stat-icon purple"><ArrowsClockwise /></div>
                     <div className="stat-info">
                         <h3>Conflitos</h3>
-                        <p>Nenhum detectado</p>
+                        <p>{attentionStats.conflicts > 0 ? <strong>{attentionStats.conflicts} detectados</strong> : 'Nenhum detectado'}</p>
                     </div>
                 </div>
             </section>
 
-            {/* FILTROS RÁPIDOS */}
             <div className="filter-chips">
                 <button className={filterStatus === 'all' ? 'active' : ''} onClick={() => setFilterStatus('all')}>Todos</button>
                 <button className={filterStatus === 'AGENDADO' ? 'active' : ''} onClick={() => setFilterStatus('AGENDADO')}>Aguardando</button>
@@ -436,15 +416,43 @@ const AppointmentManager: React.FC = () => {
                 <button className="filter-btn"><User /> Responsável <CaretDown /></button>
             </div>
 
-            {/* CONTEÚDO PRINCIPAL (ALTERNÂNCIA DE VIEWS) */}
             <main className="appt-content">
                 {loading ? (
                     <LoadingScreen fullScreen={false} message="Sincronizando Fluxo de Campo..." />
-                ) : filteredAppointments.length === 0 ? (
+                ) : filteredAppointments.length === 0 && viewMode !== 'month' ? (
                     <div className="empty-state">
                         <Calendar size={64} weight="duotone" />
-                        <h2>Nenhum agendamento encontrado</h2>
+                        <h2>Nenhum agendamento para este período</h2>
                         <p>Ajuste os filtros ou crie um novo compromisso no botão superior.</p>
+                    </div>
+                ) : viewMode === 'month' ? (
+                    <div className="month-grid-container shadow-premium">
+                        <header className="month-header">
+                            {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map(d => <div key={d} className="month-day-name">{d}</div>)}
+                        </header>
+                        <div className="days-grid">
+                            {Array.from({ length: 42 }).map((_, i) => {
+                                const dayDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                                dayDate.setDate(dayDate.getDate() - dayDate.getDay() + i);
+                                const dayAppts = appointments.filter(a => new Date(a.dataInicio).toDateString() === dayDate.toDateString());
+                                const isCurrentMonth = dayDate.getMonth() === currentDate.getMonth();
+
+                                return (
+                                    <div
+                                        key={i}
+                                        className={`month-day-cell ${!isCurrentMonth ? 'inactive' : ''} ${dayDate.toDateString() === new Date().toDateString() ? 'today' : ''}`}
+                                        onClick={() => { setViewMode('day'); setCurrentDate(dayDate); }}
+                                    >
+                                        <div className="day-num">{dayDate.getDate()}</div>
+                                        {dayAppts.length > 0 && (
+                                            <div className="day-badges">
+                                                <span className="count-dot">{dayAppts.length} agend.</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
                     </div>
                 ) : viewMode === 'list' ? (
                     <div className="appt-table">
@@ -459,12 +467,14 @@ const AppointmentManager: React.FC = () => {
                         </div>
                         <AnimatePresence>
                             {Object.entries(
-                                filteredAppointments.reduce((groups, appt) => {
-                                    const date = new Date(appt.dataInicio).toDateString();
-                                    if (!groups[date]) groups[date] = [];
-                                    groups[date].push(appt);
-                                    return groups;
-                                }, {} as Record<string, Appointment[]>)
+                                filteredAppointments
+                                    .filter(appt => new Date(appt.dataInicio).toDateString() === currentDate.toDateString())
+                                    .reduce((groups, appt) => {
+                                        const date = new Date(appt.dataInicio).toDateString();
+                                        if (!groups[date]) groups[date] = [];
+                                        groups[date].push(appt);
+                                        return groups;
+                                    }, {} as Record<string, Appointment[]>)
                             ).map(([date, group]) => (
                                 <React.Fragment key={date}>
                                     <div className="group-header">
@@ -498,7 +508,6 @@ const AppointmentManager: React.FC = () => {
                                                         <img src={`https://ui-avatars.com/api/?name=${appt.vendedorId || 'U'}&background=random`} alt="" />
                                                         <span>{appt.vendedorId || 'S/R'}</span>
                                                     </div>
-                                                    {appt.equipeIds && appt.equipeIds.length > 0 && <span className="team-label">Equipe Alpha</span>}
                                                 </div>
                                             </div>
                                             <div className="col-loc">
@@ -516,7 +525,7 @@ const AppointmentManager: React.FC = () => {
                                             </div>
                                             <div className="col-confirm">
                                                 {appt.dataConfirmacao ? (
-                                                    <div className="confirm-indicator confirmed" title={`Confirmado em ${new Date(appt.dataConfirmacao).toLocaleString()}`}>
+                                                    <div className="confirm-indicator confirmed">
                                                         {appt.canalConfirmacao === 'WHATSAPP' ? <WhatsappLogo size={18} weight="fill" /> : <Checks size={18} weight="bold" />}
                                                         <span className="confirm-date">{new Date(appt.dataConfirmacao).toLocaleDateString()}</span>
                                                     </div>
@@ -529,11 +538,7 @@ const AppointmentManager: React.FC = () => {
                                             </div>
                                             <div className="col-actions">
                                                 <div className="action-pill">
-                                                    {!appt.dataConfirmacao && <button title="Confirmar Presença" className="action-item ok"><Checks /></button>}
-                                                    <button title="Reagendar" className="action-item"><ArrowsClockwise /></button>
                                                     <button title="Abrir Detalhe" className="action-item" onClick={() => setSelectedApptId(appt.id)}><ArrowSquareOut /></button>
-                                                    <div className="action-divider" />
-                                                    <button className="action-more"><DotsThreeVertical weight="bold" /></button>
                                                 </div>
                                             </div>
                                         </motion.div>
@@ -558,57 +563,51 @@ const AppointmentManager: React.FC = () => {
                         </div>
                         <div className="lane-grid ic-sidebar-scroll">
                             <div className="time-labels">
-                                {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18].map(h => (
+                                {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(h => (
                                     <div key={h} className="time-slot-label">{h}:00</div>
                                 ))}
                             </div>
                             <div className="grid-content">
-                                {/* Linhas de grade horárias */}
                                 {[8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20].map(h => (
                                     <div key={h} className="grid-row" />
                                 ))}
 
-                                {/* Blocos Dinâmicos */}
-                                {filteredAppointments.map(appt => {
-                                    const laneIndex = lanes.findIndex(l => l.id === (appt.vendedorId || 'S/R'));
-                                    if (laneIndex === -1) return null;
+                                {filteredAppointments
+                                    .filter(appt => new Date(appt.dataInicio).toDateString() === currentDate.toDateString())
+                                    .map(appt => {
+                                        const laneIndex = lanes.findIndex(l => l.id === (appt.vendedorId || 'S/R'));
+                                        if (laneIndex === -1) return null;
 
-                                    const { top, height } = calculateBlockPos(appt.dataInicio, appt.duracaoEstimada || 60);
-                                    const left = (100 / lanes.length) * laneIndex + 0.5;
-                                    const width = (100 / lanes.length) - 1;
+                                        const { top, height } = calculateBlockPos(appt.dataInicio, appt.duracaoEstimada || 60);
+                                        const left = (100 / lanes.length) * laneIndex + 0.5;
+                                        const width = (100 / lanes.length) - 1;
 
-                                    return (
-                                        <motion.div
-                                            key={appt.id}
-                                            className="appt-block"
-                                            style={{ top, left: `${left}%`, width: `${width}%`, height }}
-                                            drag="y"
-                                            dragMomentum={false}
-                                            onDragEnd={(_, info) => handleDragEnd(appt, info)}
-                                            onClick={(e) => {
-                                                e.stopPropagation();
-                                                setSelectedApptId(appt.id);
-                                            }}
-                                            whileHover={{ scale: 1.02, zIndex: 10 }}
-                                        >
-                                            <div className="block-tag tint-blue" style={{ background: getStatusStyle(appt.status).color }} />
-                                            <div className="block-info">
-                                                <strong>{appt.titulo}</strong>
-                                                <span>{new Date(appt.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
-                                            </div>
+                                        return (
+                                            <motion.div
+                                                key={appt.id}
+                                                className="appt-block"
+                                                style={{ top, left: `${left}%`, width: `${width}%`, height }}
+                                                drag="y"
+                                                dragMomentum={false}
+                                                onDragEnd={(_, info) => handleDragEnd(appt, info)}
+                                                onClick={(e) => { e.stopPropagation(); setSelectedApptId(appt.id); }}
+                                                whileHover={{ scale: 1.02, zIndex: 10 }}
+                                            >
+                                                <div className="block-tag" style={{ background: getStatusStyle(appt.status).color }} />
+                                                <div className="block-info">
+                                                    <strong>{appt.titulo}</strong>
+                                                    <span>{new Date(appt.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                                </div>
 
-                                            {/* Indicador de Conflito */}
-                                            {filteredAppointments.some(a2 =>
-                                                a2.id !== appt.id &&
-                                                a2.vendedorId === appt.vendedorId &&
-                                                new Date(appt.dataInicio) < new Date(a2.dataFim || a2.dataInicio) &&
-                                                new Date(a2.dataInicio) < new Date(appt.dataFim || appt.dataInicio)
-                                            ) && (
-                                                    <div className="block-warning"><Warning size={14} /> Conflito</div>
-                                                )}
-                                        </motion.div>
-                                    );
-                                })}
+                                                {filteredAppointments.some(a2 =>
+                                                    a2.id !== appt.id &&
+                                                    a2.vendedorId === appt.vendedorId &&
+                                                    new Date(appt.dataInicio) < new Date(a2.dataFim || a2.dataInicio) &&
+                                                    new Date(a2.dataInicio) < new Date(appt.dataFim || appt.dataInicio)
+                                                ) && <div className="block-warning"><Warning size={14} /> Conflito</div>}
+                                            </motion.div>
+                                        );
+                                    })}
                             </div>
                         </div>
                     </div>
@@ -626,317 +625,123 @@ const AppointmentManager: React.FC = () => {
 
             <style>{`
                 .appt-dashboard {
-                    padding: 2.5rem;
-                    background: #080a0f;
-                    height: 100%;
-                    overflow-y: auto;
-                    display: flex;
-                    flex-direction: column;
-                    gap: 2rem;
+                    padding: 2.5rem; background: #080a0f; height: 100%; overflow-y: auto;
+                    display: flex; flex-direction: column; gap: 2rem;
                 }
-
-                /* HEADER */
-                .appt-header {
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                }
+                .appt-header { display: flex; justify-content: space-between; align-items: center; }
                 .title-group h1 { font-size: 1.8rem; font-weight: 800; color: #fff; margin: 0; }
                 .count-badge { font-size: 0.8rem; color: #475569; font-weight: 600; }
 
-                .view-selector {
-                    background: #11141d;
-                    padding: 4px;
-                    border-radius: 12px;
-                    display: flex;
-                    margin-top: 1rem;
-                    border: 1px solid #1e2430;
-                }
+                .date-nav-controls { display: flex; align-items: center; gap: 20px; }
+                .nav-buttons { display: flex; background: #11141d; border: 1px solid #1e2430; border-radius: 10px; overflow: hidden; }
+                .nav-btn { background: transparent; border: none; color: #64748b; padding: 8px 12px; cursor: pointer; transition: all 0.2s; }
+                .nav-btn:hover { background: #1e2430; color: #fff; }
+                .nav-btn.today { font-weight: 800; border-left: 1px solid #1e2430; border-right: 1px solid #1e2430; padding: 8px 16px; font-size: 0.8rem; }
+                .current-date-label { color: #fff; font-size: 1.1rem; font-weight: 800; text-transform: capitalize; min-width: 180px; }
+
+                .view-selector { background: #11141d; padding: 4px; border-radius: 12px; display: flex; border: 1px solid #1e2430; }
                 .view-selector button {
-                    background: transparent;
-                    border: none;
-                    color: #64748b;
-                    padding: 8px 16px;
-                    border-radius: 8px;
-                    font-size: 0.85rem;
-                    font-weight: 600;
-                    cursor: pointer;
-                    display: flex;
-                    align-items: center;
-                    gap: 8px;
-                    transition: all 0.2s;
+                    background: transparent; border: none; color: #64748b; padding: 8px 16px; border-radius: 8px;
+                    font-size: 0.85rem; font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s;
                 }
-                .view-selector button.active {
-                    background: #1e2430;
-                    color: #fff;
-                }
+                .view-selector button.active { background: #1e2430; color: #fff; }
 
                 .header-right { display: flex; gap: 1rem; align-items: center; }
                 .search-bar {
-                    background: #11141d;
-                    border: 1px solid #1e2430;
-                    border-radius: 12px;
-                    padding: 0 16px;
-                    height: 48px;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    width: 320px;
+                    background: #11141d; border: 1px solid #1e2430; border-radius: 12px; padding: 0 16px; height: 48px;
+                    display: flex; align-items: center; gap: 12px; width: 320px;
                 }
                 .search-bar input { background: transparent; border: none; color: #fff; outline: none; width: 100%; }
 
                 .btn-create {
-                    background: #2563eb;
-                    color: #fff;
-                    border: none;
-                    padding: 0 24px;
-                    height: 48px;
-                    border-radius: 12px;
-                    font-weight: 700;
-                    display: flex;
-                    align-items: center;
-                    gap: 10px;
-                    cursor: pointer;
-                    transition: all 0.2s;
+                    background: #2563eb; color: #fff; border: none; padding: 0 24px; height: 48px;
+                    border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 10px; cursor: pointer; transition: all 0.2s;
                 }
                 .btn-create:hover { background: #3b82f6; box-shadow: 0 0 20px rgba(59, 130, 246, 0.4); }
 
-                /* ATTENTION PANEL */
-                .attention-panel {
-                    display: grid;
-                    grid-template-columns: repeat(4, 1fr);
-                    gap: 1.5rem;
-                }
-                .stat-card {
-                    background: #11141d;
-                    border: 1px solid #1e2430;
-                    padding: 1.5rem;
-                    border-radius: 20px;
-                    display: flex;
-                    align-items: center;
-                    gap: 1.2rem;
-                    transition: all 0.3s;
-                }
+                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.5rem; }
+                .stat-card { background: #11141d; border: 1px solid #1e2430; padding: 1.5rem; border-radius: 20px; display: flex; align-items: center; gap: 1.2rem; }
                 .stat-card.urgent { border-color: #f59e0b; background: rgba(245, 158, 11, 0.05); }
                 .stat-card.warning { border-color: #ef4444; background: rgba(239, 68, 68, 0.05); }
-
-                .stat-icon {
-                    width: 48px; height: 48px; border-radius: 14px;
-                    display: flex; align-items: center; justify-content: center;
-                    font-size: 1.5rem;
-                }
+                .stat-icon { width: 48px; height: 48px; border-radius: 14px; display: flex; align-items: center; justify-content: center; font-size: 1.5rem; }
                 .stat-icon.blue { background: #2563eb20; color: #3b82f6; }
                 .stat-icon.yellow { background: #f59e0b20; color: #f59e0b; }
                 .stat-icon.red { background: #ef444420; color: #ef4444; }
                 .stat-icon.purple { background: #8b5cf620; color: #8b5cf6; }
 
-                .stat-info h3 { font-size: 0.75rem; color: #64748b; text-transform: uppercase; letter-spacing: 0.1em; margin: 0; }
-                .stat-info p { font-size: 1.1rem; color: #fff; margin: 4px 0 0; }
-                .stat-info strong { color: #fff; font-weight: 800; }
-
-                /* FILTERS */
                 .filter-chips { display: flex; gap: 8px; align-items: center; }
                 .filter-chips button {
-                    background: transparent; border: 1px solid #1e2430;
-                    color: #64748b; padding: 8px 16px; border-radius: 999px;
-                    font-size: 0.85rem; font-weight: 600; cursor: pointer;
-                    transition: all 0.2s;
+                    background: transparent; border: 1px solid #1e2430; color: #64748b; padding: 8px 16px; border-radius: 999px;
+                    font-size: 0.85rem; font-weight: 600; cursor: pointer; transition: all 0.2s;
                 }
                 .filter-chips button.active { background: #2563eb; color: #fff; border-color: #2563eb; }
                 .filter-divider { width: 1px; height: 24px; background: #1e2430; margin: 0 8px; }
-                .filter-btn { display: flex; align-items: center; gap: 8px; }
 
-                /* TABLE */
-                .appt-table {
-                    display: flex; flex-direction: column; gap: 8px;
-                }
+                .appt-table { display: flex; flex-direction: column; gap: 8px; }
                 .table-header {
-                    display: grid;
-                    grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr;
-                    padding: 0 24px 12px;
-                    color: #475569; font-size: 0.75rem; font-weight: 800;
-                    text-transform: uppercase; letter-spacing: 0.1em;
+                    display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr; padding: 0 24px 12px;
+                    color: #475569; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em;
                 }
                 .table-row {
-                    background: #11141d;
-                    border: 1px solid #1e2430;
-                    border-radius: 16px;
-                    padding: 1rem 24px;
-                    display: grid;
-                    grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr;
-                    align-items: center;
-                    transition: all 0.2s;
+                    background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1rem 24px;
+                    display: grid; grid-template-columns: 2fr 1.5fr 1.5fr 1.5fr 1.2fr 1.2fr 1.5fr; align-items: center; transition: all 0.2s;
                 }
-                .table-row:hover { border-color: #3b82f640; background: #161b26; transform: translateX(4px); }
-
-                /* GROUP HEADERS */
-                .group-header {
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    padding: 2rem 1rem 1rem;
-                    color: #475569;
-                    font-size: 0.85rem;
-                    font-weight: 700;
-                }
-                .group-header span { color: #94a3b8; text-transform: capitalize; }
+                .group-header { display: flex; align-items: center; gap: 12px; padding: 2rem 1rem 1rem; color: #475569; font-size: 0.85rem; font-weight: 700; }
                 .group-line { flex: 1; height: 1px; background: linear-gradient(to right, #1e2430, transparent); }
 
-                .lead-name { display: block; color: #fff; font-weight: 700; font-size: 0.95rem; margin-bottom: 4px; }
-                .type-badge {
-                    font-size: 0.65rem; font-weight: 800; text-transform: uppercase;
-                    padding: 2px 8px; border-radius: 4px; background: #1e2430; color: #94a3b8;
-                }
-                .type-badge[data-type="INSTALACAO"] { background: #3b82f620; color: #3b82f6; }
-
-                .time-info { display: flex; flex-direction: column; gap: 2px; }
-                .time-val { color: #fff; font-weight: 800; font-size: 1rem; }
-                .day-val { color: #64748b; font-size: 0.8rem; }
-                .remaining-badge {
-                    font-size: 0.65rem; color: #3b82f6; font-weight: 800;
-                    background: #3b82f615; padding: 1px 6px; border-radius: 4px; width: fit-content; margin-top: 4px;
-                }
-
-                .avatar-chip { display: flex; align-items: center; gap: 10px; color: #cbd5e1; font-weight: 600; font-size: 0.9rem; }
-                .avatar-chip img { width: 28px; height: 28px; border-radius: 8px; background: #2d3748; }
-                .team-label { font-size: 0.7rem; color: #64748b; margin-top: 2px; display: block; }
-
-                .loc-info { display: flex; align-items: center; gap: 12px; }
-                .loc-text { color: #94a3b8; font-size: 0.85rem; max-width: 140px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .btn-map {
-                    width: 32px; height: 32px; border-radius: 8px; border: 1px solid #1e2430;
-                    background: transparent; color: #3b82f6; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-                }
-                .btn-map:hover { background: #3b82f610; border-color: #3b82f6; }
-
-                .status-badge {
-                    padding: 6px 12px; border-radius: 8px; font-size: 0.75rem; font-weight: 800;
-                    text-align: center; display: inline-block; min-width: 100px;
-                }
-
-                .confirm-indicator { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; }
-                .confirm-indicator.confirmed { color: #10b981; }
-                .confirm-indicator.pending { color: #475569; }
-                .confirm-date { font-size: 0.7rem; color: #64748b; font-weight: 600; }
-
-                .action-pill {
-                    background: #080a0f; border: 1px solid #1e2430;
-                    border-radius: 10px; padding: 4px; display: flex; align-items: center; gap: 4px;
-                    width: fit-content;
-                }
-                .action-item {
-                    width: 32px; height: 32px; border: none; background: transparent;
-                    color: #64748b; border-radius: 6px; cursor: pointer;
-                    display: flex; align-items: center; justify-content: center; transition: all 0.2s;
-                }
-                .action-item:hover { background: #1e2430; color: #fff; }
-                .action-item.ok { color: #10b981; background: #10b98110; }
-                .action-divider { width: 1px; height: 16px; background: #1e2430; margin: 0 4px; }
-                .action-more { background: transparent; border: none; color: #475569; cursor: pointer; padding: 4px; }
-
-                .empty-state {
-                    padding: 4rem; text-align: center; color: #475569;
-                    display: flex; flex-direction: column; align-items: center; gap: 1rem;
-                }
-                .empty-state h2 { color: #fff; margin: 0; }
-
-                /* CALENDAR VIEW PANE */
-                .calendar-view-pane {
-                    background: #11141d; border: 1px solid #1e2430; border-radius: 24px;
-                    display: flex; flex-direction: column; overflow: hidden; height: 700px;
-                }
-                .lane-header {
-                    display: grid; grid-template-columns: 80px 1fr 1fr 1fr;
-                    border-bottom: 1px solid #1e2430; background: #0c0f16;
-                }
-                .time-col { border-right: 1px solid #1e2430; }
+                .calendar-view-pane { background: #11141d; border-radius: 20px; border: 1px solid #1e2430; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+                .lane-header { display: flex; background: #0c0f16; border-bottom: 1px solid #1e2430; }
+                .time-col { width: 80px; flex-shrink: 0; border-right: 1px solid #1e243020; }
                 .lane-col {
-                    padding: 1rem; display: flex; align-items: center; gap: 12px;
-                    border-right: 1px solid #1e2430; font-weight: 700; color: #fff; font-size: 0.9rem;
+                    flex: 1; padding: 16px; text-align: center; border-right: 1px solid #1e243020;
+                    display: flex; flex-direction: column; align-items: center; gap: 8px;
                 }
-                .lane-col img { width: 32px; height: 32px; border-radius: 10px; }
-                .occupancy-bar {
-                    width: 40px; height: 4px; background: #1e2430; border-radius: 2px;
-                    margin-left: auto; overflow: hidden;
-                }
-                .occupancy-fill { height: 100%; background: #3b82f6; border-radius: 2px; }
+                .lane-col img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid #3b82f640; }
+                .lane-col span { font-size: 0.75rem; color: #fff; font-weight: 800; }
+                .occupancy-bar { width: 60%; height: 4px; background: #1e2430; border-radius: 99px; overflow: hidden; margin-top: 4px; }
+                .occupancy-fill { height: 100%; background: #3b82f6; border-radius: 99px; }
 
-                .lane-grid {
-                    display: grid; grid-template-columns: 80px 1fr; overflow-y: auto; flex: 1; position: relative;
-                }
-                .time-labels { border-right: 1px solid #1e2430; background: #0c0f16; z-index: 5; }
-                .time-slot-label {
-                    height: 80px; display: flex; align-items: flex-start; justify-content: center;
-                    padding-top: 10px; font-size: 0.7rem; color: #475569; font-weight: 800; border-bottom: 1px solid #1e243020;
-                }
-                
-                .grid-content { position: relative; background: #11141d; min-height: 1040px; }
-                .grid-row { height: 80px; border-bottom: 1px solid #1e243020; pointer-events: none; }
-                
-                .lane-dividers { position: absolute; inset: 0; pointer-events: none; }
-                .lane-vertical-line { position: absolute; top: 0; bottom: 0; width: 1px; background: #1e243040; }
+                .lane-grid { flex: 1; display: flex; overflow-y: auto; position: relative; }
+                .time-labels { width: 80px; flex-shrink: 0; background: #0c0f16; border-right: 1px solid #1e243020; }
+                .time-slot-label { height: 80px; padding: 10px; font-size: 0.7rem; color: #475569; font-weight: 800; text-align: right; }
+                .grid-content { flex: 1; position: relative; height: 1040px; background-size: 100% 80px; background-image: linear-gradient(to bottom, #1e243015 1px, transparent 1px); }
+                .grid-row { height: 80px; border-bottom: 1px solid #1e243008; }
 
-                /* APPT BLOCKS */
                 .appt-block {
-                    position: absolute; background: #1a202c; border: 1px solid #1e2430;
-                    border-radius: 12px; display: flex; overflow: hidden;
-                    box-shadow: 0 4px 20px rgba(0,0,0,0.3); border-left-width: 4px;
-                    cursor: grab; z-index: 10;
-                    transition: border-color 0.2s;
+                    position: absolute; border-radius: 12px; background: #1e2430; border: 1px solid #3b82f640;
+                    box-shadow: 0 4px 15px rgba(0,0,0,0.3); display: flex; overflow: hidden; cursor: grab; z-index: 1;
                 }
-                .appt-block:hover { border-color: #3b82f680; }
-                .appt-block:active { cursor: grabbing; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 100; }
-                
+                .appt-block:active { cursor: grabbing; z-index: 10; cursor: move; }
                 .block-tag { width: 4px; height: 100%; }
-                
                 .block-info { padding: 8px 12px; flex: 1; display: flex; flex-direction: column; gap: 2px; }
                 .block-info strong { font-size: 0.75rem; color: #fff; line-height: 1.2; }
                 .block-info span { font-size: 0.65rem; color: #64748b; font-weight: 700; }
-                
                 .block-warning {
                     background: #f59e0b; color: #000; font-size: 0.55rem; font-weight: 900;
                     padding: 2px 4px; position: absolute; top: 4px; right: 4px; border-radius: 3px;
                     display: flex; align-items: center; gap: 2px; text-transform: uppercase;
                 }
 
-                .resize-handle:hover { background: #3b82f640; }
-
-                /* MONTH VIEW */
-                .month-grid-container {
-                    background: #11141d; border-radius: 16px; border: 1px solid #1e2430;
-                    display: flex; flex-direction: column; overflow: hidden;
-                    flex: 1;
-                }
-                .month-header {
-                    display: grid; grid-template-columns: repeat(7, 1fr);
-                    background: #0c0f16; border-bottom: 1px solid #1e2430;
-                }
-                .month-day-name {
-                    padding: 12px; text-align: center; color: #475569;
-                    font-size: 0.75rem; font-weight: 800; text-transform: uppercase;
-                }
+                .month-grid-container { background: #11141d; border-radius: 16px; border: 1px solid #1e2430; display: flex; flex-direction: column; overflow: hidden; flex: 1; }
+                .month-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #0c0f16; border-bottom: 1px solid #1e2430; }
+                .month-day-name { padding: 12px; text-align: center; color: #475569; font-size: 0.75rem; font-weight: 800; text-transform: uppercase; }
                 .days-grid { display: grid; grid-template-columns: repeat(7, 1fr); flex: 1; }
                 .month-day-cell {
                     min-height: 100px; border-right: 1px solid #1e243020; border-bottom: 1px solid #1e243020;
-                    padding: 10px; cursor: pointer; transition: background 0.2s;
-                    display: flex; flex-direction: column; gap: 8px;
+                    padding: 10px; cursor: pointer; transition: background 0.2s; display: flex; flex-direction: column; gap: 8px;
                 }
                 .month-day-cell:hover { background: #1e243040; }
-                .month-day-cell.inactive { opacity: 0.3; pointer-events: none; }
-                .month-day-cell.today { background: #3b82f605; border: 1px inset #3b82f640; }
-                .day-num { font-size: 0.8rem; font-weight: 800; color: #475569; }
-                .month-day-cell.today .day-num { color: #3b82f6; }
-                .count-dot {
-                    background: #3b82f6; color: #fff; font-size: 0.6rem;
-                    padding: 2px 6px; border-radius: 4px; font-weight: 800;
-                    white-space: nowrap;
-                }
+                .month-day-cell.inactive { opacity: 0.15; pointer-events: none; }
+                .month-day-cell.today { background: #3b82f605; }
+                .month-day-cell.today .day-num { color: #3b82f6; border-bottom: 2px solid #3b82f6; }
+                .day-num { font-size: 0.8rem; font-weight: 800; color: #475569; width: fit-content; }
+                .count-dot { background: #3b82f6; color: #fff; font-size: 0.6rem; padding: 2px 6px; border-radius: 4px; font-weight: 800; white-space: nowrap; }
+
+                .empty-state { padding: 5rem; text-align: center; color: #475569; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
+                .empty-state h2 { color: #fff; margin: 0; }
             `}</style>
         </div>
     );
 };
-
-
 
 export default AppointmentManager;
