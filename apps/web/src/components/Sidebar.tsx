@@ -19,7 +19,8 @@ import {
     Headset,
     TrendUp,
     CaretRight,
-    WarningCircle
+    WarningCircle,
+    User
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
