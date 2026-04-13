@@ -1,0 +1,16 @@
+[Sidebar] Atendimento Central -> OK (Carregado)
+[Sidebar] Comunicação Interna -> OK (Carregado)
+[Sidebar] Agentes Inteligentes -> OK (Carregado)
+[Sidebar] Gestão de Leads -> Não encontrado visualmente
+[Sidebar] Agendamentos -> Não encontrado visualmente
+[Sidebar] Contratos -> Não encontrado visualmente
+[Sidebar] Consultar Cliente -> Não encontrado visualmente
+[Sidebar] Funil Kanban -> OK (Carregado)
+[Sidebar] Automações -> OK (Carregado)
+[Sidebar] Relatórios -> OK (Carregado)
+[Sidebar] Gestão Financeira -> Não encontrado visualmente
+[Sidebar] Ordens de Serviço -> Não encontrado visualmente
+[Sidebar] Ocorrências -> Não encontrado visualmente
+[Sidebar] Estoque de Rede -> Não encontrado visualmente
+[Sidebar] Dashboard Resumo -> Não encontrado visualmente
+[Sidebar] Topologia de Rede -> Não encontrado visualmente
