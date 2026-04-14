@@ -252,224 +252,224 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             </div>
                             <button className="btn-resend"><EnvelopeSimple size={18} /> Reenviar no WhatsApp</button>
                         </div>
+                    </section>
                 </div>
-            </div>
 
-            <div className="prop-visualizer">
-                <div className="pdf-mock">
-                    <FileText size={48} weight="duotone" />
-                    <span>Visualização da Proposta #4482</span>
-                    <button className="btn-view-pdf">Abrir em nova aba <ArrowSquareOut /></button>
+                <div className="prop-visualizer">
+                    <div className="pdf-mock">
+                        <FileText size={48} weight="duotone" />
+                        <span>Visualização da Proposta #4482</span>
+                        <button className="btn-view-pdf">Abrir em nova aba <ArrowSquareOut /></button>
+                    </div>
                 </div>
             </div>
-        </div>
         </div >
     );
 
-const renderViabilidadeTab = () => (
-    <div className="tab-pane-viabilidade">
-        <div className="viab-grid">
-            <div className="viab-info">
-                <div className="viab-card active">
-                    <div className="v-header">
-                        <HardDrives size={24} weight="duotone" />
-                        <div>
-                            <strong>Viabilidade Confirmada</strong>
-                            <span>Verificado por Técnico (Gabriel) em 12/04</span>
+    const renderViabilidadeTab = () => (
+        <div className="tab-pane-viabilidade">
+            <div className="viab-grid">
+                <div className="viab-info">
+                    <div className="viab-card active">
+                        <div className="v-header">
+                            <HardDrives size={24} weight="duotone" />
+                            <div>
+                                <strong>Viabilidade Confirmada</strong>
+                                <span>Verificado por Técnico (Gabriel) em 12/04</span>
+                            </div>
                         </div>
-                    </div>
-                    <div className="v-details">
-                        <div className="v-stat">
-                            <small>Caixa (CTO)</small>
-                            <strong>CTO-CENTRO-04</strong>
+                        <div className="v-details">
+                            <div className="v-stat">
+                                <small>Caixa (CTO)</small>
+                                <strong>CTO-CENTRO-04</strong>
+                            </div>
+                            <div className="v-stat">
+                                <small>Portas Livres</small>
+                                <strong>03</strong>
+                            </div>
+                            <div className="v-stat">
+                                <small>Distância drop</small>
+                                <strong>45 metros</strong>
+                            </div>
+                            <div className="v-stat">
+                                <small>Tecnologia</small>
+                                <strong>FTTH (Fibra)</strong>
+                            </div>
                         </div>
-                        <div className="v-stat">
-                            <small>Portas Livres</small>
-                            <strong>03</strong>
+                        <div className="v-obs">
+                            <label>Observação Técnica:</label>
+                            <p>Instalação padrão via poste frontal. Sem impedimentos. Necessário escada de 7 metros.</p>
                         </div>
-                        <div className="v-stat">
-                            <small>Distância drop</small>
-                            <strong>45 metros</strong>
-                        </div>
-                        <div className="v-stat">
-                            <small>Tecnologia</small>
-                            <strong>FTTH (Fibra)</strong>
-                        </div>
-                    </div>
-                    <div className="v-obs">
-                        <label>Observação Técnica:</label>
-                        <p>Instalação padrão via poste frontal. Sem impedimentos. Necessário escada de 7 metros.</p>
                     </div>
                 </div>
-            </div>
-            <div className="viab-map-view">
-                <MapContainer center={[lead.latitude || -23.5505, lead.longitude || -46.6333]} zoom={18} scrollWheelZoom={false} style={{ height: '100%', borderRadius: '16px' }}>
-                    <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                    <Marker position={[lead.latitude || -23.5505, lead.longitude || -46.6333]}>
-                        <Popup>{lead.nomeCompleto}</Popup>
-                    </Marker>
-                </MapContainer>
+                <div className="viab-map-view">
+                    <MapContainer center={[lead.latitude || -23.5505, lead.longitude || -46.6333]} zoom={18} scrollWheelZoom={false} style={{ height: '100%', borderRadius: '16px' }}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <Marker position={[lead.latitude || -23.5505, lead.longitude || -46.6333]}>
+                            <Popup>{lead.nomeCompleto}</Popup>
+                        </Marker>
+                    </MapContainer>
+                </div>
             </div>
         </div>
-    </div>
-);
+    );
 
-return (
-    <AnimatePresence>
-        <motion.div
-            initial={{ opacity: 0, scale: 0.98 }}
-            animate={{ opacity: 1, scale: 1 }}
-            exit={{ opacity: 0, scale: 0.98 }}
-            className="lead-detail-titan"
-        >
-            {renderHeader()}
+    return (
+        <AnimatePresence>
+            <motion.div
+                initial={{ opacity: 0, scale: 0.98 }}
+                animate={{ opacity: 1, scale: 1 }}
+                exit={{ opacity: 0, scale: 0.98 }}
+                className="lead-detail-titan"
+            >
+                {renderHeader()}
 
-            <div className="detail-layout">
-                <main className="detail-tabs-area ic-sidebar-scroll">
-                    <nav className="tab-menu">
-                        <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}><Clock size={18} /> Timeline</button>
-                        <button className={activeTab === 'dados' ? 'active' : ''} onClick={() => setActiveTab('dados')}><AddressBook size={18} /> Dados Cadastrais</button>
-                        <button className={activeTab === 'qualificacao' ? 'active' : ''} onClick={() => setActiveTab('qualificacao')}><IdentificationBadge size={18} /> Qualificação</button>
-                        <button className={activeTab === 'viabilidade' ? 'active' : ''} onClick={() => setActiveTab('viabilidade')}><HardDrives size={18} /> Viabilidade</button>
-                        <button className={activeTab === 'proposta' ? 'active' : ''} onClick={() => setActiveTab('proposta')}><Receipt size={18} /> Proposta & Contrato</button>
-                        <button className={activeTab === 'agendamento' ? 'active' : ''} onClick={() => setActiveTab('agendamento')}><Calendar size={18} /> Agendamento</button>
-                    </nav>
+                <div className="detail-layout">
+                    <main className="detail-tabs-area ic-sidebar-scroll">
+                        <nav className="tab-menu">
+                            <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}><Clock size={18} /> Timeline</button>
+                            <button className={activeTab === 'dados' ? 'active' : ''} onClick={() => setActiveTab('dados')}><AddressBook size={18} /> Dados Cadastrais</button>
+                            <button className={activeTab === 'qualificacao' ? 'active' : ''} onClick={() => setActiveTab('qualificacao')}><IdentificationBadge size={18} /> Qualificação</button>
+                            <button className={activeTab === 'viabilidade' ? 'active' : ''} onClick={() => setActiveTab('viabilidade')}><HardDrives size={18} /> Viabilidade</button>
+                            <button className={activeTab === 'proposta' ? 'active' : ''} onClick={() => setActiveTab('proposta')}><Receipt size={18} /> Proposta & Contrato</button>
+                            <button className={activeTab === 'agendamento' ? 'active' : ''} onClick={() => setActiveTab('agendamento')}><Calendar size={18} /> Agendamento</button>
+                        </nav>
 
-                    <div className="tab-viewport">
-                        {activeTab === 'timeline' && (
-                            <div className="timeline-view">
-                                <div className="timeline-filters">
-                                    <button className="active">Tudo</button>
-                                    <button>Ligações</button>
-                                    <button>WhatsApp</button>
-                                    <button>Sistema</button>
+                        <div className="tab-viewport">
+                            {activeTab === 'timeline' && (
+                                <div className="timeline-view">
+                                    <div className="timeline-filters">
+                                        <button className="active">Tudo</button>
+                                        <button>Ligações</button>
+                                        <button>WhatsApp</button>
+                                        <button>Sistema</button>
+                                    </div>
+                                    <div className="timeline-list">
+                                        <div className="timeline-item">
+                                            <div className="t-icon sys"><ArrowsClockwise /></div>
+                                            <div className="t-content">
+                                                <div className="t-header"><strong>Alteração de Etapa</strong> <span>Há 2 horas</span></div>
+                                                <p>Lead movido para <strong>Qualificação</strong> por João Solla.</p>
+                                            </div>
+                                        </div>
+                                        <div className="timeline-item">
+                                            <div className="t-icon call"><PhoneCall /></div>
+                                            <div className="t-content">
+                                                <div className="t-header"><strong>Ligação Efetuada</strong> <span>Há 5 horas</span></div>
+                                                <p>Resultado: <strong>Ocupado</strong>. Tentativa nº 2.</p>
+                                            </div>
+                                        </div>
+                                        <div className="timeline-item">
+                                            <div className="t-icon wa"><WhatsappLogo /></div>
+                                            <div className="t-content">
+                                                <div className="t-header"><strong>Mensagem Enviada</strong> <span>Ontem às 18:00</span></div>
+                                                <p>"Olá {lead.nomeCompleto.split(' ')[0]}, vi seu interesse no plano de 500MB..."</p>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
-                                <div className="timeline-list">
-                                    <div className="timeline-item">
-                                        <div className="t-icon sys"><ArrowsClockwise /></div>
-                                        <div className="t-content">
-                                            <div className="t-header"><strong>Alteração de Etapa</strong> <span>Há 2 horas</span></div>
-                                            <p>Lead movido para <strong>Qualificação</strong> por João Solla.</p>
-                                        </div>
-                                    </div>
-                                    <div className="timeline-item">
-                                        <div className="t-icon call"><PhoneCall /></div>
-                                        <div className="t-content">
-                                            <div className="t-header"><strong>Ligação Efetuada</strong> <span>Há 5 horas</span></div>
-                                            <p>Resultado: <strong>Ocupado</strong>. Tentativa nº 2.</p>
-                                        </div>
-                                    </div>
-                                    <div className="timeline-item">
-                                        <div className="t-icon wa"><WhatsappLogo /></div>
-                                        <div className="t-content">
-                                            <div className="t-header"><strong>Mensagem Enviada</strong> <span>Ontem às 18:00</span></div>
-                                            <p>"Olá {lead.nomeCompleto.split(' ')[0]}, vi seu interesse no plano de 500MB..."</p>
-                                        </div>
-                                    </div>
-                                </div>
-                            </div>
-                        )}
+                            )}
 
-                        {activeTab === 'dados' && (
-                            <div className="tab-pane-dados">
-                                <section className="dados-section">
-                                    <h4>Identidade</h4>
-                                    <div className="inline-grid">
-                                        <div className="i-group">
-                                            <label>Nome Completo</label>
-                                            <div className="i-val" onClick={() => setIsEditing('nomeCompleto')}>
-                                                {isEditing === 'nomeCompleto' ? <input autoFocus onBlur={(e) => handleInlineEdit('nomeCompleto', e.target.value)} defaultValue={lead.nomeCompleto} /> : <span>{lead.nomeCompleto} <Pen size={12} /></span>}
-                                            </div>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>E-mail</label>
-                                            <div className="i-val" onClick={() => setIsEditing('email')}>
-                                                {isEditing === 'email' ? <input autoFocus onBlur={(e) => handleInlineEdit('email', e.target.value)} defaultValue={lead.email} /> : <span>{lead.email || 'Não informado'} <Pen size={12} /></span>}
-                                            </div>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>CPF/CNPJ</label>
-                                            <div className="i-val" onClick={() => setIsEditing('cpfCnpj')}>
-                                                {isEditing === 'cpfCnpj' ? <input autoFocus onBlur={(e) => handleInlineEdit('cpfCnpj', e.target.value)} defaultValue={lead.cpfCnpj} /> : <span>{lead.cpfCnpj || 'Adicionar documento'} <Pen size={12} /></span>}
-                                            </div>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>Data Nasc.</label>
-                                            <span>{lead.dataNascimento ? new Date(lead.dataNascimento).toLocaleDateString() : '---'}</span>
-                                        </div>
-                                    </div>
-                                </section>
-
-                                <section className="dados-section">
-                                    <h4>Endereço de Instalação</h4>
-                                    <div className="inline-grid">
-                                        <div className="i-group full">
-                                            <label>Logradouro</label>
-                                            <div className="i-val" onClick={() => setIsEditing('logradouro')}>
-                                                {isEditing === 'logradouro' ? <input autoFocus onBlur={(e) => handleInlineEdit('logradouro', e.target.value)} defaultValue={lead.logradouro} /> : <span>{lead.logradouro || 'Definir rua'} <Pen size={12} /></span>}
-                                            </div>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>Número</label><span>{lead.numero || 'S/N'}</span>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>Bairro</label><span>{lead.bairro || 'Centro'}</span>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>CEP</label><span>{lead.cep || '00000-000'}</span>
-                                        </div>
-                                        <div className="i-group">
-                                            <label>Ponto de Referência</label>
-                                            <div className="i-val" onClick={() => setIsEditing('pontoReferencia')}>
-                                                {isEditing === 'pontoReferencia' ? <input autoFocus onBlur={(e) => handleInlineEdit('pontoReferencia', e.target.value)} defaultValue={lead.pontoReferencia} /> : <span>{lead.pontoReferencia || 'Ex: Próximo ao mercado'} <Pen size={12} /></span>}
-                                            </div>
-                                        </div>
-                                    </div>
-                                </section>
-                            </div>
-                        )}
-
-                        {activeTab === 'qualificacao' && renderQualificacaoTab()}
-                        {activeTab === 'viabilidade' && renderViabilityTab()}
-                        {activeTab === 'proposta' && renderPropostaTab()}
-
-                        {activeTab === 'agendamento' && (
-                            <div className="tab-pane-agendamento">
-                                {relatedAppts.length > 0 ? (
-                                    <div className="appt-cards-list">
-                                        {relatedAppts.map(appt => (
-                                            <div className="appt-card-v2" key={appt.id}>
-                                                <div className="a-status-icon"><Wrench size={24} weight="duotone" /></div>
-                                                <div className="a-main">
-                                                    <div className="a-header">
-                                                        <strong>{appt.tipo}</strong>
-                                                        <span className={`a-status ${appt.status.toLowerCase()}`}>{appt.status}</span>
-                                                    </div>
-                                                    <div className="a-details">
-                                                        <span><Calendar size={14} /> {new Date(appt.dataInicio).toLocaleDateString()}</span>
-                                                        <span><Clock size={14} /> {new Date(appt.dataInicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                                                        <span><User size={14} /> Técnico: {appt.tecnicoId || 'Pendente'}</span>
-                                                    </div>
+                            {activeTab === 'dados' && (
+                                <div className="tab-pane-dados">
+                                    <section className="dados-section">
+                                        <h4>Identidade</h4>
+                                        <div className="inline-grid">
+                                            <div className="i-group">
+                                                <label>Nome Completo</label>
+                                                <div className="i-val" onClick={() => setIsEditing('nomeCompleto')}>
+                                                    {isEditing === 'nomeCompleto' ? <input autoFocus onBlur={(e) => handleInlineEdit('nomeCompleto', e.target.value)} defaultValue={lead.nomeCompleto} /> : <span>{lead.nomeCompleto} <Pen size={12} /></span>}
                                                 </div>
                                             </div>
-                                        ))}
-                                    </div>
-                                ) : (
-                                    <div className="empty-state">
-                                        <CalendarPlus size={64} weight="duotone" />
-                                        <h3>Sem Instalações Agendadas</h3>
-                                        <p>Ainda não há Ordens de Serviço vinculadas a este lead.</p>
-                                        <button className="btn-primary">Criar Agendamento</button>
-                                    </div>
-                                )}
-                            </div>
-                        )}
-                    </div>
-                </main>
-                {renderSidebar()}
-            </div>
+                                            <div className="i-group">
+                                                <label>E-mail</label>
+                                                <div className="i-val" onClick={() => setIsEditing('email')}>
+                                                    {isEditing === 'email' ? <input autoFocus onBlur={(e) => handleInlineEdit('email', e.target.value)} defaultValue={lead.email} /> : <span>{lead.email || 'Não informado'} <Pen size={12} /></span>}
+                                                </div>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>CPF/CNPJ</label>
+                                                <div className="i-val" onClick={() => setIsEditing('cpfCnpj')}>
+                                                    {isEditing === 'cpfCnpj' ? <input autoFocus onBlur={(e) => handleInlineEdit('cpfCnpj', e.target.value)} defaultValue={lead.cpfCnpj} /> : <span>{lead.cpfCnpj || 'Adicionar documento'} <Pen size={12} /></span>}
+                                                </div>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>Data Nasc.</label>
+                                                <span>{lead.dataNascimento ? new Date(lead.dataNascimento).toLocaleDateString() : '---'}</span>
+                                            </div>
+                                        </div>
+                                    </section>
 
-            <style>{`
+                                    <section className="dados-section">
+                                        <h4>Endereço de Instalação</h4>
+                                        <div className="inline-grid">
+                                            <div className="i-group full">
+                                                <label>Logradouro</label>
+                                                <div className="i-val" onClick={() => setIsEditing('logradouro')}>
+                                                    {isEditing === 'logradouro' ? <input autoFocus onBlur={(e) => handleInlineEdit('logradouro', e.target.value)} defaultValue={lead.logradouro} /> : <span>{lead.logradouro || 'Definir rua'} <Pen size={12} /></span>}
+                                                </div>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>Número</label><span>{lead.numero || 'S/N'}</span>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>Bairro</label><span>{lead.bairro || 'Centro'}</span>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>CEP</label><span>{lead.cep || '00000-000'}</span>
+                                            </div>
+                                            <div className="i-group">
+                                                <label>Ponto de Referência</label>
+                                                <div className="i-val" onClick={() => setIsEditing('pontoReferencia')}>
+                                                    {isEditing === 'pontoReferencia' ? <input autoFocus onBlur={(e) => handleInlineEdit('pontoReferencia', e.target.value)} defaultValue={lead.pontoReferencia} /> : <span>{lead.pontoReferencia || 'Ex: Próximo ao mercado'} <Pen size={12} /></span>}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    </section>
+                                </div>
+                            )}
+
+                            {activeTab === 'qualificacao' && renderQualificacaoTab()}
+                            {activeTab === 'viabilidade' && renderViabilityTab()}
+                            {activeTab === 'proposta' && renderPropostaTab()}
+
+                            {activeTab === 'agendamento' && (
+                                <div className="tab-pane-agendamento">
+                                    {relatedAppts.length > 0 ? (
+                                        <div className="appt-cards-list">
+                                            {relatedAppts.map(appt => (
+                                                <div className="appt-card-v2" key={appt.id}>
+                                                    <div className="a-status-icon"><Wrench size={24} weight="duotone" /></div>
+                                                    <div className="a-main">
+                                                        <div className="a-header">
+                                                            <strong>{appt.tipo}</strong>
+                                                            <span className={`a-status ${appt.status.toLowerCase()}`}>{appt.status}</span>
+                                                        </div>
+                                                        <div className="a-details">
+                                                            <span><Calendar size={14} /> {new Date(appt.dataInicio).toLocaleDateString()}</span>
+                                                            <span><Clock size={14} /> {new Date(appt.dataInicio).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                                                            <span><User size={14} /> Técnico: {appt.tecnicoId || 'Pendente'}</span>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    ) : (
+                                        <div className="empty-state">
+                                            <CalendarPlus size={64} weight="duotone" />
+                                            <h3>Sem Instalações Agendadas</h3>
+                                            <p>Ainda não há Ordens de Serviço vinculadas a este lead.</p>
+                                            <button className="btn-primary">Criar Agendamento</button>
+                                        </div>
+                                    )}
+                                </div>
+                            )}
+                        </div>
+                    </main>
+                    {renderSidebar()}
+                </div>
+
+                <style>{`
                     .lead-detail-titan { position: fixed; inset: 0; background: #080a0f; z-index: 2000; display: flex; flex-direction: column; overflow: hidden; }
                     
                     /* Header */
@@ -613,9 +613,9 @@ return (
                     .empty-state h3 { color: #cbd5e1; margin: 1.5rem 0 0.5rem; }
                     .btn-primary { background: #3b82f6; border: none; color: #fff; padding: 12px 24px; border-radius: 10px; font-weight: 700; margin-top: 1rem; cursor: pointer; }
                 `}</style>
-        </motion.div>
-    </AnimatePresence>
-);
+            </motion.div>
+        </AnimatePresence>
+    );
 };
 
 export default LeadDetail;
