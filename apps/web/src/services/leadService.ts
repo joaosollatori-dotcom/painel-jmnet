@@ -149,9 +149,12 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
+    // Remove metadata fields that shouldn't be manually updated or could cause schema errors
+    const { id: _id, leadId: _lid, createdAt: _c, ...cleanUpdates } = updates as any;
+
     const { error } = await supabase
         .from('leads')
-        .update({ ...updates, updatedAt: new Date().toISOString() })
+        .update(cleanUpdates)
         .eq('id', id);
 
     if (error) throw error;
