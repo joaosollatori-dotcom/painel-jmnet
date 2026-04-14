@@ -178,3 +178,14 @@ export const updateAppointment = async (id: string, updates: Partial<Appointment
 
     if (error) throw error;
 };
+
+export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
+    const { data, error } = await supabase
+        .from('Appointment')
+        .insert([appointment])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};

@@ -12,12 +12,13 @@ import {
     UserSwitch, Trophy, Receipt, Wrench, CalendarPlus,
     ArrowsClockwise, ShareNetwork, EnvelopeSimple,
     CheckSquareOffset, Square, ListChecks, Kanban,
-    NavigationArrow, PhoneCall
+    NavigationArrow, PhoneCall, ArrowSquareOut
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import { Lead, LeadHistory, updateLead, Appointment, getAppointments } from '../services/leadService';
+import { dispatchCall, dispatchWhatsApp, dispatchNote, logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
 
 interface LeadDetailProps {
@@ -39,6 +40,8 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         devices: lead.numDispositivos || 1,
         profile: lead.perfilUso || 'RESIDENCIAL_BASICO'
     });
+    const [quickNote, setQuickNote] = useState('');
+    const [timelineFilter, setTimelineFilter] = useState<'ALL' | 'CALL' | 'WA' | 'SYS'>('ALL');
 
     useEffect(() => {
         loadLeadContext();
@@ -61,9 +64,18 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         }
     };
 
-    const registerInteraction = (type: string, content: string) => {
-        // Mock de registro de interação
+    const registerInteraction = async (type: string, content: string) => {
+        await logInteraction(lead.id, type, `Interação Rápida (${type})`, content);
         showToast(`Interação de ${type} registrada`, 'success');
+        onUpdate();
+    };
+
+    const handleSaveNote = async () => {
+        if (await dispatchNote(lead.id, quickNote)) {
+            showToast('Nota salva na timeline', 'success');
+            setQuickNote('');
+            onUpdate();
+        }
     };
 
     const renderHeader = () => {
@@ -124,8 +136,8 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         <span>Ontem, às 14:30</span>
                     </div>
                     <div className="task-actions">
-                        <button className="btn-done"><CheckSquareOffset size={20} /></button>
-                        <button className="btn-reschedule"><ArrowsClockwise size={20} /></button>
+                        <button className="btn-done" onClick={() => registerInteraction('SYS', 'Tarefa manual concluída')}><CheckSquareOffset size={20} /></button>
+                        <button className="btn-reschedule" onClick={() => registerInteraction('SYS', 'Tarefa reagendada pelo usuário')}><ArrowsClockwise size={20} /></button>
                     </div>
                 </div>
             </div>
@@ -139,15 +151,15 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     <button onClick={() => registerInteraction('CALL', 'Ligar mais tarde')}>Retornar later</button>
                 </div>
                 <div className="manual-log">
-                    <textarea placeholder="Anotação rápida..."></textarea>
-                    <button className="btn-save-note">Salvar Nota</button>
+                    <textarea value={quickNote} onChange={e => setQuickNote(e.target.value)} placeholder="Anotação rápida..."></textarea>
+                    <button className="btn-save-note" onClick={handleSaveNote}>Salvar Nota</button>
                 </div>
             </div>
 
             <div className="sidebar-shortcuts">
-                <button className="sc-call"><Phone size={24} weight="fill" /></button>
-                <button className="sc-whatsapp"><WhatsappLogo size={24} weight="fill" /></button>
-                <button className="sc-task"><CalendarPlus size={24} weight="fill" /></button>
+                <button className="sc-call" onClick={() => dispatchCall(lead.telefonePrincipal, lead.id)}><Phone size={24} weight="fill" /></button>
+                <button className="sc-whatsapp" onClick={() => dispatchWhatsApp(lead.telefonePrincipal, 'Olá!', lead.id)}><WhatsappLogo size={24} weight="fill" /></button>
+                <button className="sc-task" onClick={() => setActiveTab('agendamento')}><CalendarPlus size={24} weight="fill" /></button>
             </div>
         </aside>
     );
@@ -251,7 +263,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                 <div className="c-badge visualizada">Visualizada</div>
                                 <span>O lead abriu a proposta às 10:45 de hoje</span>
                             </div>
-                            <button className="btn-resend"><EnvelopeSimple size={18} /> Reenviar no WhatsApp</button>
+                            <button className="btn-resend" onClick={() => dispatchWhatsApp(lead.telefonePrincipal, `Olá ${lead.nomeCompleto.split(' ')[0]}, segue o link da nossa proposta: \n\nhttps://jmnet.com.br/proposta/${lead.id}`, lead.id)}><EnvelopeSimple size={18} /> Reenviar no WhatsApp</button>
                         </div>
                     </section>
                 </div>
@@ -260,7 +272,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     <div className="pdf-mock">
                         <FileText size={48} weight="duotone" />
                         <span>Visualização da Proposta #4482</span>
-                        <button className="btn-view-pdf">Abrir em nova aba <ArrowSquareOut /></button>
+                        <button className="btn-view-pdf" onClick={() => { showToast('Renderizando PDF...', 'info'); setTimeout(() => registerInteraction('SYS', 'PDF de Proposta visualizado e baixado'), 1000) }}>Abrir em nova aba <ArrowSquareOut /></button>
                     </div>
                 </div>
             </div>
@@ -340,10 +352,10 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             {activeTab === 'timeline' && (
                                 <div className="timeline-view">
                                     <div className="timeline-filters">
-                                        <button className="active">Tudo</button>
-                                        <button>Ligações</button>
-                                        <button>WhatsApp</button>
-                                        <button>Sistema</button>
+                                        <button className={timelineFilter === 'ALL' ? 'active' : ''} onClick={() => setTimelineFilter('ALL')}>Tudo</button>
+                                        <button className={timelineFilter === 'CALL' ? 'active' : ''} onClick={() => setTimelineFilter('CALL')}>Ligações</button>
+                                        <button className={timelineFilter === 'WA' ? 'active' : ''} onClick={() => setTimelineFilter('WA')}>WhatsApp</button>
+                                        <button className={timelineFilter === 'SYS' ? 'active' : ''} onClick={() => setTimelineFilter('SYS')}>Sistema</button>
                                     </div>
                                     <div className="timeline-list">
                                         <div className="timeline-item">

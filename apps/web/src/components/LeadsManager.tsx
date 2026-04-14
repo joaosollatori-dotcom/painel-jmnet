@@ -6,10 +6,11 @@ import {
     WhatsappLogo, CaretDown, PhoneCall,
     HardDrives, CalendarPlus, MapTrifold,
     NavigationArrow, MagnifyingGlassPlus,
-    ChartBar, ListDashes, UserPlus
+    ChartBar, ListDashes, UserPlus, X, CalendarBlank
 } from '@phosphor-icons/react';
-import { Lead, getLeads } from '../services/leadService';
+import { Lead, updateLead, getLeads, createAppointment } from '../services/leadService';
 import { handleNewLeadEntry } from '../services/automationService';
+import { dispatchWhatsApp, dispatchCall, logInteraction } from '../services/actionService';
 import LoadingScreen from './LoadingScreen';
 import { useToast } from '../contexts/ToastContext';
 import LeadReports from './LeadReports';
@@ -22,6 +23,10 @@ const LeadsManager: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
     const [viewMode, setViewMode] = useState<'list' | 'reports'>('list');
+
+    // Quick Appt Modal
+    const [showApptModal, setShowApptModal] = useState<Lead | null>(null);
+    const [apptData, setApptData] = useState({ dataInicio: '', turno: 'Manhã', tecnicoId: '' });
 
     // Filtros
     const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability' | 'vendedor'>('none');
@@ -53,6 +58,41 @@ const LeadsManager: React.FC = () => {
             setLoading(false);
         }
     };
+
+    const handleCreateAppt = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!showApptModal) return;
+        try {
+            await createAppointment({
+                leadId: showApptModal.id,
+                tipo: 'Instalação',
+                status: 'Confirmado',
+                dataInicio: apptData.dataInicio,
+                dadosCliente: {
+                    nome: showApptModal.nomeCompleto,
+                    endereco: showApptModal.logradouro || '',
+                    coords: showApptModal.latitude ? { lat: showApptModal.latitude, lng: showApptModal.longitude } : null
+                }
+            } as any);
+            showToast('Agendamento Técnico criado!', 'success');
+            await logInteraction(showApptModal.id, 'SYS', 'Agendamento Criado', `Instalação marcada para ${apptData.dataInicio}`);
+            setShowApptModal(null);
+            loadLeads();
+        } catch (e) {
+            showToast('Erro ao criar agendamento', 'error');
+        }
+    };
+
+    const handleAdvanceLead = async (lead: Lead) => {
+        try {
+            await updateLead(lead.id, { statusQualificacao: 'QUALIFICADO' });
+            await logInteraction(lead.id, 'SYS', 'Avanço Rápido de Etapa', 'Lead movido via Listagem.');
+            showToast('Funil Avançado', 'success');
+            loadLeads();
+        } catch (e) {
+            showToast('Erro ao mover lead', 'error');
+        }
+    }
 
     const handleCreateLead = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -262,7 +302,7 @@ const LeadsManager: React.FC = () => {
                                                         <div className="cell-contact">
                                                             <div className="contact-main">
                                                                 {lead.telefonePrincipal}
-                                                                <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}><WhatsappLogo size={18} weight="fill" /></a>
+                                                                <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6' }} onClick={e => { e.stopPropagation(); dispatchWhatsApp(lead.telefonePrincipal, 'Olá!', lead.id); }}><WhatsappLogo size={18} weight="fill" /></button>
                                                             </div>
                                                             <div className="channel-tag">
                                                                 {lead.canalEntrada === 'WhatsApp' ? <WhatsappLogo size={12} /> : <PhoneCall size={12} />}
@@ -299,9 +339,9 @@ const LeadsManager: React.FC = () => {
                                                                 </div>
                                                             ) : <span className="no-action">Sem ação</span>}
                                                             <div className="inline-btns">
-                                                                <button title="Registrar Contato"><PhoneCall /></button>
-                                                                <button title="Agendar"><CalendarPlus /></button>
-                                                                <button title="Avançar"><TrendUp /></button>
+                                                                <button title="Registrar Contato" onClick={e => { e.stopPropagation(); dispatchCall(lead.telefonePrincipal, lead.id); }}><PhoneCall /></button>
+                                                                <button title="Agendar" onClick={e => { e.stopPropagation(); setShowApptModal(lead); }}><CalendarPlus /></button>
+                                                                <button title="Avançar" onClick={e => { e.stopPropagation(); handleAdvanceLead(lead); }}><TrendUp /></button>
                                                             </div>
                                                         </div>
                                                     </td>
@@ -367,6 +407,40 @@ const LeadsManager: React.FC = () => {
                                 <button type="submit" className="btn-submit">
                                     <UserPlus size={20} weight="bold" /> Adicionar ao Motor
                                 </button>
+                            </footer>
+                        </form>
+                    </div>
+                </div>
+            )}
+
+            {showApptModal && (
+                <div className="modal-overlay">
+                    <div className="modal-content large" style={{ maxWidth: '500px' }}>
+                        <header className="modal-header">
+                            <div>
+                                <h2>Agendamento Expresso</h2>
+                                <p>Agendar instalação ou visita para {showApptModal.nomeCompleto}</p>
+                            </div>
+                            <button className="btn-close" onClick={() => setShowApptModal(null)}><X size={20} /></button>
+                        </header>
+                        <form onSubmit={handleCreateAppt} className="modal-body">
+                            <div className="form-grid">
+                                <div className="form-group full">
+                                    <label>Data e Hora</label>
+                                    <input required type="datetime-local" value={apptData.dataInicio} onChange={e => setApptData({ ...apptData, dataInicio: e.target.value })} />
+                                </div>
+                                <div className="form-group full">
+                                    <label>Técnico / Responsável (Opcional)</label>
+                                    <select value={apptData.tecnicoId} onChange={e => setApptData({ ...apptData, tecnicoId: e.target.value })}>
+                                        <option value="">Despacho Automático</option>
+                                        <option value="tec-1">Carlos (Zona Sul)</option>
+                                        <option value="tec-2">Fernando (Zona Norte)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <footer className="modal-footer">
+                                <button type="button" className="btn-cancel" onClick={() => setShowApptModal(null)}>Cancelar</button>
+                                <button type="submit" className="btn-submit">Confirmar na Agenda</button>
                             </footer>
                         </form>
                     </div>

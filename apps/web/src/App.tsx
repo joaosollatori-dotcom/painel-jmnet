@@ -175,6 +175,7 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
+  const navigate = useNavigate();
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
@@ -195,6 +196,16 @@ const App: React.FC = () => {
       if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
         toggleTheme();
+      }
+      if (e.ctrlKey && e.shiftKey) {
+        if (e.key === '<' || e.key === ',') {
+          e.preventDefault();
+          navigate(-1);
+        }
+        if (e.key === '>' || e.key === '.') {
+          e.preventDefault();
+          navigate(1);
+        }
       }
     };
     window.addEventListener('keydown', handleKeyDown);
@@ -227,7 +238,7 @@ const App: React.FC = () => {
 
           <Route path="/kanban" element={<SalesPipeline />} />
           <Route path="/automacoes" element={<AutomationsDashboard />} />
-          <Route path="/relatorios" element={<LeadReports />} />
+          <Route path="/relatorios" element={<LeadReports leads={[]} />} />
           <Route path="/financeiro" element={<FinanceManager />} />
           <Route path="/os" element={<OSManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />

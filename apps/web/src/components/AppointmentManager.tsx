@@ -15,6 +15,7 @@ import {
     Timer
 } from '@phosphor-icons/react';
 import { Appointment, getAppointments, updateAppointment, createAppointment } from '../services/leadService';
+import { logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
 import LoadingScreen from './LoadingScreen';
 
@@ -22,6 +23,19 @@ type ViewMode = 'list' | 'day' | 'week' | 'month';
 
 // --- SUB-COMPONENTE: DETALHE DO AGENDAMENTO ---
 const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> = ({ apptId, onClose }) => {
+    const { showToast } = useToast();
+
+    const handleOpenMaps = () => {
+        window.open(`https://google.com/maps?q=Av.+Paulista,+1000+-+Bela+Vista`);
+    };
+
+    const handleFinish = async () => {
+        showToast('Enviando para Supabase...', 'info');
+        await logInteraction(apptId, 'SYS', 'Protocolo Finalizado', 'Ordem de serviço finalizada e protocolo TXT/PDF gerado.');
+        showToast('Protocolo Gerado com Sucesso!', 'success');
+        onClose();
+    };
+
     return (
         <div className="modal-overlay">
             <motion.div
@@ -59,7 +73,7 @@ const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> 
                                 <p className="sub">CEP: 01310-100 - São Paulo/SP</p>
                                 <div className="map-placeholder">
                                     <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=400" alt="Map" />
-                                    <button className="btn-open-maps"><GoogleLogo size={20} weight="bold" /> Ver Caminho</button>
+                                    <button className="btn-open-maps" onClick={handleOpenMaps}><GoogleLogo size={20} weight="bold" /> Ver Caminho</button>
                                 </div>
                             </div>
                         </section>
@@ -73,7 +87,7 @@ const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> 
                                 <option>REAGENDADO - Pedido do Cliente</option>
                             </select>
                             <textarea className="modern-textarea" placeholder="Relatório técnico de campo..."></textarea>
-                            <button className="btn-confirm-action">Finalizar e Gerar Protocolo</button>
+                            <button className="btn-confirm-action" onClick={handleFinish}>Finalizar e Gerar Protocolo</button>
                         </section>
                     </div>
 
