@@ -448,7 +448,7 @@ const LeadsManager: React.FC = () => {
             )}
 
             <style>{`
-                .crm-dashboard { padding: 2rem; background: #080a0f; height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; }
+                .crm-dashboard { padding: 2rem; background: #080a0f; height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; flex: 1; width: 100%; box-sizing: border-box; overflow-y: auto; overflow-x: hidden; }
                 .crm-header { display: flex; justify-content: space-between; align-items: center; }
                 .header-brand { display: flex; align-items: center; gap: 2rem; }
                 .title-box { display: flex; align-items: center; gap: 12px; color: #fff; }
