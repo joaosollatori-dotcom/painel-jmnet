@@ -357,17 +357,60 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <button className={`tab-btn ${activeTab === 'agendamento' ? 'active' : ''}`} onClick={() => setActiveTab('agendamento')}><Calendar size={16} /> Agendamento</button>
                         </nav>
 
-                        <div className="tab-viewport">
+                        <div className="tab-viewport ic-sidebar-scroll" style={{ flex: 1, overflowY: 'auto' }}>
                             {activeTab === 'timeline' && renderTimeline()}
                             {activeTab === 'dados' && renderDadosTab()}
-                            {activeTab === 'viabilidade' && renderViabilityTab()}
                             {activeTab === 'qualificacao' && renderQualificacaoTab()}
+                            {activeTab === 'viabilidade' && renderViabilityTab()}
                             {activeTab === 'proposta' && renderPropostaTab()}
                             {activeTab === 'agendamento' && (
-                                <div className="empty-titan">
-                                    <CalendarPlus size={48} />
-                                    <h4>Gestão de Agendamentos</h4>
-                                    <button className="btn-titan-primary" onClick={() => setShowApptModal(true)}>CRIAR NOVA ORDEM</button>
+                                <div className="scheduling-form-titan">
+                                    <div className="section-header">
+                                        <CalendarPlus size={24} />
+                                        <h3>Programação Técnica de Instalação</h3>
+                                    </div>
+                                    <div className="scheduling-grid">
+                                        <div className="titan-field">
+                                            <label>Data da Visita/Instalação</label>
+                                            <input
+                                                type="date"
+                                                className="titan-input"
+                                                value={lead.dataInstalacao ? new Date(lead.dataInstalacao).toISOString().split('T')[0] : ''}
+                                                onChange={(e) => handleFieldUpdate('dataInstalacao', e.target.value)}
+                                            />
+                                        </div>
+                                        <div className="titan-field">
+                                            <label>Turno</label>
+                                            <select
+                                                className="titan-select"
+                                                value={lead.turnoInstalacao || ''}
+                                                onChange={(e) => handleFieldUpdate('turnoInstalacao', e.target.value)}
+                                            >
+                                                <option value="">Selecione...</option>
+                                                <option value="MANHA">Manhã (08h - 12h)</option>
+                                                <option value="TARDE">Tarde (13h - 18h)</option>
+                                                <option value="NOITE">Noite (Especial)</option>
+                                            </select>
+                                        </div>
+                                        <div className="titan-field">
+                                            <label>Técnico Responsável</label>
+                                            <select
+                                                className="titan-select"
+                                                value={lead.tecnicoId || ''}
+                                                onChange={(e) => handleFieldUpdate('tecnicoId', e.target.value)}
+                                            >
+                                                <option value="">Selecione o técnico...</option>
+                                                <option value="33333333-3333-3333-3333-333333333333">Roberto Técnico</option>
+                                                <option value="11111111-1111-1111-1111-111111111111">João Sollatori</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                    <div className="scheduling-actions">
+                                        <button className="btn-titan-primary" onClick={() => {
+                                            handleActionLog('TASK', `Agendamento técnico atualizado para ${lead.dataInstalacao} no turno ${lead.turnoInstalacao}`);
+                                            showToast('Agendamento Sincronizado!', 'success');
+                                        }}>CONFIRMAR PROGRAMAÇÃO</button>
+                                    </div>
                                 </div>
                             )}
                         </div>
@@ -539,6 +582,12 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     /* Empty States */
                     .empty-titan { text-align: center; padding: 4rem 1rem; opacity: 0.5; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
                     .empty-titan h4 { margin: 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; font-weight: 900; }
+
+                    /* Scheduling Form Styles */
+                    .scheduling-form-titan { padding: 2rem; background: #0f172a; border-radius: 12px; border: 1px solid #334155; }
+                    .scheduling-form-titan .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; color: #60a5fa; }
+                    .scheduling-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
+                    .scheduling-actions { display: flex; justify-content: flex-end; }
 
 
                 `}</style>

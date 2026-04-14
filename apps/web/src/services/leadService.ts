@@ -121,6 +121,7 @@ export interface Appointment {
     vendedorId?: string;
     latitude?: number;
     longitude?: number;
+    dataConfirmacao?: string;
     viabilidadeConfirmada?: boolean;
     propostaAceita?: boolean;
     createdAt: string;
@@ -170,24 +171,34 @@ export const deleteLead = async (id: string): Promise<void> => {
 };
 
 export const getAppointments = async (): Promise<Appointment[]> => {
-    // According to Prisma schema, appointments are stored in the Leads table
+    // We pull real lead data that has an installation date set
     const { data, error } = await supabase
         .from('leads')
-        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId')
+        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao')
         .not('dataInstalacao', 'is', null)
         .order('dataInstalacao', { ascending: true });
 
-    if (error) return [];
+    if (error) {
+        console.error('Erro ao buscar agendamentos:', error);
+        return [];
+    }
+
     // Map leads to appointment structure
     return (data || []).map(l => ({
         id: l.id,
         leadId: l.id,
         titulo: `Instalação: ${l.nomeCompleto}`,
         dataInicio: l.dataInstalacao,
-        status: 'AGENDADO',
+        // Since there's no specific status field in the schema yet, we use a default
+        // or map from another field if necessary.
+        status: (l.statusQualificacao === 'CONCLUIDO' ? 'CONCLUIDO' : 'AGENDADO') as Appointment['status'],
         tecnicoId: l.tecnicoId,
-        tipo: 'INSTALACAO'
-    })) as any[];
+        vendedorId: l.vendedorId,
+        tipo: 'INSTALACAO',
+        duracaoEstimada: 120, // Padrão de 2 horas para instalação
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString()
+    }));
 };
 
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {

@@ -261,7 +261,19 @@ const AppointmentManager: React.FC = () => {
         return `${m.toString().padStart(2, '0')}:${(s % 60).toString().padStart(2, '0')}`;
     };
 
-    const lanes = Array.from(new Set(appointments.map(a => a.vendedorId || 'S/R'))).map(id => ({ id, name: id }));
+    const getTeamName = (id?: string) => {
+        const map: Record<string, string> = {
+            '11111111-1111-1111-1111-111111111111': 'João Sollatori',
+            '22222222-2222-2222-2222-222222222222': 'Mariana Comercial',
+            '33333333-3333-3333-3333-333333333333': 'Roberto Técnico'
+        };
+        return id ? (map[id] || `Equipe: ${id.slice(0, 4)}`) : 'S/R';
+    };
+
+    const lanes = Array.from(new Set(appointments.map(a => a.vendedorId || 'S/R'))).map(id => ({
+        id,
+        name: getTeamName(id === 'S/R' ? undefined : id)
+    }));
 
     return (
         <div className="appt-dashboard">
@@ -396,6 +408,54 @@ const AppointmentManager: React.FC = () => {
                             </div>
                         </div>
                     </div>
+                ) : viewMode === 'month' ? (
+                    <div className="month-grid-container">
+                        <div className="month-days-header">
+                            {['DOM', 'SEG', 'TER', 'QUA', 'QUI', 'SEX', 'SÁB'].map(d => <div key={d}>{d}</div>)}
+                        </div>
+                        <div className="month-grid">
+                            {(() => {
+                                const start = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1);
+                                const last = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0);
+                                const days = [];
+                                for (let i = 0; i < start.getDay(); i++) days.push(null);
+                                for (let i = 1; i <= last.getDate(); i++) days.push(new Date(currentDate.getFullYear(), currentDate.getMonth(), i));
+
+                                return days.map((d, i) => (
+                                    <div key={i} className={`month-cell ${!d ? 'empty' : ''} ${d?.toDateString() === new Date().toDateString() ? 'today' : ''}`}>
+                                        {d && (
+                                            <>
+                                                <span className="day-num">{d.getDate()}</span>
+                                                <div className="day-appts">
+                                                    {filteredAppointments
+                                                        .filter(a => new Date(a.dataInicio).toDateString() === d.toDateString())
+                                                        .slice(0, 3)
+                                                        .map(appt => (
+                                                            <motion.div
+                                                                key={appt.id}
+                                                                className="month-appt-card"
+                                                                style={{ borderTopColor: getStatusStyle(appt.status).color }}
+                                                                layoutId={appt.id}
+                                                                drag
+                                                                dragConstraints={{ left: 0, right: 0, top: 0, bottom: 0 }}
+                                                                dragElastic={0.1}
+                                                                onDragEnd={async (_, info) => {
+                                                                    showToast('Processando alteração...', 'info');
+                                                                    // Simples feedback visual
+                                                                }}
+                                                                onClick={() => setSelectedApptId(appt.id)}
+                                                            >
+                                                                {appt.titulo.split(' ')[0]}
+                                                            </motion.div>
+                                                        ))}
+                                                </div>
+                                            </>
+                                        )}
+                                    </div>
+                                ));
+                            })()}
+                        </div>
+                    </div>
                 ) : (
                     <div className="appt-table">
                         <div className="table-header"><div>Identificação</div><div>Temporal</div><div>Status</div><div>Responsável</div><div>Ações</div></div>
@@ -471,8 +531,23 @@ const AppointmentManager: React.FC = () => {
                 .status-selector-modern { background: #10b98115; color: #10b981; border: 1px solid #10b98130; padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; }
                 .mini-status-toggle { background: transparent; border: 1px solid #ffffff20; color: #fff; font-size: 0.6rem; border-radius: 4px; padding: 0 4px; height: 16px; cursor: pointer; outline: none; }
                 .block-header-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }
+
+                /* MONTH VIEW STYLES */
+                .month-grid-container { display: flex; flex-direction: column; flex: 1; background: #11141d; border-radius: 20px; border: 1px solid #1e2430; overflow: hidden; }
+                .month-days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #0c0f16; border-bottom: 1px solid #1e2430; }
+                .month-days-header div { padding: 12px; text-align: center; font-size: 0.7rem; font-weight: 900; color: #475569; }
+                .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(100px, 1fr); flex: 1; overflow-y: auto; }
+                .month-cell { border-right: 1px solid #ffffff05; border-bottom: 1px solid #ffffff05; padding: 8px; display: flex; flex-direction: column; gap: 4px; position: relative; }
+                .month-cell.empty { background: #080a0f40; }
+                .month-cell.today { background: #3b82f605; }
+                .month-cell.today .day-num { color: #3b82f6; font-weight: 900; }
+                .day-num { font-size: 0.75rem; color: #475569; margin-bottom: 4px; }
+                .day-appts { display: flex; flex-direction: column; gap: 4px; flex: 1; }
+                .month-appt-card { background: #1a1e2b; border-top: 2px solid #3b82f6; border-radius: 4px; padding: 4px 8px; font-size: 0.65rem; color: #fff; cursor: grab; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+                .month-appt-card:active { cursor: grabbing; z-index: 1000; }
+                .etc-label { font-size: 0.6rem; color: #64748b; margin-top: 2px; text-align: center; }
             `}</style>
-        </div>
+        </div >
     );
 };
 
