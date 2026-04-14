@@ -167,33 +167,53 @@ export const deleteLead = async (id: string): Promise<void> => {
 };
 
 export const getAppointments = async (): Promise<Appointment[]> => {
+    // According to Prisma schema, appointments are stored in the Leads table
     const { data, error } = await supabase
-        .from('appointments')
-        .select('*')
-        .order('dataInicio', { ascending: true });
+        .from('leads')
+        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId')
+        .not('dataInstalacao', 'is', null)
+        .order('dataInstalacao', { ascending: true });
 
     if (error) return [];
-    return data || [];
+    // Map leads to appointment structure
+    return (data || []).map(l => ({
+        id: l.id,
+        leadId: l.id,
+        titulo: `Instalação: ${l.nomeCompleto}`,
+        dataInicio: l.dataInstalacao,
+        status: 'AGENDADO',
+        tecnicoId: l.tecnicoId,
+        tipo: 'INSTALACAO'
+    })) as any[];
 };
 
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
+    const leadUpdates: any = {};
+    if (updates.dataInicio) leadUpdates.dataInstalacao = updates.dataInicio;
+
     const { error } = await supabase
-        .from('appointments')
-        .update({ ...updates, updatedAt: new Date().toISOString() })
+        .from('leads')
+        .update({ ...leadUpdates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;
 };
 
 export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
+    const leadUpdates: any = {
+        dataInstalacao: appointment.dataInicio,
+        updatedAt: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
-        .from('appointments')
-        .insert([{ ...appointment, updatedAt: new Date().toISOString() }])
+        .from('leads')
+        .update(leadUpdates)
+        .eq('id', appointment.leadId)
         .select()
         .single();
 
     if (error) throw error;
-    return data;
+    return { ...data, dataInicio: data.dataInstalacao } as any;
 };
 
 export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => {
@@ -208,14 +228,12 @@ export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => 
 };
 
 export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
-    // We try to insert into both metadata and metadados if possible or just choose one.
-    // Based on the error, metadata failed. Let's try metadados.
+    // metadata column is 400ing, dropping it to ensure persistence works
+    const { metadados, metadata, ...cleanHistory } = history as any;
+
     const { data, error } = await supabase
         .from('lead_history')
-        .insert([{
-            ...history,
-            metadados: history.metadata || history.metadados
-        }])
+        .insert([cleanHistory])
         .select()
         .single();
 
