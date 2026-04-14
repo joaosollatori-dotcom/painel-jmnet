@@ -418,20 +418,23 @@ const LeadsManager: React.FC = () => {
                                             </td>
                                             <td>
                                                 <div className="stage-cell">
-                                                    <div className="stage-badge" style={{ background: 'var(--primary-color-dim)', color: 'var(--primary-color)' }}>
-                                                        Pendente
+                                                    <div className="stage-badge" style={{
+                                                        background: daysInStage > 5 ? '#ef444422' : daysInStage > 2 ? '#f59e0b22' : '#3b82f622',
+                                                        color: daysInStage > 5 ? '#ef4444' : daysInStage > 2 ? '#f59e0b' : '#3b82f6'
+                                                    }}>
+                                                        {lead.stageId || 'Novo Lead'}
                                                     </div>
-                                                    <div className={`stage-sla ${daysInStage > 3 ? 'over' : ''}`}>
-                                                        {daysInStage} dias nesta etapa
+                                                    <div className={`stage-sla ${daysInStage > 4 ? 'over' : ''}`}>
+                                                        {daysInStage === 0 ? 'Entrou hoje' : `${daysInStage} dias parado`}
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
                                                 <div className="qual-cell">
                                                     <span className="badge-status" style={{ background: qual.bg, color: qual.text }}>{qual.label}</span>
-                                                    <div className="decisor-flag">
-                                                        {lead.decisorIdentificado ? <CheckCircle color="#10b981" weight="fill" /> : <XCircle color="#ef4444" weight="fill" />}
-                                                        Decisor
+                                                    <div className="qual-meta">
+                                                        {lead.perfilUso === 'EMPRESARIAL' ? <Suitcase size={14} /> : <User size={14} />}
+                                                        <span>{lead.interessePlano || 'S/ Plano'}</span>
                                                     </div>
                                                 </div>
                                             </td>
@@ -439,9 +442,10 @@ const LeadsManager: React.FC = () => {
                                                 <div className="viab-cell">
                                                     <span className="badge-status" style={{ background: viab.bg, color: viab.text }}>{viab.label}</span>
                                                     <div className="viab-meta">
-                                                        <MapPinLine size={14} /> {lead.bairro || 'S/B'}
-                                                        <a href={`https://maps.google.com?q=${lead.latitude},${lead.longitude}`} target="_blank" rel="noreferrer" className="map-link">
-                                                            <MapTrifold size={16} />
+                                                        <HardDrives size={14} title="CTO / Ponto" />
+                                                        <span title="Porta/Caixa">{lead.ctoProxima || 'Pendente'}</span>
+                                                        <a href={`https://maps.google.com?q=${lead.latitude},${lead.longitude}`} target="_blank" rel="noreferrer" className="map-link-btn">
+                                                            <MapPinLine size={16} weight="fill" />
                                                         </a>
                                                     </div>
                                                 </div>
@@ -558,7 +562,6 @@ const LeadsManager: React.FC = () => {
                                         <span>INFORMAÇÕES BÁSICAS</span>
                                         <div className="line" />
                                     </div>
-
                                     <div className="form-grid">
                                         <div className="form-group">
                                             <label>Nome Completo</label>
@@ -573,22 +576,51 @@ const LeadsManager: React.FC = () => {
                                                 onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
                                         </div>
                                         <div className="form-group">
-                                            <label>E-mail</label>
-                                            <input type="email" placeholder="cliente@email.com"
-                                                value={formData.email}
-                                                onChange={e => setFormData({ ...formData, email: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Origem / Canal</label>
+                                            <label>Canal de Origem</label>
                                             <div className="select-wrapper">
                                                 <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
                                                     <option value="WhatsApp">WhatsApp</option>
-                                                    <option value="Instagram">Instagram</option>
                                                     <option value="Indicação">Indicação</option>
-                                                    <option value="Site/Formulário">Site/Formulário</option>
+                                                    <option value="Site">Site / Landing Page</option>
+                                                    <option value="Tráfego Pago">Tráfego Pago (Meta/Google)</option>
                                                 </select>
                                                 <CaretDown className="select-icon" />
                                             </div>
+                                        </div>
+                                    </div>
+
+                                    <div className="section-divider" style={{ marginTop: '1.5rem' }}>
+                                        <span>DADOS TÉCNICOS & INTERESSE</span>
+                                        <div className="line" />
+                                    </div>
+                                    <div className="form-grid">
+                                        <div className="form-group">
+                                            <label>Perfil de Uso</label>
+                                            <div className="select-wrapper">
+                                                <select value={formData.tipoCliente} onChange={e => setFormData({ ...formData, tipoCliente: e.target.value })}>
+                                                    <option value="RESIDENCIAL">Residencial Básico</option>
+                                                    <option value="PREMIUM">Residencial Premium (Gamer/Home Office)</option>
+                                                    <option value="EMPRESARIAL">Empresarial / Dedicado</option>
+                                                </select>
+                                                <CaretDown className="select-icon" />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>CEP e Bairro</label>
+                                            <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
+                                                <input type="text" placeholder="00000-000" style={{ width: '100px' }}
+                                                    value={formData.cep}
+                                                    onChange={e => setFormData({ ...formData, cep: e.target.value })} />
+                                                <input type="text" placeholder="Bairro"
+                                                    value={formData.bairro}
+                                                    onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
+                                            </div>
+                                        </div>
+                                        <div className="form-group">
+                                            <label>Plano de Interesse</label>
+                                            <input type="text" placeholder="Ex: 500 Mega Fiber"
+                                                value={formData.interessePlano}
+                                                onChange={e => setFormData({ ...formData, interessePlano: e.target.value })} />
                                         </div>
                                     </div>
 
@@ -596,7 +628,7 @@ const LeadsManager: React.FC = () => {
                                         <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
                                         <button type="submit" className="btn-submit">
                                             <UserPlus size={20} weight="bold" />
-                                            Registrar Lead
+                                            Iniciar Jornada do Lead
                                         </button>
                                     </footer>
                                 </form>
@@ -673,6 +705,14 @@ const LeadsManager: React.FC = () => {
                 .lead-name { font-weight: 700; color: #f8fafc; font-size: 0.85rem; line-height: 1.2; word-break: break-all; }
                 .lead-name:hover { color: var(--primary-color); }
                 .lead-meta { font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+                
+                .map-link-btn { 
+                    color: var(--primary-color); background: rgba(59, 130, 246, 0.1); 
+                    padding: 4px; border-radius: 6px; display: flex; align-items: center; 
+                    transition: all 0.2s; border: 1px solid rgba(59, 130, 246, 0.2);
+                }
+                .map-link-btn:hover { background: var(--primary-color); color: #fff; transform: scale(1.1); }
+                .qual-meta { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #666; margin-top: 4px; }
                 
                 .badge-pPF { font-size: 9px; padding: 2px 6px; background: #10b98122; color: #10b981; border-radius: 4px; }
                 .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }

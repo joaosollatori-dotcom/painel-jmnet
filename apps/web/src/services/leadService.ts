@@ -37,8 +37,8 @@ export interface Lead {
     vendedorId?: string;
 
     // Qualificação
-    tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
-    perfilUso?: string;
+    tipoCliente: 'RESIDENCIAL' | 'PREMIUM' | 'EMPRESARIAL';
+    perfilUso?: 'BASICO' | 'GAMER' | 'HOME_OFFICE' | 'CORPORATIVO';
     usoPrincipal?: string;
     numDispositivos?: number;
     temMEI: boolean;
@@ -47,10 +47,10 @@ export interface Lead {
     interessePlano?: string;
     valorPagoAtual?: number;
     operadoraAtual?: string;
-    statusQualificacao: 'PENDENTE' | 'QUALIFICADO' | 'DESQUALIFICADO';
+    statusQualificacao: 'PENDENTE' | 'QUALIFICADO' | 'DESQUALIFICADO' | 'EM_ANALISE';
 
     // Viabilidade
-    statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA';
+    statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA' | 'VIABILIDADE_ESPECIAL';
     distanciaDistribuidor?: number;
     ctoProxima?: string;
     portasDisponiveis?: number;
@@ -141,11 +141,16 @@ export interface Appointment {
     dataConfirmacao?: string;
     canalConfirmacao?: 'WHATSAPP' | 'TELEFONE' | 'EMAIL';
 
-    // Vinculações
+    // Vinculações e Validações
     funnelStageId?: string;
     propostaId?: string;
     erpOrderId?: string;
     protocoloOrigem?: string;
+
+    // Flags de Negócio (Campos Calculados ou Persistidos)
+    viabilidadeConfirmada?: boolean;
+    propostaAceita?: boolean;
+    distanciaConflito?: boolean; // Flag visual para geolocalização inviável
 
     createdAt: string;
     updatedAt: string;
