@@ -579,7 +579,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                 )}
 
                 <style>{`
-                    .lead-detail-titan { position: fixed; inset: 0; background: #080a0f; z-index: 999; display: flex; flex-direction: column; overflow: hidden; }
+                    .lead-detail-titan { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #080a0f; width: 100%; position: relative; }
                     
                     /* Header */
                     .fixed-header { background: #0c0f16; border-bottom: 1px solid #1e2430; padding: 1.25rem 2.5rem; }

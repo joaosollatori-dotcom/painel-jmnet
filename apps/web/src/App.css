@@ -9,8 +9,12 @@
 
 .main-layout {
   display: flex;
+  flex-direction: column;
   flex: 1;
+  width: 100%;
+  min-width: 0;
   overflow: hidden;
+  position: relative;
 }
 
 @media (max-width: 768px) {
