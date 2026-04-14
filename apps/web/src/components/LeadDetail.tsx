@@ -11,7 +11,8 @@ import {
     MagnifyingGlass, Timer, Checks, WarningCircle,
     UserSwitch, Trophy, Receipt, Wrench, CalendarPlus,
     ArrowsClockwise, ShareNetwork, EnvelopeSimple,
-    CheckSquareOffset, Square, ListChecks, Kanban
+    CheckSquareOffset, Square, ListChecks, Kanban,
+    NavigationArrow, PhoneCall
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
