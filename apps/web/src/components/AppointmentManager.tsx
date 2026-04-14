@@ -21,115 +21,7 @@ import LoadingScreen from './LoadingScreen';
 
 type ViewMode = 'list' | 'day' | 'week' | 'month';
 
-// --- SUB-COMPONENTE: DETALHE DO AGENDAMENTO ---
-const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> = ({ apptId, onClose }) => {
-    const { showToast } = useToast();
-
-    const handleOpenMaps = () => {
-        window.open(`https://google.com/maps?q=Av.+Paulista,+1000+-+Bela+Vista`);
-    };
-
-    const handleFinish = async () => {
-        showToast('Enviando para Supabase...', 'info');
-        await logInteraction(apptId, 'SYS', 'Protocolo Finalizado', 'Ordem de serviço finalizada e protocolo TXT/PDF gerado.');
-        showToast('Protocolo Gerado com Sucesso!', 'success');
-        onClose();
-    };
-
-    return (
-        <div className="modal-overlay">
-            <motion.div
-                className="detail-panel ic-sidebar-scroll"
-                initial={{ opacity: 0, x: 400 }}
-                animate={{ opacity: 1, x: 0 }}
-                exit={{ opacity: 0, x: 400 }}
-            >
-                <header className="detail-header">
-                    <div className="header-labels">
-                        <span className="type-pill">VISTORIA TÉCNICA</span>
-                        <h2>Execução de Atendimento - ID: {apptId.slice(0, 8)}</h2>
-                        <div className="status-selector">
-                            <span className="status-current em-andamento">Em Andamento</span>
-                            <CaretDown size={14} />
-                        </div>
-                    </div>
-                    <button className="btn-close-circle" onClick={onClose}><X /></button>
-                </header>
-
-                <div className="detail-grid">
-                    <div className="detail-col main">
-                        <section className="detail-section card">
-                            <div className="section-title"><Timer size={18} /> Tempo em Execução</div>
-                            <div className="timer-block">
-                                <div className="timer-val">01:12:45</div>
-                                <div className="timer-label">Tracking de produtividade em tempo real</div>
-                            </div>
-                        </section>
-
-                        <section className="detail-section card">
-                            <div className="section-title"><MapPin size={18} /> Destino</div>
-                            <div className="address-display">
-                                <p>Av. Paulista, 1000 - Bela Vista</p>
-                                <p className="sub">CEP: 01310-100 - São Paulo/SP</p>
-                                <div className="map-placeholder">
-                                    <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=400" alt="Map" />
-                                    <button className="btn-open-maps" onClick={handleOpenMaps}><GoogleLogo size={20} weight="bold" /> Ver Caminho</button>
-                                </div>
-                            </div>
-                        </section>
-
-                        <section className="detail-section card">
-                            <div className="section-title"><Checks size={18} /> Resultado</div>
-                            <select className="modern-select">
-                                <option>Selecione o desfecho...</option>
-                                <option>SUCESSO - Ativado</option>
-                                <option>FALHA - Cliente Ausente</option>
-                                <option>REAGENDADO - Pedido do Cliente</option>
-                            </select>
-                            <textarea className="modern-textarea" placeholder="Relatório técnico de campo..."></textarea>
-                            <button className="btn-confirm-action" onClick={handleFinish}>Finalizar e Gerar Protocolo</button>
-                        </section>
-                    </div>
-
-                    <div className="detail-col side">
-                        <section className="detail-section">
-                            <div className="section-title small">Equipe Field</div>
-                            <div className="resp-card">
-                                <div className="resp-item">
-                                    <img src="https://ui-avatars.com/api/?name=Tecnico+X&background=0284c7&color=fff" alt="" />
-                                    <div><strong>João Silva</strong><span>Técnico Responsável</span></div>
-                                </div>
-                                <div className="resp-divider" />
-                                <div className="resp-item">
-                                    <img src="https://ui-avatars.com/api/?name=Vendedor+Y&background=10b981&color=fff" alt="" />
-                                    <div><strong>Maria Souza</strong><span>Consultor Comercial</span></div>
-                                </div>
-                            </div>
-                        </section>
-                    </div>
-                </div>
-
-                <style>{`
-                    .detail-panel { position: fixed; top: 0; right: 0; width: 600px; height: 100vh; background: #0c0f16; border-left: 1px solid #1e2430; z-index: 3000; padding: 2.5rem; overflow-y: auto; }
-                    .detail-header { display: flex; justify-content: space-between; margin-bottom: 2rem; }
-                    .header-labels h2 { font-size: 1.4rem; color: #fff; margin: 8px 0; }
-                    .type-pill { font-size: 0.7rem; font-weight: 900; color: #3b82f6; background: #3b82f615; padding: 4px 10px; border-radius: 6px; }
-                    .status-selector { display: flex; align-items: center; gap: 8px; color: #10b981; background: #10b98115; padding: 6px 14px; border-radius: 99px; width: fit-content; font-size: 0.8rem; font-weight: 800; }
-                    .detail-grid { display: grid; grid-template-columns: 1.5fr 1fr; gap: 2rem; }
-                    .detail-section.card { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; padding: 1.5rem; margin-bottom: 1.5rem; }
-                    .section-title { font-size: 0.9rem; font-weight: 800; color: #fff; display: flex; align-items: center; gap: 10px; margin-bottom: 1rem; }
-                    .timer-val { font-size: 2.5rem; font-weight: 900; color: #fff; font-family: monospace; }
-                    .modern-select, .modern-textarea { width: 100%; background: #080a0f; border: 1px solid #1e2430; color: #fff; padding: 12px; border-radius: 12px; margin-bottom: 1rem; }
-                    .btn-confirm-action { width: 100%; background: #2563eb; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; cursor: pointer; }
-                    .resp-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1rem; }
-                    .resp-item { display: flex; align-items: center; gap: 12px; padding: 8px 0; }
-                    .resp-item img { width: 32px; height: 32px; border-radius: 8px; }
-                `}</style>
-            </motion.div>
-        </div>
-    );
-};
-
+// --- COMPONENTE PRINCIPAL ---
 const AppointmentManager: React.FC = () => {
     const { showToast } = useToast();
     const [appointments, setAppointments] = useState<Appointment[]>([]);
@@ -141,6 +33,114 @@ const AppointmentManager: React.FC = () => {
     const [currentDate, setCurrentDate] = useState(new Date());
     const [resizingAppt, setResizingAppt] = useState<{ id: string, startY: number, startDuration: number } | null>(null);
     const [runningTimes, setRunningTimes] = useState<Record<string, number>>({});
+    const [updatingId, setUpdatingId] = useState<string | null>(null);
+
+    const STATUS_OPTIONS = [
+        { value: 'AGENDADO', label: 'Agendado' },
+        { value: 'CONFIRMADO', label: 'Confirmado' },
+        { value: 'DESLOCAMENTO', label: 'Em Deslocamento' },
+        { value: 'EM_ANDAMENTO', label: 'Em Execução' },
+        { value: 'CONCLUIDO', label: 'Concluído' },
+        { value: 'NAO_ATENDIDO', label: 'Não Atendido' },
+        { value: 'CANCELADO', label: 'Cancelado' },
+        { value: 'REAGENDADO', label: 'Reagendado' }
+    ];
+
+    const handleStatusUpdate = async (id: string, newStatus: string) => {
+        try {
+            setUpdatingId(id);
+            await updateAppointment(id, { status: newStatus as any });
+            showToast('Status atualizado com sucesso', 'success');
+            loadAppointments();
+        } catch (err) {
+            showToast('Falha ao sincronizar status', 'error');
+        } finally {
+            setUpdatingId(null);
+        }
+    };
+
+    // --- SUB-COMPONENTE INTERNO: DETALHE DO AGENDAMENTO ---
+    const AppointmentDetailModal: React.FC<{ apptId: string; onClose: () => void }> = ({ apptId, onClose }) => {
+        const appt = appointments.find(a => a.id === apptId);
+
+        const handleOpenMaps = () => { window.open(`https://google.com/maps?q=${appt?.latitude},${appt?.longitude}`); };
+        const handleFinish = async () => {
+            showToast('Enviando para Supabase...', 'info');
+            await logInteraction(apptId, 'SYS', 'Protocolo Finalizado', 'Ordem de serviço finalizada e protocolo TXT/PDF gerado.');
+            showToast('Protocolo Gerado com Sucesso!', 'success');
+            onClose();
+        };
+
+        return (
+            <div className="modal-overlay">
+                <motion.div
+                    className="detail-panel ic-sidebar-scroll"
+                    initial={{ opacity: 0, x: 400 }}
+                    animate={{ opacity: 1, x: 0 }}
+                    exit={{ opacity: 0, x: 400 }}
+                >
+                    <header className="detail-header">
+                        <div className="header-labels">
+                            <span className="type-pill">{appt?.tipo || 'EXECUTANDO'}</span>
+                            <h2>Operação Técnica - ID: {apptId.slice(0, 8)}</h2>
+                            <select
+                                className="status-selector-modern"
+                                disabled={updatingId === apptId}
+                                value={appt?.status || 'AGENDADO'}
+                                onChange={(e) => handleStatusUpdate(apptId, e.target.value)}
+                            >
+                                {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                            </select>
+                        </div>
+                        <button className="btn-close-circle" onClick={onClose}><X /></button>
+                    </header>
+
+                    <div className="detail-grid">
+                        <div className="detail-col main">
+                            <section className="detail-section card">
+                                <div className="section-title"><Timer size={18} /> Tempo em Execução</div>
+                                <div className="timer-block">
+                                    <div className="timer-val">{runningTimes[apptId] ? formatElapsed(runningTimes[apptId]) : '00:00'}</div>
+                                    <div className="timer-label">Tracking de produtividade em tempo real</div>
+                                </div>
+                            </section>
+
+                            <section className="detail-section card">
+                                <div className="section-title"><MapPin size={18} /> Localização</div>
+                                <div className="map-placeholder">
+                                    <img src="https://images.unsplash.com/photo-1526778548025-fa2f459cd5c1?auto=format&fit=crop&q=80&w=400" alt="Map" />
+                                    <button className="btn-open-maps" onClick={handleOpenMaps}><GoogleLogo size={20} weight="bold" /> Abrir GPS</button>
+                                </div>
+                            </section>
+
+                            <section className="detail-section card">
+                                <div className="section-title"><Checks size={18} /> Resultado de Campo</div>
+                                <textarea className="modern-textarea" placeholder="Descreva as observações técnicas desta execução..."></textarea>
+                                <button className="btn-confirm-action" onClick={handleFinish}>Finalizar Operação</button>
+                            </section>
+                        </div>
+
+                        <div className="detail-col side">
+                            <section className="detail-section">
+                                <div className="section-title small">Equipe Field</div>
+                                <div className="resp-card">
+                                    <div className="resp-item">
+                                        <div className="ic-avatar-small" style={{ background: '#3b82f6' }}>T</div>
+                                        <div><strong>Técnico Responsável</strong><span>ID: {appt?.tecnicoId?.slice(0, 8) || 'N/A'}</span></div>
+                                    </div>
+                                    <div className="resp-divider" />
+                                    <div className="resp-item">
+                                        <div className="ic-avatar-small" style={{ background: '#10b981' }}>V</div>
+                                        <div><strong>Vendedor Original</strong><span>ID: {appt?.vendedorId?.slice(0, 8) || 'S/R'}</span></div>
+                                    </div>
+                                </div>
+                            </section>
+                        </div>
+                    </div>
+                </motion.div>
+            </div>
+        );
+    };
 
     useEffect(() => { loadAppointments(); }, []);
 
@@ -287,19 +287,31 @@ const AppointmentManager: React.FC = () => {
             </header>
 
             <section className="attention-panel">
-                <div className="stat-card">
+                <div
+                    className={`stat-card clickable ${filterStatus === 'all' ? 'active' : ''}`}
+                    onClick={() => { setFilterStatus('all'); setViewMode('day'); }}
+                >
                     <div className="stat-icon blue"><Calendar /></div>
                     <div className="stat-info"><h3>Hoje</h3><p><strong>{attentionStats.today}</strong> serviços</p></div>
                 </div>
-                <div className="stat-card urgent">
+                <div
+                    className={`stat-card urgent clickable ${filterStatus === 'AGENDADO' ? 'active' : ''}`}
+                    onClick={() => { setFilterStatus('AGENDADO'); setViewMode('list'); }}
+                >
                     <div className="stat-icon yellow"><Bell /></div>
                     <div className="stat-info"><h3>Sem Confirmação</h3><p><strong>{attentionStats.unconfirmed}</strong> pendentes</p></div>
                 </div>
-                <div className="stat-card warning">
+                <div
+                    className={`stat-card warning clickable ${filterStatus === 'NAO_ATENDIDO' ? 'active' : ''}`}
+                    onClick={() => { setFilterStatus('NAO_ATENDIDO'); setViewMode('list'); }}
+                >
                     <div className="stat-icon red"><WarningCircle /></div>
                     <div className="stat-info"><h3>Pendências</h3><p><strong>{attentionStats.unattended}</strong> falhas</p></div>
                 </div>
-                <div className="stat-card">
+                <div
+                    className="stat-card clickable"
+                    onClick={() => { setFilterStatus('all'); setViewMode('list'); }}
+                >
                     <div className="stat-icon purple"><ArrowsClockwise /></div>
                     <div className="stat-info"><h3>Inviáveis</h3><p><strong>{attentionStats.conflicts}</strong> alertas</p></div>
                 </div>
@@ -336,7 +348,17 @@ const AppointmentManager: React.FC = () => {
                                             >
                                                 <div className="block-tag" style={{ background: getStatusStyle(appt.status).color }} />
                                                 <div className="block-info">
-                                                    <strong>{appt.titulo}</strong>
+                                                    <div className="block-header-title">
+                                                        <strong>{appt.titulo}</strong>
+                                                        <select
+                                                            className="mini-status-toggle"
+                                                            value={appt.status}
+                                                            onChange={(e) => { e.stopPropagation(); handleStatusUpdate(appt.id, e.target.value); }}
+                                                            onClick={e => e.stopPropagation()}
+                                                        >
+                                                            {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label.charAt(0)}</option>)}
+                                                        </select>
+                                                    </div>
                                                     <div className="block-meta">
                                                         <span>{new Date(appt.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
                                                         {runningTimes[appt.id] && <div className="block-chrono"> <Timer size={10} /> {formatElapsed(runningTimes[appt.id])}</div>}
@@ -381,7 +403,16 @@ const AppointmentManager: React.FC = () => {
                             <div key={a.id} className="table-row">
                                 <div><strong>{a.titulo}</strong><br /><small>{a.tipo}</small></div>
                                 <div>{new Date(a.dataInicio).toLocaleDateString()} {new Date(a.dataInicio).toLocaleTimeString()}</div>
-                                <div><span className="status-badge" style={{ background: getStatusStyle(a.status).bg, color: getStatusStyle(a.status).color }}>{getStatusStyle(a.status).label}</span></div>
+                                <div>
+                                    <select
+                                        className="status-select-table"
+                                        style={{ background: getStatusStyle(a.status).bg, color: getStatusStyle(a.status).color }}
+                                        value={a.status}
+                                        onChange={(e) => handleStatusUpdate(a.id, e.target.value)}
+                                    >
+                                        {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                    </select>
+                                </div>
                                 <div>{a.vendedorId || 'S/R'}</div>
                                 <div><button onClick={() => setSelectedApptId(a.id)}><ArrowSquareOut /></button></div>
                             </div>
@@ -401,7 +432,10 @@ const AppointmentManager: React.FC = () => {
                 .view-selector button { background: none; border: none; color: #64748b; padding: 8px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
                 .view-selector button.active { background: #1e2430; color: #fff; }
                 .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-                .stat-card { background: #11141d; border: 1px solid #1e2430; padding: 1rem; border-radius: 16px; display: flex; align-items: center; gap: 1rem; }
+                .stat-card { background: #11141d; border: 1px solid #1e2430; padding: 1rem; border-radius: 16px; display: flex; align-items: center; gap: 1rem; transition: all 0.3s ease; }
+                .stat-card.clickable { cursor: pointer; }
+                .stat-card.clickable:hover { border-color: #3b82f6; background: #1a1e2b; transform: translateY(-2px); }
+                .stat-card.active { border-color: #3b82f6; background: #1a1e2b; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
                 .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
                 .stat-icon.blue { background: #3b82f615; color: #3b82f6; }
                 .calendar-view-pane { background: #11141d; border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #1e2430; }
@@ -433,6 +467,10 @@ const AppointmentManager: React.FC = () => {
                 .table-header { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr; padding-bottom: 12px; color: #475569; font-size: 0.7rem; font-weight: 800; }
                 .table-row { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr; align-items: center; padding: 12px 0; border-top: 1px solid #1e2430; font-size: 0.8rem; color: #fff; }
                 .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
+                .status-select-table { border: none; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; outline: none; cursor: pointer; }
+                .status-selector-modern { background: #10b98115; color: #10b981; border: 1px solid #10b98130; padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; }
+                .mini-status-toggle { background: transparent; border: 1px solid #ffffff20; color: #fff; font-size: 0.6rem; border-radius: 4px; padding: 0 4px; height: 16px; cursor: pointer; outline: none; }
+                .block-header-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }
             `}</style>
         </div>
     );
