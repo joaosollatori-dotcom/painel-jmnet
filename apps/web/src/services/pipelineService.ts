@@ -46,17 +46,18 @@ export const moveLead = async (leadId: string, stageId: string, details?: Partia
     // 1. Atualiza o lead
     const { error: leadErr } = await supabase
         .from('leads')
-        .update({ stageId, updatedAt: new Date().toISOString() })
+        .update({ stage_id: stageId, updated_at: new Date().toISOString() })
         .eq('id', leadId);
 
     if (leadErr) throw leadErr;
 
     // 2. Registra no histórico
+    const dbHist = { ...details } as any;
     await supabase.from('lead_history').insert([{
-        leadId,
-        stageId,
-        dataEntrada: new Date().toISOString(),
-        ...details
+        lead_id: leadId,
+        stage_id: stageId,
+        data_entrada: new Date().toISOString(),
+        ...dbHist
     }]);
 };
 

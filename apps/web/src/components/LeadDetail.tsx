@@ -151,17 +151,17 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         ) : historyLogs.filter(h => timelineFilter === 'ALL' || h.type === timelineFilter).map(event => (
                             <tr key={event.id} className="event-row">
                                 <td style={{ width: '60px' }}>
-                                    <div className={`type-icon ${event.type.toLowerCase() === 'wa' ? 'wa' : event.type.toLowerCase() === 'call' ? 'call' : 'sys'}`}>
-                                        {event.type === 'CALL' ? <PhoneCall size={18} /> : event.type === 'WA' ? <WhatsappLogo size={18} /> : <ArrowsClockwise size={18} />}
+                                    <div className={`type-icon ${(event.type as string).toLowerCase() === 'wa' ? 'wa' : (event.type as string).toLowerCase() === 'call' ? 'call' : 'sys'}`}>
+                                        {(event.type as string) === 'CALL' ? <PhoneCall size={18} /> : (event.type as string) === 'WA' ? <WhatsappLogo size={18} /> : <ArrowsClockwise size={18} />}
                                     </div>
                                 </td>
                                 <td>
-                                    <strong>{event.metadata?.action || 'Atividade Geral'}</strong>
+                                    <strong>{event.metadata?.action || event.metadados?.action || 'Atividade Geral'}</strong>
                                     <p style={{ margin: '4px 0 0 0', opacity: 0.8, fontSize: '0.8rem' }}>{event.content || 'Nenhuma descrição detalhada.'}</p>
                                 </td>
                                 <td style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                                    {new Date(event.dataEvento).toLocaleDateString()} <br />
-                                    {new Date(event.dataEvento).toLocaleTimeString().slice(0, 5)}
+                                    {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleDateString()} <br />
+                                    {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleTimeString().slice(0, 5)}
                                 </td>
                                 <td style={{ fontSize: '0.75rem' }}>João Solla</td>
                             </tr>
