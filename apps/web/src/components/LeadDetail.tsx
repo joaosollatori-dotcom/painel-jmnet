@@ -131,7 +131,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     <div className="id-main">
                         <div className="id-avatar-lg">{lead.nomeCompleto.split(' ').map(n => n[0]).join('')}</div>
                         <div>
-                            <h1>{lead.nomeCompleto}</h1>
+                            <h1>{lead.nomeCompleto} <small style={{ fontSize: '0.6rem', color: '#3b82f6', background: '#3b82f620', padding: '2px 6px', borderRadius: '4px', verticalAlign: 'middle' }}>v2.02.07</small></h1>
                             <div className="id-badges">
                                 <span className={`badge-p${lead.tipoPessoa}`}>{lead.tipoPessoa}</span>
                                 <span><MapPin size={14} /> {lead.cidade || 'São Paulo'}, {lead.bairro || 'Centro'}</span>
@@ -343,6 +343,9 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                 style={{ width: '100%', background: '#080a0f', border: '1px solid #1e2430', borderRadius: '8px', padding: '10px', color: '#94a3b8', fontSize: '0.85rem', minHeight: '80px', resize: 'none' }}
                             ></textarea>
                         </div>
+                        <button className="btn-save-viab" onClick={() => { showToast('CPO Atualizada no sistema central', 'success'); registerInteraction('SYS', 'CPO e Viabilidade confirmados via CRM'); }}>
+                            <CheckCircle size={20} weight="bold" /> Salvar e Atualizar CPO
+                        </button>
                     </div>
                 </div>
                 <div className="viab-map-view">
@@ -660,16 +663,28 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     .i-val input { background: none; border: none; color: #fff; width: 100%; outline: none; padding: 10px 0; }
                     
                     /* Viabilidade */
-                    .tab-pane-viability { display: flex; flex-direction: column; gap: 1.5rem; }
-                    .viab-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; }
-                    .viab-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; }
-                    .v-header { display: flex; gap: 12px; margin-bottom: 1.5rem; color: #3b82f6; }
-                    .v-header strong { display: block; font-size: 1rem; color: #f8fafc; }
-                    .v-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex: 1; }
-                    .v-stat small { display: block; font-size: 0.7rem; color: #475569; text-transform: uppercase; }
-                    .v-stat strong { font-size: 0.95rem; color: #f8fafc; }
+                    .tab-pane-viability { display: flex; flex-direction: column; gap: 1.5rem; height: 100%; }
+                    .viab-grid { display: grid; grid-template-columns: 360px 1fr; gap: 1.5rem; height: 100%; min-height: 400px; }
+                    .viab-info { display: flex; flex-direction: column; gap: 1.5rem; }
+                    .viab-card { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; padding: 2rem; display: flex; flex-direction: column; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+                    .v-header { display: flex; gap: 16px; margin-bottom: 2rem; align-items: center; }
+                    .v-header svg { color: #3b82f6; background: #3b82f615; padding: 10px; border-radius: 12px; }
+                    .v-header strong { display: block; font-size: 1.1rem; color: #f8fafc; margin-bottom: 4px; }
+                    .v-header span { font-size: 0.8rem; color: #64748b; }
                     
-                    .viab-map-view { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; height: 300px; overflow: hidden; }
+                    .v-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; margin-bottom: 2rem; }
+                    .v-stat { background: #080a0f; padding: 12px 16px; border-radius: 12px; border: 1px solid #1e2430; transition: border-color 0.2s; }
+                    .v-stat:focus-within { border-color: #3b82f6; }
+                    .v-stat small { display: block; font-size: 0.7rem; color: #475569; text-transform: uppercase; font-weight: 800; margin-bottom: 4px; letter-spacing: 0.05em; }
+                    .v-select, .v-stat input { background: transparent; border: none; color: #fff; font-weight: 700; font-size: 0.95rem; width: 100%; outline: none; padding: 4px 0; }
+                    
+                    .v-obs label { display: block; font-size: 0.7rem; color: #475569; text-transform: uppercase; font-weight: 800; margin-bottom: 10px; letter-spacing: 0.05em; }
+                    .v-obs textarea { width: 100%; background: #080a0f; border: 1px solid #1e2430; border-radius: 12px; padding: 12px; color: #94a3b8; font-size: 0.9rem; min-height: 120px; resize: none; outline: none; transition: border-color 0.2s; }
+                    .v-obs textarea:focus { border-color: #3b82f6; color: #f8fafc; }
+                    
+                    .viab-map-view { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; overflow: hidden; height: 100%; min-height: 400px; box-shadow: 0 4px 20px rgba(0,0,0,0.2); }
+                    .btn-save-viab { margin-top: 1.5rem; background: #3b82f6; color: #fff; border: none; padding: 14px; border-radius: 12px; font-weight: 800; font-size: 0.9rem; cursor: pointer; transition: all 0.2s; box-shadow: 0 4px 15px #3b82f640; display: flex; align-items: center; justify-content: center; gap: 8px; }
+                    .btn-save-viab:hover { transform: translateY(-2px); box-shadow: 0 6px 20px #3b82f660; }
 
                     /* Modals */
                     .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
