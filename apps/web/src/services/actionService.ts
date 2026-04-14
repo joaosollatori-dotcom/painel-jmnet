@@ -1,4 +1,4 @@
-import { LeadHistory, updateLead, Lead } from './leadService';
+import { LeadHistory, updateLead, Lead, createLeadHistory } from './leadService';
 
 /*
   🚀 ACTION SERVICE - TITAN ISP
@@ -6,11 +6,14 @@ import { LeadHistory, updateLead, Lead } from './leadService';
 */
 
 export const logInteraction = async (leadId: string, type: string, action: string, message: string = '') => {
-    console.log(`[SYS Action Log Event] Lead: ${leadId} | Type: ${type} | Action: ${action}`, message);
-    // TODO: In a real database scenario, insert a new record into `LeadHistory` table targeting `leadId`.
-
-    // Simulate updating the `last_interaction` date in Lead row so SLA counts correctly.
     try {
+        await createLeadHistory({
+            leadId,
+            type: type as any,
+            content: message,
+            dataEvento: new Date().toISOString(),
+            metadata: { action }
+        });
         await updateLead(leadId, { dataUltimaInteracao: new Date().toISOString() });
     } catch (e) {
         console.warn('Failed to update lead interaction date internally', e);

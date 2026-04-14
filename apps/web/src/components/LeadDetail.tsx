@@ -17,7 +17,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
-import { Lead, LeadHistory, updateLead, Appointment, getAppointments } from '../services/leadService';
+import { Lead, LeadHistory, updateLead, Appointment, getAppointments, getLeadHistory } from '../services/leadService';
 import { dispatchCall, dispatchWhatsApp, dispatchNote, logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
 
@@ -42,6 +42,9 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     });
     const [quickNote, setQuickNote] = useState('');
     const [timelineFilter, setTimelineFilter] = useState<'ALL' | 'CALL' | 'WA' | 'SYS'>('ALL');
+    const [historyLogs, setHistoryLogs] = useState<LeadHistory[]>([]);
+    const [showTransferModal, setShowTransferModal] = useState(false);
+    const [newVendedorId, setNewVendedorId] = useState('');
 
     useEffect(() => {
         loadLeadContext();
@@ -50,6 +53,8 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     const loadLeadContext = async () => {
         const appts = await getAppointments();
         setRelatedAppts(appts.filter(a => a.leadId === lead.id));
+        const hist = await getLeadHistory(lead.id);
+        setHistoryLogs(hist);
     };
 
     const handleInlineEdit = async (field: keyof Lead, value: any) => {
@@ -78,6 +83,26 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         }
     };
 
+    const handleTransfer = async () => {
+        if (!newVendedorId) return;
+        try {
+            await updateLead(lead.id, { vendedorId: newVendedorId });
+            await registerInteraction('SYS', `Lead transferido do Comercial para: ${newVendedorId}`);
+            setShowTransferModal(false);
+            showToast('Responsável atualizado!', 'success');
+        } catch (e) {
+            showToast('Erro ao transferir', 'error');
+        }
+    };
+
+    const handleAdvanceStage = async () => {
+        showToast('Validando regras de automação...', 'info');
+        // Simulate background routine to advance Bant/Viab/Proposta statuses
+        setTimeout(() => {
+            registerInteraction('STAGE_CHANGE', 'Avanço Automático de Etapa disparado pelo usuário.');
+        }, 1000);
+    };
+
     const renderHeader = () => {
         const stages = ['Novo', 'Qualificação', 'Viabilidade', 'Proposta', 'Contrato', 'Instalação'];
         const currentStageIdx = 2; // Simulado
@@ -98,8 +123,8 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         ))}
                     </div>
                     <div className="header-controls">
-                        <button className="btn-transfer"><UserSwitch size={20} /> Transferir</button>
-                        <button className="btn-advance">Avançar Etapa <CaretRight weight="bold" /></button>
+                        <button className="btn-transfer" onClick={() => setShowTransferModal(true)}><UserSwitch size={20} /> Transferir</button>
+                        <button className="btn-advance" onClick={handleAdvanceStage}>Avançar Etapa <CaretRight weight="bold" /></button>
                     </div>
                 </div>
                 <div className="lead-identity-bar">
@@ -225,6 +250,47 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <input type="number" value={qualifData.devices} onChange={e => setQualifData({ ...qualifData, devices: Number(e.target.value) })} />
                         </div>
                     </div>
+                </div>
+            </div>
+        </div>
+    );
+
+    const renderViabilityTab = () => (
+        <div className="tab-pane-viability">
+            <div className="viab-card">
+                <div className="card-header"><HardDrives size={20} weight="duotone" /> <h4>Infraestrutura & Viabilidade Técnica</h4></div>
+                <div className="v-grid">
+                    <div className="v-item">
+                        <label>Status de Viabilidade</label>
+                        <select className="v-select" value={lead.statusViabilidade}>
+                            <option value="PENDENTE">Pendente</option>
+                            <option value="VIAVEL">Viável (Cobertura Confirmada)</option>
+                            <option value="INVIAVEL">Inviável (Sem Previsão)</option>
+                            <option value="EM_ANALISE">Em Análise (Engenharia)</option>
+                            <option value="ESPECIAL">Projeto Especial (Dedidaco)</option>
+                        </select>
+                    </div>
+                    <div className="v-item">
+                        <label>CTO Próxima (Cód.)</label>
+                        <input type="text" defaultValue={lead.ctoProxima || ''} placeholder="Ex: CTO-1R-A04" />
+                    </div>
+                    <div className="v-item">
+                        <label>Portas Livres</label>
+                        <input type="number" defaultValue={lead.portasDisponiveis || 0} />
+                    </div>
+                    <div className="v-item">
+                        <label>Distância da Caixa (m)</label>
+                        <input type="number" defaultValue={lead.distanciaDistribuidor || 0} />
+                    </div>
+                </div>
+            </div>
+
+            <div className="viab-card">
+                <div className="card-header"><Wrench size={20} weight="duotone" /> <h4>Observações da Engenharia</h4></div>
+                <textarea placeholder="Detalhes como restrições de posteamento, tipo de fachada ou dificuldade de lançamento." defaultValue={lead.obsTecnica || ''}></textarea>
+                <div className="v-footer">
+                    <span>Vistoriado por: {lead.verificadoPor || 'N/A'}</span>
+                    <button className="btn-primary" onClick={() => showToast('Viabilidade Atualizada e Notificada ao Comercial', 'success')}>Salvar e Atualizar CPO</button>
                 </div>
             </div>
         </div>
@@ -358,27 +424,23 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                         <button className={timelineFilter === 'SYS' ? 'active' : ''} onClick={() => setTimelineFilter('SYS')}>Sistema</button>
                                     </div>
                                     <div className="timeline-list">
-                                        <div className="timeline-item">
-                                            <div className="t-icon sys"><ArrowsClockwise /></div>
-                                            <div className="t-content">
-                                                <div className="t-header"><strong>Alteração de Etapa</strong> <span>Há 2 horas</span></div>
-                                                <p>Lead movido para <strong>Qualificação</strong> por João Solla.</p>
+                                        {historyLogs.filter(h => timelineFilter === 'ALL' || h.type === timelineFilter || (h.type === 'STAGE_CHANGE' && timelineFilter === 'SYS')).length === 0 && (
+                                            <div className="empty-state">Nenhum evento registrado.</div>
+                                        )}
+                                        {historyLogs.filter(h => timelineFilter === 'ALL' || h.type === timelineFilter || (h.type === 'STAGE_CHANGE' && timelineFilter === 'SYS')).map(event => (
+                                            <div className="timeline-item" key={event.id || Math.random()}>
+                                                <div className={`t-icon ${event.type === 'CALL' ? 'call' : event.type === 'WA' ? 'wa' : 'sys'}`}>
+                                                    {event.type === 'CALL' ? <PhoneCall /> : event.type === 'WA' ? <WhatsappLogo /> : <ArrowsClockwise />}
+                                                </div>
+                                                <div className="t-content">
+                                                    <div className="t-header">
+                                                        <strong>{event.metadata?.action || (event.type === 'CALL' ? 'Ligação Efetuada' : 'Ação de Sistema')}</strong>
+                                                        <span>{new Date(event.dataEvento).toLocaleDateString()} {new Date(event.dataEvento).toLocaleTimeString().slice(0, 5)}</span>
+                                                    </div>
+                                                    <p>{event.content}</p>
+                                                </div>
                                             </div>
-                                        </div>
-                                        <div className="timeline-item">
-                                            <div className="t-icon call"><PhoneCall /></div>
-                                            <div className="t-content">
-                                                <div className="t-header"><strong>Ligação Efetuada</strong> <span>Há 5 horas</span></div>
-                                                <p>Resultado: <strong>Ocupado</strong>. Tentativa nº 2.</p>
-                                            </div>
-                                        </div>
-                                        <div className="timeline-item">
-                                            <div className="t-icon wa"><WhatsappLogo /></div>
-                                            <div className="t-content">
-                                                <div className="t-header"><strong>Mensagem Enviada</strong> <span>Ontem às 18:00</span></div>
-                                                <p>"Olá {lead.nomeCompleto.split(' ')[0]}, vi seu interesse no plano de 500MB..."</p>
-                                            </div>
-                                        </div>
+                                        ))}
                                     </div>
                                 </div>
                             )}
@@ -391,24 +453,26 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                             <div className="i-group">
                                                 <label>Nome Completo</label>
                                                 <div className="i-val" onClick={() => setIsEditing('nomeCompleto')}>
-                                                    {isEditing === 'nomeCompleto' ? <input autoFocus onBlur={(e) => handleInlineEdit('nomeCompleto', e.target.value)} defaultValue={lead.nomeCompleto} /> : <span>{lead.nomeCompleto} <Pen size={12} /></span>}
+                                                    {isEditing === 'nomeCompleto' ? <input autoFocus onBlur={(e) => handleInlineEdit('nomeCompleto', e.target.value)} defaultValue={lead.nomeCompleto} /> : <span className="val-content"><span className="val-text">{lead.nomeCompleto}</span> <Pen size={12} className="v-icon" /></span>}
                                                 </div>
                                             </div>
                                             <div className="i-group">
                                                 <label>E-mail</label>
                                                 <div className="i-val" onClick={() => setIsEditing('email')}>
-                                                    {isEditing === 'email' ? <input autoFocus onBlur={(e) => handleInlineEdit('email', e.target.value)} defaultValue={lead.email} /> : <span>{lead.email || 'Não informado'} <Pen size={12} /></span>}
+                                                    {isEditing === 'email' ? <input autoFocus onBlur={(e) => handleInlineEdit('email', e.target.value)} defaultValue={lead.email} /> : <span className="val-content"><span className="val-text">{lead.email || 'Não informado'}</span> <Pen size={12} className="v-icon" /></span>}
                                                 </div>
                                             </div>
                                             <div className="i-group">
                                                 <label>CPF/CNPJ</label>
                                                 <div className="i-val" onClick={() => setIsEditing('cpfCnpj')}>
-                                                    {isEditing === 'cpfCnpj' ? <input autoFocus onBlur={(e) => handleInlineEdit('cpfCnpj', e.target.value)} defaultValue={lead.cpfCnpj} /> : <span>{lead.cpfCnpj || 'Adicionar documento'} <Pen size={12} /></span>}
+                                                    {isEditing === 'cpfCnpj' ? <input autoFocus onBlur={(e) => handleInlineEdit('cpfCnpj', e.target.value)} defaultValue={lead.cpfCnpj} /> : <span className="val-content"><span className="val-text">{lead.cpfCnpj || 'Adicionar doc'}</span> <Pen size={12} className="v-icon" /></span>}
                                                 </div>
                                             </div>
                                             <div className="i-group">
                                                 <label>Data Nasc.</label>
-                                                <span>{lead.dataNascimento ? new Date(lead.dataNascimento).toLocaleDateString() : '---'}</span>
+                                                <div className="i-val">
+                                                    <span className="val-content"><span className="val-text">{lead.dataNascimento ? new Date(lead.dataNascimento).toLocaleDateString() : '---'}</span></span>
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
@@ -419,22 +483,25 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                             <div className="i-group full">
                                                 <label>Logradouro</label>
                                                 <div className="i-val" onClick={() => setIsEditing('logradouro')}>
-                                                    {isEditing === 'logradouro' ? <input autoFocus onBlur={(e) => handleInlineEdit('logradouro', e.target.value)} defaultValue={lead.logradouro} /> : <span>{lead.logradouro || 'Definir rua'} <Pen size={12} /></span>}
+                                                    {isEditing === 'logradouro' ? <input autoFocus onBlur={(e) => handleInlineEdit('logradouro', e.target.value)} defaultValue={lead.logradouro} /> : <span className="val-content"><span className="val-text">{lead.logradouro || 'Definir rua'}</span> <Pen size={12} className="v-icon" /></span>}
                                                 </div>
                                             </div>
                                             <div className="i-group">
-                                                <label>Número</label><span>{lead.numero || 'S/N'}</span>
+                                                <label>Número</label>
+                                                <div className="i-val"><span className="val-content"><span className="val-text">{lead.numero || 'S/N'}</span></span></div>
                                             </div>
                                             <div className="i-group">
-                                                <label>Bairro</label><span>{lead.bairro || 'Centro'}</span>
+                                                <label>Bairro</label>
+                                                <div className="i-val"><span className="val-content"><span className="val-text">{lead.bairro || 'Centro'}</span></span></div>
                                             </div>
                                             <div className="i-group">
-                                                <label>CEP</label><span>{lead.cep || '00000-000'}</span>
+                                                <label>CEP</label>
+                                                <div className="i-val"><span className="val-content"><span className="val-text">{lead.cep || '00000-000'}</span></span></div>
                                             </div>
-                                            <div className="i-group">
+                                            <div className="i-group full">
                                                 <label>Ponto de Referência</label>
                                                 <div className="i-val" onClick={() => setIsEditing('pontoReferencia')}>
-                                                    {isEditing === 'pontoReferencia' ? <input autoFocus onBlur={(e) => handleInlineEdit('pontoReferencia', e.target.value)} defaultValue={lead.pontoReferencia} /> : <span>{lead.pontoReferencia || 'Ex: Próximo ao mercado'} <Pen size={12} /></span>}
+                                                    {isEditing === 'pontoReferencia' ? <input autoFocus onBlur={(e) => handleInlineEdit('pontoReferencia', e.target.value)} defaultValue={lead.pontoReferencia} /> : <span className="val-content"><span className="val-text">{lead.pontoReferencia || 'Ex: Próximo ao mercado'}</span> <Pen size={12} className="v-icon" /></span>}
                                                 </div>
                                             </div>
                                         </div>
@@ -482,8 +549,37 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     {renderSidebar()}
                 </div>
 
+                {showTransferModal && (
+                    <div className="modal-overlay">
+                        <div className="modal-content" style={{ maxWidth: '400px' }}>
+                            <header className="modal-header">
+                                <div>
+                                    <h2>Transferir Responsável</h2>
+                                    <p>Rotear lead para outro Vendedor/Área</p>
+                                </div>
+                                <button className="btn-close" onClick={() => setShowTransferModal(false)}><X size={20} /></button>
+                            </header>
+                            <div className="modal-body">
+                                <div className="form-group full">
+                                    <label>Novo Responsável</label>
+                                    <select value={newVendedorId} onChange={e => setNewVendedorId(e.target.value)} style={{ padding: '10px', background: '#080a0f', color: '#fff', border: '1px solid #1e2430', borderRadius: '8px', width: '100%', outline: 'none' }}>
+                                        <option value="">Selecione na equipe...</option>
+                                        <option value="VD-101">Mariana (Comercial)</option>
+                                        <option value="VD-102">Roberto (Retenção)</option>
+                                        <option value="AG-01">Vendas BO T (IA)</option>
+                                    </select>
+                                </div>
+                            </div>
+                            <footer className="modal-footer" style={{ borderTop: 'none', padding: '1.5rem 2rem' }}>
+                                <button type="button" className="btn-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
+                                <button type="button" className="btn-submit" onClick={handleTransfer}>Confirmar Rotação</button>
+                            </footer>
+                        </div>
+                    </div>
+                )}
+
                 <style>{`
-                    .lead-detail-titan { position: fixed; inset: 0; background: #080a0f; z-index: 2000; display: flex; flex-direction: column; overflow: hidden; }
+                    .lead-detail-titan { position: fixed; inset: 0; background: #080a0f; z-index: 999; display: flex; flex-direction: column; overflow: hidden; }
                     
                     /* Header */
                     .fixed-header { background: #0c0f16; border-bottom: 1px solid #1e2430; padding: 1.25rem 2.5rem; }
@@ -556,9 +652,12 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     .inline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
                     .inline-grid .full { grid-column: 1 / -1; }
                     .i-group label { display: block; font-size: 0.7rem; color: #475569; margin-bottom: 6px; text-transform: uppercase; font-weight: 800; }
-                    .i-val { background: #080a0f; padding: 8px 12px; border-radius: 8px; color: #f8fafc; font-weight: 600; cursor: pointer; display: flex; align-items: center; justify-content: space-between; border: 1px solid transparent; }
+                    .i-val { background: #080a0f; min-height: 40px; padding: 0 12px; border-radius: 8px; color: #f8fafc; font-weight: 600; cursor: pointer; display: flex; align-items: center; border: 1px solid transparent; width: 100%; box-sizing: border-box; }
                     .i-val:hover { border-color: #3b82f640; }
-                    .i-val input { background: none; border: none; color: #fff; width: 100%; outline: none; }
+                    .i-val input { background: none; border: none; color: #fff; width: 100%; outline: none; padding: 10px 0; font-family: inherit; font-size: 0.9rem; }
+                    .val-content { display: flex; align-items: center; width: 100%; justify-content: space-between; overflow: hidden; }
+                    .val-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
+                    .v-icon { color: #64748b; flex-shrink: 0; margin-left: 8px; }
                     
                     /* Qualif */
                     .qualif-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }

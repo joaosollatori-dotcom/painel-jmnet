@@ -189,3 +189,25 @@ export const createAppointment = async (appointment: Partial<Appointment>): Prom
     if (error) throw error;
     return data;
 };
+
+export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => {
+    const { data, error } = await supabase
+        .from('LeadHistory')
+        .select('*')
+        .eq('leadId', leadId)
+        .order('dataEvento', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+};
+
+export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
+    const { data, error } = await supabase
+        .from('LeadHistory')
+        .insert([history])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
