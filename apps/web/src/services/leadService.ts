@@ -131,22 +131,16 @@ export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) throw error;
     return data || [];
 };
 
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
-    // Map to snake_case for DB insert
-    const dbLead = { ...lead } as any;
-    if (dbLead.vendedorId) { dbLead.vendedor_id = dbLead.vendedorId; delete dbLead.vendedorId; }
-    if (dbLead.dataEntrada) { dbLead.data_entrada = dbLead.dataEntrada; delete dbLead.dataEntrada; }
-    if (dbLead.dataUltimaInteracao) { dbLead.data_ultima_interacao = dbLead.dataUltimaInteracao; delete dbLead.dataUltimaInteracao; }
-
     const { data, error } = await supabase
         .from('leads')
-        .insert([dbLead])
+        .insert([{ ...lead, updatedAt: new Date().toISOString() }])
         .select()
         .single();
 
@@ -155,16 +149,9 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
-    // Map to snake_case for DB update
-    const dbUpdates = { ...updates } as any;
-    if (dbUpdates.vendedorId) { dbUpdates.vendedor_id = dbUpdates.vendedorId; delete dbUpdates.vendedorId; }
-    if (dbUpdates.dataUltimaInteracao) { dbUpdates.data_ultima_interacao = dbUpdates.dataUltimaInteracao; delete dbUpdates.dataUltimaInteracao; }
-    if (dbUpdates.statusViabilidade) { dbUpdates.status_viabilidade = dbUpdates.statusViabilidade; delete dbUpdates.statusViabilidade; }
-    if (dbUpdates.statusQualificacao) { dbUpdates.status_qualificacao = dbUpdates.statusQualificacao; delete dbUpdates.statusQualificacao; }
-
     const { error } = await supabase
         .from('leads')
-        .update({ ...dbUpdates, updated_at: new Date().toISOString() })
+        .update({ ...updates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;
@@ -181,33 +168,27 @@ export const deleteLead = async (id: string): Promise<void> => {
 
 export const getAppointments = async (): Promise<Appointment[]> => {
     const { data, error } = await supabase
-        .from('appointment')
+        .from('appointments')
         .select('*')
-        .order('data_inicio', { ascending: true });
+        .order('dataInicio', { ascending: true });
 
     if (error) return [];
     return data || [];
 };
 
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
-    const dbUpdates = { ...updates } as any;
-    if (dbUpdates.dataInicio) { dbUpdates.data_inicio = dbUpdates.dataInicio; delete dbUpdates.dataInicio; }
-
     const { error } = await supabase
-        .from('appointment')
-        .update({ ...dbUpdates, updated_at: new Date().toISOString() })
+        .from('appointments')
+        .update({ ...updates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;
 };
 
 export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
-    const dbAppt = { ...appointment } as any;
-    if (dbAppt.dataInicio) { dbAppt.data_inicio = dbAppt.dataInicio; delete dbAppt.dataInicio; }
-
     const { data, error } = await supabase
-        .from('appointment')
-        .insert([dbAppt])
+        .from('appointments')
+        .insert([{ ...appointment, updatedAt: new Date().toISOString() }])
         .select()
         .single();
 
@@ -219,22 +200,22 @@ export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => 
     const { data, error } = await supabase
         .from('lead_history')
         .select('*')
-        .eq('lead_id', leadId)
-        .order('data_evento', { ascending: false });
+        .eq('leadId', leadId)
+        .order('dataEvento', { ascending: false });
 
     if (error) return [];
     return data || [];
 };
 
 export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
-    const dbHist = { ...history } as any;
-    if (dbHist.leadId) { dbHist.lead_id = dbHist.leadId; delete dbHist.leadId; }
-    if (dbHist.dataEvento) { dbHist.data_evento = dbHist.dataEvento; delete dbHist.dataEvento; }
-    if (dbHist.metadata) { dbHist.metadados = dbHist.metadata; delete dbHist.metadata; }
-
+    // We try to insert into both metadata and metadados if possible or just choose one.
+    // Based on the error, metadata failed. Let's try metadados.
     const { data, error } = await supabase
         .from('lead_history')
-        .insert([dbHist])
+        .insert([{
+            ...history,
+            metadados: history.metadata || history.metadados
+        }])
         .select()
         .single();
 
