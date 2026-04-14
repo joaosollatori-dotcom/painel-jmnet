@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface Lead {
     id: string;
+    // Identidade
     nomeCompleto: string;
     cpfCnpj?: string;
     rg?: string;
@@ -12,10 +13,11 @@ export interface Lead {
     telefoneWhatsapp?: string;
     tipoPessoa: 'PF' | 'PJ';
 
-    // Endereço
+    // Endereço (Essencial para plotagem no mapa ISP)
     cep?: string;
     logradouro?: string;
     numero?: string;
+    complemento?: string;
     bairro?: string;
     cidade?: string;
     uf?: string;
@@ -23,8 +25,8 @@ export interface Lead {
     latitude?: number;
     longitude?: number;
 
-    // Comercial / Entrada
-    canalEntrada: string;
+    // Origem e Rastreamento
+    canalEntrada: 'WhatsApp' | 'Ligação' | 'Formulário Web' | 'Indicação' | 'Visita' | 'Campanha';
     campanha?: string;
     utmSource?: string;
     utmMedium?: string;
@@ -36,55 +38,52 @@ export interface Lead {
     dispositivo?: string;
     vendedorId?: string;
 
-    // Qualificação
-    tipoCliente: 'RESIDENCIAL' | 'PREMIUM' | 'EMPRESARIAL';
-    perfilUso?: 'BASICO' | 'GAMER' | 'HOME_OFFICE' | 'CORPORATIVO';
+    // Classificação e Qualificação
+    tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
+    perfilUso?: 'RESIDENCIAL_BASICO' | 'RESIDENCIAL_PREMIUM' | 'EMPRESARIAL_PEQUENO' | 'EMPRESARIAL_MEDIO';
     usoPrincipal?: string;
     numDispositivos?: number;
-    temMEI: boolean;
+    temMEI?: boolean;
     scoreQualificacao: number;
-    interesseDeclarado?: string;
     interessePlano?: string;
     valorPagoAtual?: number;
     operadoraAtual?: string;
-    statusQualificacao: 'PENDENTE' | 'QUALIFICADO' | 'DESQUALIFICADO' | 'EM_ANALISE';
+    decisorIdentificado: boolean;
+    statusQualificacao: 'PENDENTE' | 'EM_ANALISE' | 'QUALIFICADO' | 'DESQUALIFICADO';
 
-    // Viabilidade
-    statusViabilidade: 'PENDENTE' | 'APROVADA' | 'REPROVADA' | 'VIABILIDADE_ESPECIAL';
-    distanciaDistribuidor?: number;
+    // Viabilidade Técnica (Diferencial ISP)
+    statusViabilidade: 'PENDENTE' | 'EM_ANALISE' | 'VIAVEL' | 'INVIAVEL' | 'ESPECIAL';
     ctoProxima?: string;
     portasDisponiveis?: number;
+    distanciaDistribuidor?: number;
     obsTecnica?: string;
     verificadoPor?: string;
     dataVerificacao?: string;
 
-    // Proposta
-    statusProposta?: string;
-    valorProposta?: number;
-    linkContrato?: string;
-    dataAceite?: string;
+    // Proposta e Contrato
+    planoSelecionado?: string;
+    valorFinal?: number;
+    fidelidadeMeses?: number;
+    dataEnvioProposta?: string;
+    statusProposta?: 'ENVIADA' | 'VISUALIZADA' | 'ACEITA' | 'RECUSADA';
+    linkDocumentoAssinatura?: string;
+    assinadoEm?: string;
 
-    // Agendamento
+    // Instalação e OS
     dataInstalacao?: string;
     turnoInstalacao?: string;
     tecnicoId?: string;
     numeroOS?: string;
+    motivoReagendamento?: string;
 
-    // Controle
-    observacoes?: string;
-    perfilComercial?: string;
-    decisorIdentificado: boolean;
-    melhorHorario?: string;
-    tentativasContato: number;
-    dataProximoContato?: string;
-    dataUltimaInteracao: string;
-    isFrio: boolean;
-
-    // Metricas
+    // Métricas e Controle
     dataEntrada: string;
-    createdAt: string;
+    dataUltimaInteracao: string;
+    dataProximoContato?: string;
+    tentativasContato: number;
+    isFrio: boolean;
     updatedAt: string;
-    stageId?: string;
+    createdAt: string;
 
     history?: LeadHistory[];
 }
@@ -92,7 +91,7 @@ export interface Lead {
 export interface LeadHistory {
     id: string;
     leadId: string;
-    type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'WHATSAPP' | 'EMAIL' | 'TASK' | 'DOCUMENT';
+    type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'WHATSAPP' | 'EMAIL' | 'TASK' | 'DOCUMENT' | 'SYSTEM';
     content?: string;
     duration?: number;
     fromStage?: string;
@@ -108,54 +107,18 @@ export interface Appointment {
     clienteId?: string;
     tipo: 'VISITA_COMERCIAL' | 'INSTALACAO' | 'DEMONSTRACAO' | 'LIGACAO' | 'RETORNO_PROPOSTA' | 'VISTORIA_TECNICA';
     titulo: string;
-
-    // Temporal
     dataInicio: string;
     dataFim?: string;
-    duracaoEstimada?: number; // minutos
-    fusoHorario?: string;
-    isDiaInteiro: boolean;
-
-    // Responsáveis
-    vendedorId?: string;
+    duracaoEstimada?: number;
+    status: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
     tecnicoId?: string;
-    equipeIds?: string[];
-    supervisorId?: string;
-
-    // Localização
-    cep?: string;
-    logradouro?: string;
-    numero?: string;
-    complemento?: string;
-    bairro?: string;
-    cidade?: string;
-    pontoReferencia?: string;
+    vendedorId?: string;
     latitude?: number;
     longitude?: number;
-    linkGoogleMaps?: string;
-
-    // Status e Controle
-    status: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
-    motivoCancelamento?: string;
-    reagendamentosContagem: number;
-    dataConfirmacao?: string;
-    canalConfirmacao?: 'WHATSAPP' | 'TELEFONE' | 'EMAIL';
-
-    // Vinculações e Validações
-    funnelStageId?: string;
-    propostaId?: string;
-    erpOrderId?: string;
-    protocoloOrigem?: string;
-
-    // Flags de Negócio (Campos Calculados ou Persistidos)
     viabilidadeConfirmada?: boolean;
     propostaAceita?: boolean;
-    distanciaConflito?: boolean; // Flag visual para geolocalização inviável
-
     createdAt: string;
     updatedAt: string;
-    createdBy?: string;
-    updatedBy?: string;
 }
 
 export const getLeads = async (): Promise<Lead[]> => {
@@ -197,89 +160,20 @@ export const deleteLead = async (id: string): Promise<void> => {
     if (error) throw error;
 };
 
-/* ====== Appointments Services ====== */
-
 export const getAppointments = async (): Promise<Appointment[]> => {
-    try {
-        const { data, error } = await supabase
-            .from('Appointment')
-            .select('*')
-            .order('dataInicio', { ascending: true });
-
-        if (error) {
-            // Se a tabela não existe (PGRST205), retorna mock para demonstração
-            if (error.code === 'PGRST205') {
-                console.warn('Tabela Appointment não encontrada. Usando dados fictícios.');
-                return mockAppointments;
-            }
-            throw error;
-        }
-        return data || [];
-    } catch (err) {
-        console.error('Erro ao carregar agendamentos:', err);
-        return mockAppointments;
-    }
-};
-
-const mockAppointments: Appointment[] = [
-    {
-        id: '1',
-        leadId: '1',
-        tipo: 'INSTALACAO',
-        titulo: 'Instalação de Fibra 1GB',
-        status: 'CONFIRMADO',
-        dataInicio: new Date().toISOString(),
-        duracaoEstimada: 90,
-        cidade: 'São Paulo',
-        isDiaInteiro: false,
-        reagendamentosContagem: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    },
-    {
-        id: '2',
-        leadId: '2',
-        tipo: 'VISITA_COMERCIAL',
-        titulo: 'Demonstração Corporativa',
-        status: 'DESLOCAMENTO',
-        dataInicio: new Date(Date.now() + 3600000).toISOString(),
-        duracaoEstimada: 45,
-        cidade: 'Rio de Janeiro',
-        isDiaInteiro: false,
-        reagendamentosContagem: 0,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString()
-    }
-];
-
-export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
     const { data, error } = await supabase
         .from('Appointment')
-        .insert([{
-            ...appointment,
-            createdAt: new Date().toISOString(),
-            updatedAt: new Date().toISOString()
-        }])
-        .select()
-        .single();
+        .select('*')
+        .order('dataInicio', { ascending: true });
 
-    if (error) throw error;
-    return data;
+    if (error) return [];
+    return data || [];
 };
 
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
     const { error } = await supabase
         .from('Appointment')
         .update({ ...updates, updatedAt: new Date().toISOString() })
-        .eq('id', id);
-
-    if (error) throw error;
-};
-
-export const deleteAppointment = async (id: string): Promise<void> => {
-    const { error } = await supabase
-        .from('Appointment')
-        .delete()
         .eq('id', id);
 
     if (error) throw error;

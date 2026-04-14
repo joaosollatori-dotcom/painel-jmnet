@@ -11,15 +11,13 @@ import {
     ChatCircleDots, CalendarBlank, ArrowSquareOut,
     Archive, MapTrifold, Warning, CaretDown,
     PhoneCall, DeviceMobile, HardDrives, MapPinLine,
-    CalendarPlus, X
+    CalendarPlus, X, WarningCircle, Checks,
+    NavigationArrow, MagnifyingGlassPlus
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Lead, getLeads, deleteLead, updateLead, createLead } from '../services/leadService';
-import { genericFilter } from '../utils/filterUtils';
 import LoadingScreen from './LoadingScreen';
-import LeadDetail from './LeadDetail';
 import { useToast } from '../contexts/ToastContext';
-import './Dashboard.css';
 
 const LeadsManager: React.FC = () => {
     const { showToast } = useToast();
@@ -28,14 +26,9 @@ const LeadsManager: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
     const [showModal, setShowModal] = useState(false);
-    const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-    const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability'>('none');
+    const [groupBy, setGroupBy] = useState<'none' | 'stage' | 'viability' | 'vendedor'>('none');
     const [currentQuickFilter, setCurrentQuickFilter] = useState<string | null>(null);
-    const [sortConfig, setSortConfig] = useState<{ key: keyof Lead, direction: 'asc' | 'desc' } | null>(null);
     const [selectedIds, setSelectedIds] = useState<string[]>([]);
-    const [contextMenu, setContextMenu] = useState<{ x: number, y: number, leadId: string } | null>(null);
-
-    // Filtros de Chips
     const [stageFilter, setStageFilter] = useState<string | null>(null);
     const [viabilityFilter, setViabilityFilter] = useState<string | null>(null);
 
@@ -43,24 +36,17 @@ const LeadsManager: React.FC = () => {
         nomeCompleto: '',
         telefonePrincipal: '',
         canalEntrada: 'WhatsApp',
-        statusViabilidade: 'PENDENTE',
-        statusQualificacao: 'PENDENTE',
-        tipoCliente: 'RESIDENCIAL',
         tipoPessoa: 'PF',
-        decisorIdentificado: false,
+        tipoCliente: 'RESIDENCIAL',
+        statusQualificacao: 'PENDENTE',
+        statusViabilidade: 'PENDENTE',
+        scoreQualificacao: 0,
         tentativasContato: 0,
-        isFrio: false
+        isFrio: false,
+        decisorIdentificado: false
     });
 
-    useEffect(() => {
-        const handleClickOutside = () => setContextMenu(null);
-        window.addEventListener('click', handleClickOutside);
-        return () => window.removeEventListener('click', handleClickOutside);
-    }, []);
-
-    useEffect(() => {
-        loadLeads();
-    }, []);
+    useEffect(() => { loadLeads(); }, []);
 
     const loadLeads = async () => {
         try {
@@ -74,38 +60,6 @@ const LeadsManager: React.FC = () => {
         }
     };
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        try {
-            if (selectedLead) {
-                await updateLead(selectedLead.id, formData);
-                showToast('Lead atualizado com sucesso!', 'success');
-            } else {
-                await createLead(formData);
-                showToast('Novo lead registrado com sucesso!', 'success');
-            }
-            setShowModal(false);
-            setSelectedLead(null);
-            loadLeads();
-        } catch (err) {
-            showToast('Erro ao salvar lead. Tente novamente.', 'error');
-            console.error('Error saving lead:', err);
-        }
-    };
-
-    const handleDelete = async (id: string) => {
-        if (!window.confirm("Atenção: Esta ação é irreversível. Deseja excluir este lead?")) return;
-        try {
-            await deleteLead(id);
-            showToast('Lead excluído permanentemente.', 'success');
-            loadLeads();
-        } catch (err) {
-            showToast('Erro ao excluir lead.', 'error');
-            console.error('Error deleting lead:', err);
-        }
-    };
-
-    // Estatísticas para o Painel de Atenção
     const stats = useMemo(() => {
         const now = new Date();
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -113,28 +67,27 @@ const LeadsManager: React.FC = () => {
 
         return {
             noContact48h: leads.filter(l => new Date(l.dataUltimaInteracao) < fortyEightHoursAgo).length,
-            pendingViability: leads.filter(l => l.statusViabilidade === 'PENDENTE').length,
-            slaOverdue: leads.filter(l => {
-                // Simplificado: se está em 'Novo Lead' há mais de 24h
-                const limit = new Date(now.getTime() - 24 * 60 * 60 * 1000);
-                return new Date(l.updatedAt) < limit;
-            }).length,
-            waitingContract: leads.filter(l => l.statusQualificacao === 'QUALIFICADO' && !l.dataAceite).length,
+            pendingViability: leads.filter(l => l.statusViabilidade === 'PENDENTE' || l.statusViabilidade === 'EM_ANALISE').length,
+            stalledProposals: leads.filter(l => l.statusProposta === 'ENVIADA' && new Date(l.updatedAt) < threeDaysAgo).length,
+            overdueTasks: leads.filter(l => l.dataProximoContato && new Date(l.dataProximoContato) < now).length
         };
     }, [leads]);
 
-    const handleSort = (key: keyof Lead) => {
-        let direction: 'asc' | 'desc' = 'asc';
-        if (sortConfig && sortConfig.key === key && sortConfig.direction === 'asc') {
-            direction = 'desc';
-        }
-        setSortConfig({ key, direction });
-    };
-
     const processedLeads = useMemo(() => {
-        let result = genericFilter(leads, searchTerm);
+        let result = leads.filter(l => {
+            const matchesSearch =
+                l.nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                l.cpfCnpj?.includes(searchTerm) ||
+                l.telefonePrincipal.includes(searchTerm) ||
+                l.logradouro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                l.bairro?.toLowerCase().includes(searchTerm.toLowerCase());
 
-        // Quick Filters (Attention Panel)
+            const matchesStage = !stageFilter || l.statusQualificacao === stageFilter;
+            const matchesViability = !viabilityFilter || l.statusViabilidade === viabilityFilter;
+
+            return matchesSearch && matchesStage && matchesViability;
+        });
+
         if (currentQuickFilter === 'noContact48h') {
             const limit = new Date(Date.now() - 48 * 60 * 60 * 1000);
             result = result.filter(l => new Date(l.dataUltimaInteracao) < limit);
@@ -142,324 +95,197 @@ const LeadsManager: React.FC = () => {
             result = result.filter(l => l.statusViabilidade === 'PENDENTE');
         } else if (currentQuickFilter === 'stalledProposals') {
             const limit = new Date(Date.now() - 3 * 24 * 60 * 60 * 1000);
-            result = result.filter(l => l.statusQualificacao === 'QUALIFICADO' && new Date(l.updatedAt) < limit);
-        }
-
-        // Chip Filters
-        if (stageFilter) result = result.filter(l => l.statusQualificacao === stageFilter);
-        if (viabilityFilter) result = result.filter(l => l.statusViabilidade === viabilityFilter);
-
-        // Sorting
-        if (sortConfig) {
-            result.sort((a, b) => {
-                const aVal = String(a[sortConfig.key] ?? '');
-                const bVal = String(b[sortConfig.key] ?? '');
-                if (aVal < bVal) return sortConfig.direction === 'asc' ? -1 : 1;
-                if (aVal > bVal) return sortConfig.direction === 'asc' ? 1 : -1;
-                return 0;
-            });
+            result = result.filter(l => l.statusProposta === 'ENVIADA' && new Date(l.updatedAt) < limit);
         }
 
         return result;
-    }, [leads, searchTerm, currentQuickFilter, stageFilter, viabilityFilter, sortConfig]);
+    }, [leads, searchTerm, stageFilter, viabilityFilter, currentQuickFilter]);
 
-    // Grouping Logic
     const groupedLeads = useMemo(() => {
         if (groupBy === 'none') return { 'Todos os Leads': processedLeads };
-
         return processedLeads.reduce((acc, lead) => {
-            const groupKey = groupBy === 'stage' ? lead.statusQualificacao : lead.statusViabilidade;
+            const groupKey = groupBy === 'stage' ? lead.statusQualificacao : groupBy === 'viability' ? lead.statusViabilidade : lead.vendedorId || 'Sem Vendedor';
             if (!acc[groupKey]) acc[groupKey] = [];
             acc[groupKey].push(lead);
             return acc;
         }, {} as Record<string, Lead[]>);
     }, [processedLeads, groupBy]);
 
-    const toggleSelectAll = () => {
-        if (selectedIds.length === processedLeads.length) {
-            setSelectedIds([]);
-        } else {
-            setSelectedIds(processedLeads.map(l => l.id));
-        }
-    };
-
-    const toggleSelect = (id: string) => {
-        setSelectedIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
-    };
-
-    const copyToClipboard = (text: string, label: string) => {
-        navigator.clipboard.writeText(text);
-        showToast(`${label} copiado: ${text}`, 'success');
-    };
-
-    const getDaysInStage = (updatedAt: string) => {
+    const getSLAStyle = (updatedAt: string) => {
         const days = Math.floor((Date.now() - new Date(updatedAt).getTime()) / (1000 * 60 * 60 * 24));
-        return days;
+        if (days > 4) return { color: '#ef4444', label: `${days}d parado (Crítico)` };
+        if (days > 2) return { color: '#f59e0b', label: `${days}d parado (Alerta)` };
+        return { color: '#10b981', label: days === 0 ? 'Entrou hoje' : `${days}d parado` };
     };
 
-    const handleContextMenu = (e: React.MouseEvent, leadId: string) => {
-        if (e.ctrlKey) {
-            e.preventDefault();
-            setContextMenu({
-                x: e.clientX,
-                y: e.clientY,
-                leadId
-            });
-        }
-    };
-
-    const getStatusStyles = (status: string) => {
+    const getStatusStyle = (status: string) => {
         switch (status) {
-            case 'APROVADA': case 'QUALIFICADO': return { bg: '#10b98122', text: '#10b981', label: status };
-            case 'REPROVADA': case 'DESQUALIFICADO': return { bg: '#ef444422', text: '#ef4444', label: status };
-            case 'EM_ANALISE': return { bg: '#8b5cf622', text: '#8b5cf6', label: 'Em Análise' };
-            default: return { bg: '#f59e0b22', text: '#f59e0b', label: 'Pendente' };
+            case 'VIAVEL': case 'QUALIFICADO': case 'ACEITA': return { bg: '#10b98120', text: '#10b981' };
+            case 'INVIAVEL': case 'DESQUALIFICADO': case 'RECUSADA': return { bg: '#ef444420', text: '#ef4444' };
+            case 'EM_ANALISE': return { bg: '#8b5cf620', text: '#8b5cf6' };
+            default: return { bg: '#3b82f620', text: '#3b82f6' };
         }
-    };
-
-    const renderEmptyState = () => {
-        if (loading || processedLeads.length > 0) return null;
-
-        if (leads.length === 0) {
-            return (
-                <div className="empty-state">
-                    <UserPlus size={64} weight="duotone" />
-                    <h2>Bem-vindo ao Titã CRM</h2>
-                    <p>Você ainda não possui leads cadastrados. Comece agora para impulsionar suas vendas.</p>
-                    <button onClick={() => setShowModal(true)} className="btn-primary">Criar Meu Primeiro Lead</button>
-                </div>
-            );
-        }
-
-        // Só mostra "Nada encontrado" se houver algum filtro ativo
-        const hasActiveFilter = searchTerm || currentQuickFilter || stageFilter || viabilityFilter;
-
-        if (hasActiveFilter) {
-            return (
-                <div className="empty-state">
-                    <MagnifyingGlass size={64} weight="duotone" />
-                    <h2>Nada encontrado</h2>
-                    <p>Não encontramos resultados para os filtros selecionados.</p>
-                    <button onClick={() => { setSearchTerm(''); setCurrentQuickFilter(null); setStageFilter(null); setViabilityFilter(null); }} className="btn-secondary">Limpar filtros</button>
-                </div>
-            );
-        }
-
-        return null;
     };
 
     return (
-        <div className="manager-container" style={{ height: '100%', overflowY: 'auto', background: 'var(--bg-deep)', flex: 1, padding: 'var(--space-lg)' }}>
-            {/* Barra Superior */}
-            <header className="listing-header">
-                <div>
-                    <h1 className="main-title">
-                        <Users size={32} weight="duotone" color="var(--primary-color)" />
-                        Gestão Comercial de Leads
-                    </h1>
-                    <div className="results-counter">
-                        <span>{processedLeads.length}</span> leads encontrados
+        <div className="crm-dashboard">
+            <header className="crm-header">
+                <div className="header-brand">
+                    <div className="title-box">
+                        <Users size={32} weight="duotone" />
+                        <h1>Gestão de Leads ISP</h1>
+                    </div>
+                    <div className="count-pill">
+                        <strong>{processedLeads.length}</strong> <span>Leads no Funil</span>
                     </div>
                 </div>
 
                 <div className="header-actions">
-                    <div className="search-box">
-                        <MagnifyingGlass size={20} className="search-icon" />
+                    <div className="search-multi-vector">
+                        <MagnifyingGlass size={20} />
                         <input
-                            type="text"
-                            placeholder="Pesquisa unificada (Nome, CPF, Tel...)"
+                            placeholder="Busca unificada (Nome, CPF, Tel, Endereço...)"
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
                         />
                     </div>
-
-                    <button onClick={() => setShowModal(true)} className="btn-new-lead">
+                    <button className="btn-add-lead" onClick={() => setShowModal(true)}>
                         <Plus size={20} weight="bold" /> Novo Lead
                     </button>
                 </div>
             </header>
 
-            {/* Painel de Atenção */}
-            <section className="attention-panel">
-                <div
-                    className={`stat-card ${currentQuickFilter === 'slaOverdue' ? 'active' : ''}`}
-                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'slaOverdue' ? null : 'slaOverdue')}
-                >
-                    <div className="stat-value error">{stats.slaOverdue}</div>
-                    <div className="stat-label">SLA Vencido</div>
+            <section className="attention-bar">
+                <div className={`attn-card ${currentQuickFilter === 'noContact48h' ? 'active' : ''}`} onClick={() => setCurrentQuickFilter(currentQuickFilter === 'noContact48h' ? null : 'noContact48h')}>
+                    <span className="attn-val warning">{stats.noContact48h}</span>
+                    <span className="attn-label">Sem contato +48h</span>
                 </div>
-                <div
-                    className={`stat-card ${currentQuickFilter === 'noContact48h' ? 'active' : ''}`}
-                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'noContact48h' ? null : 'noContact48h')}
-                >
-                    <div className="stat-value warning">{stats.noContact48h}</div>
-                    <div className="stat-label">Sem contato (+48h)</div>
+                <div className={`attn-card ${currentQuickFilter === 'pendingViability' ? 'active' : ''}`} onClick={() => setCurrentQuickFilter(currentQuickFilter === 'pendingViability' ? null : 'pendingViability')}>
+                    <span className="attn-val info">{stats.pendingViability}</span>
+                    <span className="attn-label">Viab. Pendentes</span>
                 </div>
-                <div
-                    className={`stat-card ${currentQuickFilter === 'pendingViability' ? 'active' : ''}`}
-                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'pendingViability' ? null : 'pendingViability')}
-                >
-                    <div className="stat-value info">{stats.pendingViability}</div>
-                    <div className="stat-label">Viab. Pendentes</div>
+                <div className={`attn-card ${currentQuickFilter === 'overdueTasks' ? 'active' : ''}`} onClick={() => setCurrentQuickFilter(currentQuickFilter === 'overdueTasks' ? null : 'overdueTasks')}>
+                    <span className="attn-val overdue">{stats.overdueTasks}</span>
+                    <span className="attn-label">Tarefas Vencidas</span>
                 </div>
-                <div
-                    className={`stat-card ${currentQuickFilter === 'waitingContract' ? 'active' : ''}`}
-                    onClick={() => setCurrentQuickFilter(currentQuickFilter === 'waitingContract' ? null : 'waitingContract')}
-                >
-                    <div className="stat-value success">{stats.waitingContract}</div>
-                    <div className="stat-label">Aguard. Assinatura</div>
+                <div className={`attn-card ${currentQuickFilter === 'stalledProposals' ? 'active' : ''}`} onClick={() => setCurrentQuickFilter(currentQuickFilter === 'stalledProposals' ? null : 'stalledProposals')}>
+                    <span className="attn-val success">{stats.stalledProposals}</span>
+                    <span className="attn-label">Propostas Paradas</span>
                 </div>
             </section>
 
-            {/* Toolbar de Filtros e Agrupamento */}
-            <div className="filter-toolbar">
-                <div className="filter-chips">
-                    <div className="filter-label"><Funnel size={16} /> Filtros:</div>
-                    <select value={stageFilter || ''} onChange={e => setStageFilter(e.target.value || null)} className="chip-select">
-                        <option value="">Etapa do Funil</option>
-                        <option value="PENDENTE">Novo / Pendente</option>
+            <div className="toolbar-filters">
+                <div className="chip-group">
+                    <Funnel size={16} />
+                    <select value={stageFilter || ''} onChange={e => setStageFilter(e.target.value || null)}>
+                        <option value="">Filtro: Funil</option>
+                        <option value="PENDENTE">Novo</option>
                         <option value="QUALIFICADO">Qualificado</option>
                         <option value="DESQUALIFICADO">Desqualificado</option>
                     </select>
-                    <select value={viabilityFilter || ''} onChange={e => setViabilityFilter(e.target.value || null)} className="chip-select">
-                        <option value="">Viabilidade</option>
+                    <select value={viabilityFilter || ''} onChange={e => setViabilityFilter(e.target.value || null)}>
+                        <option value="">Filtro: Viabilidade</option>
+                        <option value="VIAVEL">Viável</option>
+                        <option value="INVIAVEL">Inviável</option>
                         <option value="PENDENTE">Pendente</option>
-                        <option value="APROVADA">Aprovada</option>
-                        <option value="REPROVADA">Inviável</option>
                     </select>
-                    {(stageFilter || viabilityFilter || searchTerm || currentQuickFilter) && (
-                        <button className="clear-chip" onClick={() => { setStageFilter(null); setViabilityFilter(null); setSearchTerm(''); setCurrentQuickFilter(null); }}>
-                            Limpar Tudo <XCircle size={14} />
-                        </button>
-                    )}
                 </div>
 
-                <div className="view-actions">
-                    <span className="filter-label">Agrupar por:</span>
-                    <div className="toggle-group">
+                <div className="group-toggle">
+                    <span>Agrupar por:</span>
+                    <div className="toggle-btns">
                         <button className={groupBy === 'none' ? 'active' : ''} onClick={() => setGroupBy('none')}>Nenhum</button>
                         <button className={groupBy === 'stage' ? 'active' : ''} onClick={() => setGroupBy('stage')}>Etapa</button>
-                        <button className={groupBy === 'viability' ? 'active' : ''} onClick={() => setGroupBy('viability')}>Viabilidade</button>
+                        <button className={groupBy === 'vendedor' ? 'active' : ''} onClick={() => setGroupBy('vendedor')}>Vendedor</button>
                     </div>
                 </div>
             </div>
 
-            {/* Tabela de Listagem */}
-            <div className="table-container">
-                <table className="leads-table">
+            <main className="crm-table-container ic-sidebar-scroll">
+                <table className="crm-table">
                     <thead>
                         <tr>
-                            <th style={{ width: '40px', padding: '1rem' }}>
-                                <input type="checkbox" checked={selectedIds.length === processedLeads.length && processedLeads.length > 0} onChange={toggleSelectAll} />
-                            </th>
-                            <th onClick={() => handleSort('nomeCompleto')} className="sortable" style={{ width: '25%' }}>
-                                Lead {sortConfig?.key === 'nomeCompleto' && (sortConfig.direction === 'asc' ? '↑' : '↓')}
-                            </th>
+                            <th style={{ width: '40px' }}><input type="checkbox" /></th>
+                            <th style={{ width: '28%' }}>Identificação do Lead</th>
                             <th style={{ width: '20%' }}>Contato e Canal</th>
-                            <th onClick={() => handleSort('statusQualificacao')} className="sortable" style={{ width: '12%' }}>Etapa</th>
-                            <th onClick={() => handleSort('statusQualificacao')} className="sortable">Qualificação</th>
-                            <th onClick={() => handleSort('statusViabilidade')} className="sortable">Viabilidade</th>
-                            <th onClick={() => handleSort('dataProximoContato')} className="sortable">Próxima Ação</th>
-
+                            <th style={{ width: '12%' }}>Etapa (SLA)</th>
+                            <th style={{ width: '12%' }}>Qualificação</th>
+                            <th style={{ width: '14%' }}>Viabilidade</th>
+                            <th style={{ width: '14%' }}>Próxima Ação</th>
                         </tr>
                     </thead>
                     <tbody>
                         {loading ? (
-                            <tr><td colSpan={7} style={{ padding: '4rem 0' }}><LoadingScreen fullScreen={false} message="Sincronizando Leads..." /></td></tr>
-                        ) : Object.entries(groupedLeads).map(([groupName, groupLeads]) => (
-                            <React.Fragment key={groupName}>
+                            <tr><td colSpan={7} style={{ padding: '5rem 0' }}><LoadingScreen fullScreen={false} message="Sincronizando Base..." /></td></tr>
+                        ) : Object.entries(groupedLeads).map(([group, groupLeads]) => (
+                            <React.Fragment key={group}>
                                 {groupBy !== 'none' && (
-                                    <tr className="group-header-row">
-                                        <td colSpan={7}>
-                                            <div className="group-header">
-                                                <CaretDown size={14} /> {groupName} <span>({groupLeads.length})</span>
-                                            </div>
-                                        </td>
+                                    <tr className="group-divider">
+                                        <td colSpan={7}><div className="group-tag"><CaretDown size={14} /> {group} <span>({groupLeads.length})</span></div></td>
                                     </tr>
                                 )}
                                 {groupLeads.map(lead => {
-                                    const viab = getStatusStyles(lead.statusViabilidade);
-                                    const qual = getStatusStyles(lead.statusQualificacao);
-                                    const daysInStage = getDaysInStage(lead.updatedAt);
+                                    const sla = getSLAStyle(lead.updatedAt);
+                                    const qStyle = getStatusStyle(lead.statusQualificacao);
+                                    const vStyle = getStatusStyle(lead.statusViabilidade);
 
                                     return (
-                                        <tr
-                                            key={lead.id}
-                                            className={`lead-row ${selectedIds.includes(lead.id) ? 'selected' : ''}`}
-                                            onContextMenu={(e) => handleContextMenu(e, lead.id)}
-                                        >
-                                            <td><input type="checkbox" checked={selectedIds.includes(lead.id)} onChange={() => toggleSelect(lead.id)} /></td>
-                                            <td onClick={() => navigate(`/crm/lead/${lead.id}`)}>
-                                                <div className="lead-id-cell">
-                                                    <div className="lead-avatar">
-                                                        {lead.nomeCompleto.charAt(0)}
-                                                    </div>
-                                                    <div className="lead-info-text">
-                                                        <div className="lead-name" onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.nomeCompleto, 'Nome'); }} title={lead.nomeCompleto}>
-                                                            {lead.nomeCompleto}
-                                                            <span className={`badge-p${lead.tipoPessoa}`} style={{ marginLeft: '8px' }}>{lead.tipoPessoa}</span>
-                                                        </div>
-                                                        <div className="lead-meta">Entrada: {new Date(lead.dataEntrada).toLocaleDateString()}</div>
+                                        <tr key={lead.id} className="lead-row" onClick={() => navigate(`/crm/lead/${lead.id}`)}>
+                                            <td><input type="checkbox" onClick={e => e.stopPropagation()} /></td>
+                                            <td>
+                                                <div className="cell-id">
+                                                    <div className="id-avatar">{lead.nomeCompleto.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
+                                                    <div className="id-info">
+                                                        <strong>{lead.nomeCompleto} <span className={`type-tag ${lead.tipoPessoa.toLowerCase()}`}>{lead.tipoPessoa}</span></strong>
+                                                        <small>Entrada em {new Date(lead.dataEntrada).toLocaleDateString()}</small>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="contact-cell">
-                                                    <div className="contact-main" onClick={() => copyToClipboard(lead.telefonePrincipal, 'Telefone')} title="Clique para copiar">
-                                                        <PhoneCall size={18} /> {lead.telefonePrincipal}
-                                                        <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()}>
-                                                            <WhatsappLogo size={20} weight="fill" color="#25D366" />
-                                                        </a>
+                                                <div className="cell-contact">
+                                                    <div className="contact-main">
+                                                        {lead.telefonePrincipal}
+                                                        <a href={`https://wa.me/55${lead.telefonePrincipal.replace(/\D/g, '')}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}><WhatsappLogo size={18} weight="fill" /></a>
                                                     </div>
-                                                    <div className="lead-meta" style={{ marginTop: '2px' }}>
-                                                        {lead.canalEntrada} • {lead.campanha || 'Direto'}
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="stage-cell">
-                                                    <div className="stage-badge" style={{
-                                                        background: daysInStage > 5 ? '#ef444422' : daysInStage > 2 ? '#f59e0b22' : '#3b82f622',
-                                                        color: daysInStage > 5 ? '#ef4444' : daysInStage > 2 ? '#f59e0b' : '#3b82f6'
-                                                    }}>
-                                                        {lead.stageId || 'Novo Lead'}
-                                                    </div>
-                                                    <div className={`stage-sla ${daysInStage > 4 ? 'over' : ''}`}>
-                                                        {daysInStage === 0 ? 'Entrou hoje' : `${daysInStage} dias parado`}
+                                                    <div className="channel-tag">
+                                                        {lead.canalEntrada === 'WhatsApp' ? <WhatsappLogo size={12} /> : <PhoneCall size={12} />}
+                                                        <span>{lead.campanha || 'Direto'}</span>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="qual-cell">
-                                                    <span className="badge-status" style={{ background: qual.bg, color: qual.text }}>{qual.label}</span>
-                                                    <div className="qual-meta">
-                                                        {lead.perfilUso === 'EMPRESARIAL' ? <Suitcase size={14} /> : <User size={14} />}
-                                                        <span>{lead.interessePlano || 'S/ Plano'}</span>
+                                                <div className="cell-sla">
+                                                    <div className="sla-badge" style={{ background: `${sla.color}20`, color: sla.color }}>{lead.statusQualificacao}</div>
+                                                    <small style={{ color: sla.color }}>{sla.label}</small>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="cell-qual">
+                                                    <span className="status-pill" style={{ background: qStyle.bg, color: qStyle.text }}>{lead.statusQualificacao}</span>
+                                                    <div className="decisor-flag">{lead.decisorIdentificado ? <CheckCircle color="#10b981" /> : <XCircle color="#ef4444" />} Decisor</div>
+                                                </div>
+                                            </td>
+                                            <td>
+                                                <div className="cell-viab">
+                                                    <span className="status-pill" style={{ background: vStyle.bg, color: vStyle.text }}>{lead.statusViabilidade}</span>
+                                                    <div className="cto-info">
+                                                        <HardDrives size={14} /> <span>{lead.ctoProxima || '---'}</span>
+                                                        <a href={`https://maps.google.com?q=${lead.latitude},${lead.longitude}`} target="_blank" rel="noreferrer" onClick={e => e.stopPropagation()}><MapTrifold size={16} /></a>
                                                     </div>
                                                 </div>
                                             </td>
                                             <td>
-                                                <div className="viab-cell">
-                                                    <span className="badge-status" style={{ background: viab.bg, color: viab.text }}>{viab.label}</span>
-                                                    <div className="viab-meta">
-                                                        <HardDrives size={14} title="CTO / Ponto" />
-                                                        <span title="Porta/Caixa">{lead.ctoProxima || 'Pendente'}</span>
-                                                        <a href={`https://maps.google.com?q=${lead.latitude},${lead.longitude}`} target="_blank" rel="noreferrer" className="map-link-btn">
-                                                            <MapPinLine size={16} weight="fill" />
-                                                        </a>
-                                                    </div>
-                                                </div>
-                                            </td>
-                                            <td>
-                                                <div className="action-cell">
+                                                <div className="cell-action">
                                                     {lead.dataProximoContato ? (
-                                                        <div className={`next-task ${new Date(lead.dataProximoContato) < new Date() ? 'overdue' : ''}`}>
-                                                            <CalendarBlank size={14} />
-                                                            {new Date(lead.dataProximoContato).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
+                                                        <div className={`action-task ${new Date(lead.dataProximoContato) < new Date() ? 'overdue' : ''}`}>
+                                                            <CalendarBlank size={14} /> {new Date(lead.dataProximoContato).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })}
                                                         </div>
-                                                    ) : (
-                                                        <div className="no-task">Sem agendamento</div>
-                                                    )}
+                                                    ) : <span className="no-action">Sem ação</span>}
+                                                    <div className="inline-btns">
+                                                        <button title="Ligar"><PhoneCall /></button>
+                                                        <button title="Tarefa"><CalendarPlus /></button>
+                                                        <button title="Mover"><TrendUp /></button>
+                                                    </div>
                                                 </div>
                                             </td>
                                         </tr>
@@ -469,619 +295,92 @@ const LeadsManager: React.FC = () => {
                         ))}
                     </tbody>
                 </table>
-                {renderEmptyState()}
-            </div>
-
-            {contextMenu && (
-                <div
-                    className="options-dropdown context-menu"
-                    style={{
-                        position: 'fixed',
-                        top: contextMenu.y,
-                        left: contextMenu.x,
-                        margin: 0,
-                        zIndex: 3000
-                    }}
-                    onClick={e => e.stopPropagation()}
-                >
-                    <div className="dropdown-header">Ações Rápidas</div>
-                    <div className="dropdown-item">
-                        <ChatCircleDots size={18} weight="duotone" /> Novo Registro
+                {processedLeads.length === 0 && !loading && (
+                    <div className="crm-empty">
+                        <MagnifyingGlassPlus size={64} weight="duotone" />
+                        <h2>Nenhum resultado para "{searchTerm}"</h2>
+                        <p>Tente ajustar os filtros ou a busca unificada.</p>
+                        <button className="btn-secondary" onClick={() => { setSearchTerm(''); setStageFilter(null); setViabilityFilter(null); setCurrentQuickFilter(null); }}>Limpar filtros</button>
                     </div>
-                    <div className="dropdown-item">
-                        <CalendarPlus size={18} weight="duotone" /> Nova Tarefa
-                    </div>
-                    <div className="dropdown-item">
-                        <ArrowSquareOut size={18} weight="duotone" /> Mover Etapa
-                    </div>
-                    <div className="divider" />
-                    <div className="dropdown-item danger" onClick={() => { handleDelete(contextMenu.leadId); setContextMenu(null); }}>
-                        <Archive size={18} weight="duotone" /> Arquivar Lead
-                    </div>
-                </div>
-            )}
-
-            {/* LeadDetail é gerenciado pela rota /crm/lead/:id */}
-
-            {/* Bulk Actions Bar */}
-            {selectedIds.length > 0 && (
-                <motion.div
-                    initial={{ y: 100 }}
-                    animate={{ y: 0 }}
-                    exit={{ y: 100 }}
-                    className="bulk-action-bar"
-                >
-                    <div className="bulk-info">
-                        <span className="count">{selectedIds.length}</span>
-                        <span>leads selecionados</span>
-                    </div>
-                    <div className="bulk-actions">
-                        <button className="btn-bulk"><User size={18} /> Mudar Vendedor</button>
-                        <button className="btn-bulk"><TrendUp size={18} /> Mover Estágio</button>
-                        <button className="btn-bulk warning"><Warning size={18} /> Marcar como Frio</button>
-                        <button className="btn-bulk error" onClick={() => {
-                            if (window.confirm(`Deseja excluir ${selectedIds.length} leads permanentemente?`)) {
-                                Promise.all(selectedIds.map(id => deleteLead(id))).then(() => {
-                                    setSelectedIds([]);
-                                    loadLeads();
-                                });
-                            }
-                        }}><Trash size={18} /> Excluir em Lote</button>
-                    </div>
-                    <button className="btn-cancel-bulk" onClick={() => setSelectedIds([])}>Cancelar</button>
-                </motion.div>
-            )}
-
-
-            {/* Novo Lead Modal */}
-            <AnimatePresence>
-                {
-                    showModal && (
-                        <div className="modal-overlay">
-                            <motion.div
-                                initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                                animate={{ opacity: 1, scale: 1, y: 0 }}
-                                exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                                className="lead-modal"
-                            >
-                                <header className="modal-header">
-                                    <div className="header-left">
-                                        <div className="header-icon-box">
-                                            <UserPlus size={24} weight="bold" />
-                                        </div>
-                                        <div className="header-text">
-                                            <h2>Novo Lead Comercial</h2>
-                                            <p>Cadastre um novo potencial cliente no funil de vendas</p>
-                                        </div>
-                                    </div>
-                                    <button className="btn-close" onClick={() => setShowModal(false)}><X size={18} /></button>
-                                </header>
-
-                                <form onSubmit={handleSubmit} className="modal-body">
-                                    <div className="section-divider">
-                                        <span>INFORMAÇÕES BÁSICAS</span>
-                                        <div className="line" />
-                                    </div>
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label>Nome Completo</label>
-                                            <input required type="text" placeholder="Ex: João da Silva"
-                                                value={formData.nomeCompleto}
-                                                onChange={e => setFormData({ ...formData, nomeCompleto: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Telefone Principal</label>
-                                            <input required type="text" placeholder="(00) 00000-0000"
-                                                value={formData.telefonePrincipal}
-                                                onChange={e => setFormData({ ...formData, telefonePrincipal: e.target.value })} />
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Canal de Origem</label>
-                                            <div className="select-wrapper">
-                                                <select value={formData.canalEntrada} onChange={e => setFormData({ ...formData, canalEntrada: e.target.value })}>
-                                                    <option value="WhatsApp">WhatsApp</option>
-                                                    <option value="Indicação">Indicação</option>
-                                                    <option value="Site">Site / Landing Page</option>
-                                                    <option value="Tráfego Pago">Tráfego Pago (Meta/Google)</option>
-                                                </select>
-                                                <CaretDown className="select-icon" />
-                                            </div>
-                                        </div>
-                                    </div>
-
-                                    <div className="section-divider" style={{ marginTop: '1.5rem' }}>
-                                        <span>DADOS TÉCNICOS & INTERESSE</span>
-                                        <div className="line" />
-                                    </div>
-                                    <div className="form-grid">
-                                        <div className="form-group">
-                                            <label>Perfil de Uso</label>
-                                            <div className="select-wrapper">
-                                                <select value={formData.tipoCliente} onChange={e => setFormData({ ...formData, tipoCliente: e.target.value })}>
-                                                    <option value="RESIDENCIAL">Residencial Básico</option>
-                                                    <option value="PREMIUM">Residencial Premium (Gamer/Home Office)</option>
-                                                    <option value="EMPRESARIAL">Empresarial / Dedicado</option>
-                                                </select>
-                                                <CaretDown className="select-icon" />
-                                            </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>CEP e Bairro</label>
-                                            <div className="input-group" style={{ display: 'flex', gap: '8px' }}>
-                                                <input type="text" placeholder="00000-000" style={{ width: '100px' }}
-                                                    value={formData.cep}
-                                                    onChange={e => setFormData({ ...formData, cep: e.target.value })} />
-                                                <input type="text" placeholder="Bairro"
-                                                    value={formData.bairro}
-                                                    onChange={e => setFormData({ ...formData, bairro: e.target.value })} />
-                                            </div>
-                                        </div>
-                                        <div className="form-group">
-                                            <label>Plano de Interesse</label>
-                                            <input type="text" placeholder="Ex: 500 Mega Fiber"
-                                                value={formData.interessePlano}
-                                                onChange={e => setFormData({ ...formData, interessePlano: e.target.value })} />
-                                        </div>
-                                    </div>
-
-                                    <footer className="modal-footer">
-                                        <button type="button" className="btn-cancel" onClick={() => setShowModal(false)}>Cancelar</button>
-                                        <button type="submit" className="btn-submit">
-                                            <UserPlus size={20} weight="bold" />
-                                            Iniciar Jornada do Lead
-                                        </button>
-                                    </footer>
-                                </form>
-                            </motion.div>
-                        </div>
-                    )
-                }
-            </AnimatePresence >
+                )}
+            </main>
 
             <style>{`
-                .manager-container { box-sizing: border-box; }
-                .listing-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: var(--space-lg); padding-top: 0.5rem; }
-                .main-title { font-size: 1.5rem; font-weight: 800; display: flex; align-items: center; gap: 12px; margin: 0; color: #fff; }
-                .results-counter { margin-top: 4px; color: #666; font-size: 0.85rem; }
-                .results-counter span { color: var(--primary-color); font-weight: 700; }
+                .crm-dashboard { padding: 2rem; background: #080a0f; height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; }
+                .crm-header { display: flex; justify-content: space-between; align-items: center; }
+                .header-brand { display: flex; align-items: center; gap: 2rem; }
+                .title-box { display: flex; align-items: center; gap: 12px; color: #fff; }
+                .title-box h1 { font-size: 1.5rem; font-weight: 800; margin: 0; }
+                .count-pill { background: #1e2430; padding: 4px 12px; border-radius: 99px; font-size: 0.8rem; color: #64748b; }
+                .count-pill strong { color: #3b82f6; }
                 
-                .header-actions { display: flex; gap: var(--space-md); align-items: center; }
-                .search-box { position: relative; width: 350px; display: flex; align-items: center; }
-                .search-icon { position: absolute; left: 16px; color: #666; pointer-events: none; display: flex; align-items: center; }
-                .search-box input { 
-                    width: 100%; padding: 12px 16px 12px 48px; border-radius: 12px; 
-                    background: var(--bg-surface); border: 1px solid var(--border); 
-                    color: #fff; font-size: 0.95rem; transition: all 0.2s;
-                    line-height: 1;
-                }
-                .search-box input:focus { border-color: var(--primary-color); box-shadow: 0 0 0 4px rgba(59, 130, 246, 0.1); }
-                
-                .btn-new-lead { 
-                    background: var(--primary-color); color: #fff; border: none; padding: 12px 24px;
-                    border-radius: 12px; font-weight: 700; display: flex; align-items: center; gap: 8px;
-                    cursor: pointer; transition: transform 0.2s, background 0.2s;
-                }
-                .btn-new-lead:hover { background: #2563eb; transform: translateY(-2px); }
+                .header-actions { display: flex; gap: 1rem; align-items: center; }
+                .search-multi-vector { position: relative; width: 350px; }
+                .search-multi-vector svg { position: absolute; left: 14px; top: 50%; transform: translateY(-50%); color: #475569; }
+                .search-multi-vector input { width: 100%; background: #11141d; border: 1px solid #1e2430; border-radius: 12px; padding: 12px 16px 12px 42px; color: #fff; font-size: 0.9rem; }
 
-                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; margin-bottom: 2rem; width: 100%; }
-                .stat-card { 
-                    background: var(--bg-surface); border: 1px solid var(--border); padding: 1.25rem 1.5rem;
-                    border-radius: 16px; cursor: pointer; transition: all 0.2s;
-                    display: flex; align-items: center; gap: 12px;
-                }
-                .stat-card:hover { border-color: #444; background: rgba(255,255,255,0.02); }
-                .stat-card.active { border-color: var(--primary-color); background: rgba(59, 130, 246, 0.05); }
-                .stat-value { font-size: 2.2rem; font-weight: 900; line-height: 1; }
-                .stat-label { font-size: 0.75rem; color: #888; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; line-height: 1.2; }
-                
-                .stat-value.warning { color: #f59e0b; }
-                .stat-value.purple { color: #8b5cf6; }
-                .stat-value.urgent { color: #ef4444; }
-                .stat-value.success { color: #10b981; }
+                .attention-bar { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.25rem; }
+                .attn-card { background: #11141d; border: 1px solid #1e2430; padding: 1.25rem; border-radius: 16px; cursor: pointer; transition: all 0.2s; display: flex; align-items: center; gap: 1rem; }
+                .attn-card:hover { border-color: #3b82f640; background: #11141d90; }
+                .attn-card.active { border-color: #3b82f6; background: #3b82f60a; }
+                .attn-val { font-size: 2.2rem; font-weight: 900; }
+                .attn-val.warning { color: #f59e0b; }
+                .attn-val.info { color: #3b82f6; }
+                .attn-val.overdue { color: #ef4444; }
+                .attn-val.success { color: #10b981; }
+                .attn-label { font-size: 0.7rem; color: #64748b; font-weight: 700; text-transform: uppercase; letter-spacing: 0.05em; }
 
-                .table-container { 
-                    background: var(--bg-surface); border: 1px solid var(--border); 
-                    border-radius: 20px; overflow: hidden; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-                    width: 100%;
-                }
-                .leads-table { width: 100%; border-collapse: separate; border-spacing: 0; }
-                .leads-table thead { position: sticky; top: 0; z-index: 100; }
-                .leads-table th { 
-                    padding: 1rem 12px; text-align: left; color: #555; font-size: 0.7rem;
-                    text-transform: uppercase; font-weight: 700; letter-spacing: 0.05em;
-                    border-bottom: 1px solid var(--border); background: rgba(0,0,0,0.1);
-                }
+                .toolbar-filters { display: flex; justify-content: space-between; align-items: center; background: #11141d80; padding: 0.75rem 1.5rem; border-radius: 12px; border: 1px solid #1e2430; }
+                .chip-group { display: flex; align-items: center; gap: 12px; color: #475569; }
+                .chip-group select { background: #080a0f; border: 1px solid #1e2430; color: #94a3b8; padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; }
                 
-                .lead-row { border-bottom: 1px solid var(--border); transition: background 0.2s; cursor: pointer; }
-                .lead-row:hover { background: rgba(255,255,255,0.02); }
+                .group-toggle { display: flex; align-items: center; gap: 12px; font-size: 0.8rem; color: #475569; }
+                .toggle-btns { display: flex; background: #080a0f; padding: 3px; border-radius: 8px; }
+                .toggle-btns button { background: none; border: none; color: #475569; padding: 6px 14px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; font-weight: 700; }
+                .toggle-btns button.active { background: #3b82f6; color: #fff; }
+
+                .crm-table-container { flex: 1; overflow-y: auto; background: #11141d; border: 1px solid #1e2430; border-radius: 20px; }
+                .crm-table { width: 100%; border-collapse: collapse; }
+                .crm-table th { text-align: left; padding: 1rem; font-size: 0.7rem; text-transform: uppercase; color: #475569; letter-spacing: 0.1em; border-bottom: 1px solid #1e2430; position: sticky; top: 0; background: #11141d; z-index: 10; }
+                .lead-row { border-bottom: 1px solid #1e2430; transition: all 0.2s; cursor: pointer; }
+                .lead-row:hover { background: #1e243050; }
                 .lead-row td { padding: 1.25rem 1rem; vertical-align: middle; }
+
+                .cell-id { display: flex; align-items: center; gap: 12px; }
+                .id-avatar { width: 40px; height: 40px; border-radius: 10px; background: #3b82f615; color: #3b82f6; display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 0.9rem; flex-shrink: 0; }
+                .id-info strong { display: block; color: #f8fafc; font-size: 0.9rem; }
+                .type-tag { font-size: 9px; padding: 2px 6px; border-radius: 4px; border: 1px solid #ffffff10; vertical-align: middle; }
+                .type-tag.pf { color: #10b981; border-color: #10b98140; }
+                .id-info small { color: #475569; font-size: 0.75rem; }
+
+                .cell-contact .contact-main { display: flex; align-items: center; gap: 8px; color: #3b82f6; font-weight: 700; font-size: 0.95rem; }
+                .channel-tag { display: flex; align-items: center; gap: 4px; font-size: 0.7rem; color: #475569; margin-top: 4px; }
                 
-                .lead-id-cell { display: flex; align-items: center; gap: 12px; min-width: 200px; }
-                .lead-avatar { 
-                    width: 44px; height: 44px; border-radius: 12px; background: #3b82f622; color: #3b82f6;
-                    display: flex; align-items: center; justify-content: center; font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
-                }
-                .lead-info-text { display: flex; flex-direction: column; overflow: hidden; }
-                .lead-name { font-weight: 700; color: #f8fafc; font-size: 0.85rem; line-height: 1.2; word-break: break-all; }
-                .lead-name:hover { color: var(--primary-color); }
-                .lead-meta { font-size: 0.7rem; color: #555; margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.02em; }
+                .sla-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
+                .cell-sla small { display: block; margin-top: 6px; font-size: 0.7rem; }
+
+                .status-pill { padding: 4px 10px; border-radius: 20px; font-size: 0.7rem; font-weight: 800; }
+                .decisor-flag { font-size: 0.7rem; color: #475569; margin-top: 8px; display: flex; align-items: center; gap: 4px; }
                 
-                .map-link-btn { 
-                    color: var(--primary-color); background: rgba(59, 130, 246, 0.1); 
-                    padding: 4px; border-radius: 6px; display: flex; align-items: center; 
-                    transition: all 0.2s; border: 1px solid rgba(59, 130, 246, 0.2);
-                }
-                .map-link-btn:hover { background: var(--primary-color); color: #fff; transform: scale(1.1); }
-                .qual-meta { display: flex; align-items: center; gap: 6px; font-size: 0.7rem; color: #666; margin-top: 4px; }
-                
-                .badge-pPF { font-size: 9px; padding: 2px 6px; background: #10b98122; color: #10b981; border-radius: 4px; }
-                .badge-pPJ { font-size: 9px; padding: 2px 6px; background: #3b82f622; color: #3b82f6; border-radius: 4px; }
+                .cto-info { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #475569; margin-top: 8px; }
+                .cto-info a { color: #3b82f6; }
 
-                .contact-cell { min-width: 240px; }
-                .contact-cell .contact-main { display: flex; align-items: center; gap: 6px; font-weight: 800; color: var(--primary-color); cursor: pointer; white-space: nowrap; font-size: 0.95rem; letter-spacing: -0.01em; }
-                .contact-cell .contact-main:hover { filter: brightness(1.2); }
-                .contact-cell .lead-meta { color: #444; font-size: 0.65rem; opacity: 0.7; }
-                
-                .stage-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 700; display: inline-block; }
-                .stage-sla { font-size: 0.7rem; color: #666; margin-top: 6px; }
-                .stage-sla.over { color: #ef4444; font-weight: 600; }
+                .cell-action { display: flex; flex-direction: column; gap: 8px; }
+                .action-task { font-size: 0.75rem; font-weight: 600; color: #94a3b8; display: flex; align-items: center; gap: 4px; }
+                .action-task.overdue { color: #ef4444; }
+                .inline-btns { display: flex; gap: 4px; margin-top: 4px; opacity: 0; transition: opacity 0.2s; }
+                .lead-row:hover .inline-btns { opacity: 1; }
+                .inline-btns button { background: #1e2430; border: 1px solid #ffffff05; color: #64748b; padding: 4px; border-radius: 6px; cursor: pointer; }
+                .inline-btns button:hover { background: #3b82f6; color: #fff; }
 
-                .badge-status { padding: 3px 8px; border-radius: 20px; font-size: 0.7rem; font-weight: 700; }
-                .decisor-flag { display: flex; align-items: center; gap: 4px; font-size: 0.75rem; color: #666; margin-top: 6px; }
-                
-                .viab-meta { display: flex; align-items: center; gap: 6px; font-size: 0.75rem; color: #666; margin-top: 6px; }
-                .map-link { color: var(--primary-color); display: flex; align-items: center; border-radius: 4px; padding: 2px; }
-                .map-link:hover { background: rgba(59, 130, 246, 0.1); }
+                .group-divider { background: #0c0f16; }
+                .group-tag { font-size: 0.7rem; font-weight: 800; color: #475569; text-transform: uppercase; padding: 0.5rem 1rem; display: flex; align-items: center; gap: 6px; }
+                .group-tag span { color: #3b82f6; }
 
-                .next-task { display: flex; align-items: center; gap: 6px; font-size: 0.85rem; font-weight: 600; color: #aaa; }
-                .next-task.overdue { color: #ef4444; }
-                .no-task { font-size: 0.75rem; color: #444; font-style: italic; }
-
-                .actions-inline { position: relative; display: flex; justify-content: flex-end; }
-                .btn-options { 
-                    background: var(--bg-surface-light); border: 1px solid var(--border); 
-                    color: var(--text-secondary); padding: 6px 14px; cursor: pointer; border-radius: 8px;
-                    font-size: 0.8rem; font-weight: 600; display: flex; align-items: center; gap: 6px;
-                    transition: all 0.2s;
-                }
-                .btn-options:hover, .btn-options.active { background: var(--border); color: #fff; }
-
-                .options-dropdown {
-                    position: absolute; top: 100%; right: 0; margin-top: 8px;
-                    background: #1a1a1a; border: 1px solid #333; border-radius: 12px;
-                    padding: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5);
-                    z-index: 1000; width: 180px; display: flex; flex-direction: column; gap: 4px;
-                    text-align: left; animation: fadeIn 0.2s ease-out;
-                }
-                @keyframes fadeIn { from { opacity: 0; transform: translateY(-10px); } to { opacity: 1; transform: translateY(0); } }
-                
-                .dropdown-item {
-                    display: flex; align-items: center; gap: 10px; padding: 10px 12px;
-                    border-radius: 8px; font-size: 0.85rem; color: #aaa; cursor: pointer; transition: all 0.2s;
-                }
-                .dropdown-item:hover { background: rgba(59, 130, 246, 0.1); color: var(--primary-color); }
-                .dropdown-item.danger:hover { background: rgba(239, 68, 68, 0.1); color: #ef4444; }
-                .dropdown-item svg { color: inherit; }
-
-                .empty-state { padding: 100px 40px; text-align: center; display: flex; flex-direction: column; align-items: center; gap: 1rem; color: #555; }
-                .empty-state h2 { color: #888; margin: 0; }
-                .empty-state p { max-width: 400px; margin: 0; line-height: 1.6; }
-                
-                .lead-modal { background: var(--bg-surface); width: 100%; maxWidth: 900px; border-radius: 24px; border: 1px solid var(--border); box-shadow: 0 50px 100px rgba(0,0,0,0.5); }
-                .modal-content { padding: 2.5rem; }
-                .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 2rem; border-bottom: 1px solid var(--border); padding-bottom: 1.5rem; }
-                .modal-header h2 { margin: 0; font-size: 1.5rem; color: #fff; }
-                .btn-close { background: transparent; border: none; color: #666; cursor: pointer; }
-                .btn-close:hover { color: #fff; }
-
-                .modal-sections-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 3rem; }
-                .modal-section-col { display: flex; flex-direction: column; gap: 1.5rem; }
-                .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; }
-                .filter-toolbar { 
-                    display: flex; justify-content: space-between; align-items: center; 
-                    margin-bottom: 1.5rem; background: rgba(0,0,0,0.2); padding: 0.75rem 1.5rem;
-                    border-radius: 12px; border: 1px solid var(--border);
-                }
-                .filter-chips { display: flex; align-items: center; gap: 12px; }
-                .filter-label { font-size: 0.75rem; color: #555; font-weight: 700; display: flex; align-items: center; gap: 6px; text-transform: uppercase; }
-                
-                .chip-select { 
-                    background: var(--bg-surface); border: 1px solid var(--border); color: #aaa;
-                    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; outline: none;
-                    cursor: pointer; transition: all 0.2s;
-                }
-                .chip-select:hover { border-color: #555; color: #fff; }
-                
-                .clear-chip { 
-                    background: transparent; border: 1px solid #ef444444; color: #ef4444; 
-                    padding: 6px 12px; border-radius: 8px; font-size: 0.8rem; cursor: pointer;
-                    display: flex; align-items: center; gap: 6px; transition: all 0.2s;
-                }
-                .clear-chip:hover { background: #ef444411; }
-
-                .view-actions { display: flex; align-items: center; gap: 12px; }
-                .toggle-group { display: flex; background: var(--bg-deep); padding: 3px; border-radius: 8px; border: 1px solid var(--border); }
-                .toggle-group button { 
-                    background: transparent; border: none; color: #666; padding: 6px 12px; 
-                    font-size: 0.8rem; font-weight: 600; cursor: pointer; border-radius: 6px;
-                    transition: all 0.2s;
-                }
-                .toggle-group button.active { background: var(--primary-color); color: #fff; }
-
-                .group-header-row { background: rgba(0,0,0,0.15) !important; }
-                .group-header { 
-                    display: flex; align-items: center; gap: 10px; font-size: 0.8rem; 
-                    font-weight: 800; color: #888; text-transform: uppercase; letter-spacing: 0.05em;
-                }
-                .group-header span { color: var(--primary-color); }
-
-                .sortable { cursor: pointer; transition: color 0.1s; position: relative; }
-                .sortable:hover { color: #fff !important; }
-                
-                .lead-row.selected { background: rgba(59, 130, 246, 0.03) !important; }
-
-                /* Loading Premium */
-                .loading-state { display: flex; flex-direction: column; align-items: center; justify-content: center; padding: 100px 0; gap: 1rem; color: #666; }
-                .spinner-premium { 
-                    width: 40px; height: 40px; border: 3px solid rgba(59, 130, 246, 0.1); border-top-color: var(--primary-color);
-                    border-radius: 50%; animation: spin 0.8s linear infinite;
-                }
-                @keyframes spin { to { transform: rotate(360deg); } }
-
-                /* Bulk Action Bar */
-                .bulk-action-bar { 
-                    position: fixed; bottom: 2rem; left: 50%; transform: translateX(-50%);
-                    background: #111; border: 1px solid var(--primary-color); padding: 12px 24px;
-                    border-radius: 999px; display: flex; align-items: center; gap: 2rem;
-                    box-shadow: 0 20px 40px rgba(0,0,0,0.5); z-index: 100;
-                }
-                .bulk-info { display: flex; align-items: center; gap: 8px; color: #888; font-size: 0.9rem; }
-                .bulk-info .count { background: var(--primary-color); color: #fff; padding: 2px 10px; border-radius: 999px; font-weight: 800; }
-                .bulk-actions { display: flex; gap: 12px; }
-                .btn-bulk { 
-                    background: transparent; border: none; color: #eee; font-size: 13px; font-weight: 600;
-                    display: flex; align-items: center; gap: 6px; cursor: pointer; padding: 6px 12px; border-radius: 8px;
-                    transition: all 0.2s;
-                }
-                .btn-bulk:hover { background: rgba(255,255,255,0.05); }
-                .btn-bulk.error { color: #ef4444; }
-                .btn-bulk.error:hover { background: #ef444411; }
-                .btn-cancel-bulk { background: transparent; border: 1px solid #333; color: #555; padding: 6px 12px; border-radius: 999px; cursor: pointer; font-size: 12px; }
-
-                /* Modal Elite Pattern */
-                .modal-overlay { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); display: flex; align-items: center; justify-content: center; z-index: 2000; padding: 20px; }
-                .lead-modal { background: #111; width: 100%; max-width: 680px; border-radius: 32px; border: 1px solid #222; overflow: hidden; box-shadow: 0 40px 100px rgba(0,0,0,0.6); }
-                .modal-header { padding: 2.5rem 3rem; border-bottom: 1px solid #222; display: flex; justify-content: space-between; align-items: center; background: rgba(255,255,255,0.01); }
-                .modal-header h2 { margin: 0; font-size: 1.6rem; color: #fff; display: flex; align-items: center; gap: 16px; font-weight: 800; letter-spacing: -0.02em; }
-                .btn-close { background: #1a1a1a; border: none; color: #666; cursor: pointer; border-radius: 50%; width: 44px; height: 44px; display: flex; align-items: center; justify-content: center; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-                .btn-close:hover { color: #fff; background: #333; transform: rotate(90deg); }
-
-                .modal-content { padding: 3rem; }
-                .modal-section h3 { font-size: 0.8rem; text-transform: uppercase; color: #555; margin-bottom: 2.5rem; letter-spacing: 0.15em; font-weight: 900; display: flex; align-items: center; gap: 10px; }
-                .modal-section h3::after { content: ''; flex: 1; height: 1px; background: #222; }
-                
-                .form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 2.5rem; }
-                .form-group label { display: block; font-size: 0.7rem; color: #888; font-weight: 800; margin-bottom: 12px; text-transform: uppercase; letter-spacing: 0.08em; }
-                .form-group input, .form-group select { 
-                    width: 100%; background: #000; border: 1.5px solid #222; color: #fff; padding: 18px 20px; 
-                    border-radius: 18px; outline: none; transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1rem; font-weight: 500;
-                    box-sizing: border-box;
-                }
-                .form-group input:focus, .form-group select:focus { border-color: var(--primary-color); background: #000; box-shadow: 0 0 0 5px rgba(59, 130, 246, 0.15); }
-                .form-group input::placeholder { color: #3a3a3a; }
-                
-                .form-group select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%23666' viewBox='0 0 256 256'%3E%3Cpath d='M213.66,101.66l-80,80a8,8,0,0,1-11.32,0l-80-80a8,8,0,0,1,11.32-11.32L128,164.69l74.34-74.35a8,8,0,0,1,11.32,11.32Z'%3E%3C/path%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 20px center; padding-right: 50px; }
-
-
-                .btn-secondary { background: transparent; border: 1.5px solid #222; color: #888; padding: 0 32px; height: 56px; border-radius: 18px; font-weight: 700; cursor: pointer; transition: all 0.2s; font-size: 0.95rem; display: flex; align-items: center; justify-content: center; }
-                .btn-secondary:hover { color: #fff; border-color: #444; background: rgba(255,255,255,0.02); }
-                
-                .btn-primary { 
-                    background: var(--primary-color); color: #fff; border: none; padding: 0 40px; height: 56px; border-radius: 18px; 
-                    font-weight: 800; cursor: pointer; transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 1rem;
-                    box-shadow: 0 12px 30px rgba(59, 130, 246, 0.25);
-                    display: flex; align-items: center; justify-content: center;
-                }
-                .btn-primary:hover { transform: translateY(-3px); box-shadow: 0 18px 40px rgba(59, 130, 246, 0.35); background: #2563eb; }
-                .btn-primary:active { transform: translateY(-1px); }
-                .options-dropdown {
-                     position: fixed; background: #181818; border: 1px solid #333; border-radius: 14px;
-                     padding: 8px; box-shadow: 0 20px 60px rgba(0,0,0,0.9);
-                     z-index: 3000; width: 200px; display: flex; flex-direction: column; gap: 4px;
-                     text-align: left; animation: fadeCtx 0.12s ease-out;
-                     backdrop-filter: blur(12px);
-                 }
-                 .options-dropdown.context-menu { border-color: var(--primary-color); }
-                 .dropdown-header { padding: 8px 12px; font-size: 10px; text-transform: uppercase; color: #555; font-weight: 800; letter-spacing: 0.06em; }
-                 .divider { height: 1px; background: #2a2a2a; margin: 4px 8px; }
-                 @keyframes fadeCtx { from { opacity: 0; transform: scale(0.94); } to { opacity: 1; transform: scale(1); } }
-
-                /* Lead Modal Styled per Reference Image */
-                .modal-overlay {
-                    position: fixed;
-                    inset: 0;
-                    background: rgba(0, 0, 0, 0.7);
-                    backdrop-filter: blur(8px);
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    z-index: 2000;
-                    padding: 20px;
-                }
-                .lead-modal {
-                    background: #10141d;
-                    width: 100%;
-                    max-width: 680px;
-                    border-radius: 24px;
-                    border: 1px solid #1e2430;
-                    box-shadow: 0 30px 60px rgba(0,0,0,0.5);
-                    overflow: hidden;
-                    display: flex;
-                    flex-direction: column;
-                }
-                .modal-header {
-                    padding: 24px 32px;
-                    display: flex;
-                    justify-content: space-between;
-                    align-items: center;
-                    border-bottom: 1px solid #1e2430;
-                }
-                .header-left {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                }
-                .header-icon-box {
-                    width: 48px;
-                    height: 48px;
-                    background: #24314c;
-                    color: #3b82f6;
-                    border-radius: 14px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                }
-                .header-text h2 {
-                    margin: 0;
-                    font-size: 1.25rem;
-                    font-weight: 700;
-                    color: #fff;
-                }
-                .header-text p {
-                    margin: 4px 0 0;
-                    font-size: 0.85rem;
-                    color: #64748b;
-                }
-                .btn-close {
-                    width: 36px;
-                    height: 36px;
-                    background: #1e2430;
-                    border: none;
-                    color: #64748b;
-                    border-radius: 10px;
-                    display: flex;
-                    align-items: center;
-                    justify-content: center;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-close:hover {
-                    background: #2d3748;
-                    color: #fff;
-                }
-
-                .modal-body {
-                    padding: 32px;
-                }
-                .section-divider {
-                    display: flex;
-                    align-items: center;
-                    gap: 16px;
-                    margin-bottom: 24px;
-                }
-                .section-divider span {
-                    font-size: 0.7rem;
-                    font-weight: 800;
-                    color: #475569;
-                    letter-spacing: 0.1em;
-                }
-                .section-divider .line {
-                    flex: 1;
-                    height: 1px;
-                    background: #1e2430;
-                }
-
-                .form-grid {
-                    display: grid;
-                    grid-template-columns: 1fr 1fr;
-                    gap: 24px;
-                }
-                .form-group {
-                    display: flex;
-                    flex-direction: column;
-                    gap: 8px;
-                }
-                .form-group label {
-                    font-size: 0.7rem;
-                    font-weight: 800;
-                    color: #64748b;
-                    letter-spacing: 0.05em;
-                    text-transform: uppercase;
-                }
-                .form-group input, .form-group select {
-                    background: #0d0f14;
-                    border: 1px solid #1e2430;
-                    color: #cbd5e1;
-                    padding: 14px 16px;
-                    border-radius: 12px;
-                    font-size: 0.95rem;
-                    outline: none;
-                    transition: border-color 0.2s;
-                }
-                .form-group input::placeholder {
-                    color: #334155;
-                }
-                .form-group input:focus, .form-group select:focus {
-                    border-color: #3b82f6;
-                }
-
-                .select-wrapper {
-                    position: relative;
-                }
-                .select-wrapper select {
-                    width: 100%;
-                    appearance: none;
-                }
-                .select-icon {
-                    position: absolute;
-                    right: 16px;
-                    top: 50%;
-                    transform: translateY(-50%);
-                    pointer-events: none;
-                    color: #64748b;
-                }
-
-                .modal-footer {
-                    margin-top: 40px;
-                    display: flex;
-                    justify-content: flex-end;
-                    gap: 12px;
-                }
-                .btn-cancel {
-                    background: #1e2430;
-                    border: 1px solid #2d3748;
-                    color: #94a3b8;
-                    padding: 12px 24px;
-                    border-radius: 12px;
-                    font-weight: 600;
-                    cursor: pointer;
-                    font-size: 0.9rem;
-                    transition: all 0.2s;
-                }
-                .btn-cancel:hover {
-                    background: #2d3748;
-                    color: #fff;
-                }
-                .btn-submit {
-                    background: #2563eb;
-                    border: none;
-                    color: #fff;
-                    padding: 12px 28px;
-                    border-radius: 12px;
-                    font-weight: 700;
-                    font-size: 0.95rem;
-                    display: flex;
-                    align-items: center;
-                    gap: 12px;
-                    cursor: pointer;
-                    transition: all 0.2s;
-                }
-                .btn-submit:hover {
-                    background: #3b82f6;
-                    box-shadow: 0 0 20px rgba(59, 130, 246, 0.4);
-                }
+                .crm-empty { padding: 100px 0; text-align: center; color: #475569; }
+                .crm-empty h2 { color: #94a3b8; margin: 1.5rem 0 0.5rem; }
             `}</style>
-        </div >
+        </div>
     );
 };
 

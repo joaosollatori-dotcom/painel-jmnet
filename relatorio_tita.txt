@@ -1,48 +1,68 @@
 ================================================================================
-🚀 RELATÓRIO TITÃ: MODERNIZAÇÃO CRM OPERACIONAL JMNET
+🚀 RELATÓRIO TITÃ: ARQUITETURA FUNCIONAL CRM SaaS ISP (JMNET)
 ================================================================================
 
 Data: 13 de Abril de 2026
-Versão: 2.0.0 "Field Intelligence"
-Status: PRONTO PARA PRODUÇÃO
+Versão: 2.1.0 "ISP Blueprint Edition"
+Escopo: Gestão de Leads, Qualificação e Operações de Campo
 
 ================================================================================
-1. MÓDULO DE AGENDAMENTOS (CENTRAL DE COMANDO)
+1. MODELO DE DADOS (O ÁTOMO DO LEAD)
 ================================================================================
-- Multi-Vision System: Implementação de modos Lista, Dia, Semana e Mês.
-- Tech Lanes: Visualização por colunas de técnicos no modo Dia.
-- Motor Geográfico: Algoritmo Haversine integrado para detectar conflitos de 
-  distância entre agendamentos consecutivos.
-- Interatividade Premium: Suporte a Drag-and-Drop (reagendamento) e 
-  Resize-Handles (ajuste de duração) no calendário.
-- Chrono-Tracking: Cronômetro real-time para agendamentos "Em Andamento".
+O sistema agora opera com uma entidade Lead de alta densidade:
+- **Identidade Full**: Nome, CPF/CNPJ, RG, E-mail e separação de Telefone/WhatsApp.
+- **Geolocalização Ativa**: CEP, Logradouro, Bairro e Geo-coordenadas (Lat/Lng) 
+  essenciais para plotagem em mapa de cobertura.
+- **Rastreamento Digital**: Canal de entrada (UTMs), Campanha e dispositivo.
+- **Classificação ISP**: Tipo (PF/PJ) e Perfil de Uso (Residencial Básico/Premium, 
+  Empresarial Médio/Grande).
+- **Controle Operacional**: Etapa do funil, Vendedor, Data de última interação 
+  e status de lead frio.
 
 ================================================================================
-2. GESTÃO DE LEADS (ESPECIALISTA ISP)
+2. CENTRAL DE OPERAÇÕES (LISTAGEM INTELIGENTE)
 ================================================================================
-- CRM ISP-Driven: Segmentação PF/PJ, PF-Premium e Empresarial.
-- Painel de Atenção: KPIs clicáveis para Leads sem contato (+48h), 
-  Viabilidades Pendentes e SLAs Vencidos.
-- SLA Visual: Sistema de cores dinâmicas (Blue/Yellow/Red) baseado no tempo
-  de permanência de cada lead em sua etapa do funil.
-- Busca Multi-vetor: Campo de pesquisa única integrando Nome, CPF, Telefone e CEP.
+A tela de listagem foi transformada em um cockpit de tomada de decisão:
+- **Busca Unificada**: Pesquisa em Nome, CPF, Telefone e Endereço simultaneamente.
+- **Painel de Atenção Premium**: Faixa superior com indicadores de:
+  * Leads sem contato (+48h)
+  * Viabilidades pendentes
+  * Propostas aguardando resposta (+3 dias)
+- **Grid de Dados ISP**:
+  * Badge de SLA: Muda de cor conforme o tempo estagnado na etapa.
+  * Status de Viabilidade: Badges Coloridos + Info de CTO + Link para Mapa.
+  * Próxima Ação: Data da tarefa futura (Red alert se vencida).
+- **Ações Inline**: Ícones inteligentes para registro rápido, agendamento e arquivamento.
 
 ================================================================================
-3. BILATERALIDADE E SINCRONIZAÇÃO
+3. DETALHE DO LEAD (GESTÃO 360º)
 ================================================================================
-- Data Mirroring: O Lead Detail agora monitora o AppointmentManager em tempo real.
-- Live Pulse: Vendedores visualizam quando um técnico está executando um 
-  serviço via indicador visual pulsante no CRM.
-- Georreferenciamento: Integração total com Google Maps para plotagem de
-  coordenadas geradas via CEP.
+Estrutura interna organizada por abas de fluxo contínuo:
+- **Aba Dados**: Edição inline de endereço com mapa embutido.
+- **Aba Qualificação**: Score Automático e Camada BANT (Budget, Authority, Need, Timeline).
+- **Aba Viabilidade**: Detalhamento técnico (Caixa CTO, Portas, Distância Drop).
+- **Aba Timeline**: Histórico reverso com filtros por tipo de interação.
+- **Aba Proposta**: Controle de planos, valores e status de assinatura.
+- **Aba Agendamento**: Sincronização bilateral com o AppointmentManager.
+- **Sidebar Fixa**: Registro rápido de contato e cronômetro de operação em campo.
 
 ================================================================================
-4. UI/UX & PERFORMANCE
+4. QUALIFICAÇÃO & FUNIL (A LÓGICA TITÃ)
 ================================================================================
-- Design System: Glassmorphism, Dark Mode e Framer Motion Transitions.
-- Ícones: Phosphor Icons para semântica visual moderna.
-- Build: Compilação de produção Vite-6 testada e íntegra (1.5MB JS / 61KB CSS).
+- **Dual Layer Qualification**: Separação entre comercial (BANT) e técnica (Rede).
+- **Funil Especializado**: Etapas que variam de "Novo Lead" até "Instalado/Ativado", 
+  incluindo a etapa crítica de "Aguardando Expansão (Sem Viabilidade)".
+- **Regras de Transição**: Bloqueio de avanço para "Proposta" se os status de 
+  Qualificação e Viabilidade não estiverem ambos positivos.
 
 ================================================================================
-"O poder não está apenas nos dados, mas na rapidez com que eles se tornam ação."
+5. AUTOMAÇÕES & INDICADORES
+================================================================================
+- **Distribuição Inteligente**: Roteamento de leads por região/vendedor.
+- **Alertas de SLA**: Gatilhos visuais para leads estagnados.
+- **Dashboard em Tempo Real**: Taxa de conversão por etapa, eficiência de canal 
+  e mapa de calor de viabilidade por bairro.
+
+================================================================================
+STATUS FINAL: SISTEMA MODERNIZADO E ALINHADO AOS PRINCIPAIS CRMs SaaS DO MERCADO.
 ================================================================================
