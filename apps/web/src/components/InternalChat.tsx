@@ -289,13 +289,13 @@ const InternalChat: React.FC = () => {
                         <div className="ic-category-header">
                             <span>MENSAGENS DIRETAS</span>
                         </div>
-                        <div className="ic-user" onClick={() => handleDMClick('Carlos Oliveira')}>
-                            <div className="ic-avatar-small" style={{ background: '#046bed' }}><div className="status-dot dnd" />C</div>
-                            <span className="name">Carlos Oliveira</span>
+                        <div className="ic-user" onClick={() => handleDMClick('Roberto Técnico')}>
+                            <div className="ic-avatar-small" style={{ background: '#046bed' }}><div className="status-dot dnd" />R</div>
+                            <span className="name">Roberto Técnico</span>
                         </div>
-                        <div className="ic-user" onClick={() => handleDMClick('Mariana Silva')}>
+                        <div className="ic-user" onClick={() => handleDMClick('Mariana Comercial')}>
                             <div className="ic-avatar-small" style={{ background: '#eab308' }}><div className="status-dot online" />M</div>
-                            <span className="name">Mariana Silva</span>
+                            <span className="name">Mariana Comercial</span>
                         </div>
 
                         {/* DMs que foram abertas dinamicamente e não estão na lista fixa acima */}
@@ -479,15 +479,15 @@ const InternalChat: React.FC = () => {
                     <div className="ic-members-category" style={{ marginTop: '20px' }}>OFFLINE — 2</div>
 
                     <div className="ic-member offline">
-                        <div className="ic-avatar-small" style={{ background: '#046bed' }}>C</div>
+                        <div className="ic-avatar-small" style={{ background: '#046bed' }}>R</div>
                         <div className="name-box">
-                            <span className="name">Carlos Oliveira</span>
+                            <span className="name">Roberto Técnico</span>
                         </div>
                     </div>
                     <div className="ic-member offline">
                         <div className="ic-avatar-small" style={{ background: '#eab308' }}>M</div>
                         <div className="name-box">
-                            <span className="name">Mariana Silva</span>
+                            <span className="name">Mariana Comercial</span>
                         </div>
                     </div>
                 </aside>

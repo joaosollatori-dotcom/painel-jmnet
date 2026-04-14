@@ -410,8 +410,9 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                                     <label>Novo Operador</label>
                                     <select className="titan-select" value={newVendedorId} onChange={e => setNewVendedorId(e.target.value)}>
                                         <option value="">Selecione na equipe...</option>
-                                        <option value="00000000-0000-0000-0000-000000000001">Mariana Comercial</option>
-                                        <option value="00000000-0000-0000-0000-000000000002">Roberto Técnico</option>
+                                        <option value="11111111-1111-1111-1111-111111111111">João Sollatori</option>
+                                        <option value="22222222-2222-2222-2222-222222222222">Mariana Comercial</option>
+                                        <option value="33333333-3333-3333-3333-333333333333">Roberto Técnico</option>
                                     </select>
                                 </div>
                             </div>
