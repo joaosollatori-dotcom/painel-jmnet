@@ -123,7 +123,7 @@ export interface Appointment {
 
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
-        .from('Lead')
+        .from('leads')
         .select('*')
         .order('createdAt', { ascending: false });
 
@@ -133,7 +133,7 @@ export const getLeads = async (): Promise<Lead[]> => {
 
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
     const { data, error } = await supabase
-        .from('Lead')
+        .from('leads')
         .insert([lead])
         .select()
         .single();
@@ -144,7 +144,7 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
     const { error } = await supabase
-        .from('Lead')
+        .from('leads')
         .update({ ...updates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
@@ -153,7 +153,7 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<vo
 
 export const deleteLead = async (id: string): Promise<void> => {
     const { error } = await supabase
-        .from('Lead')
+        .from('leads')
         .delete()
         .eq('id', id);
 
@@ -162,7 +162,7 @@ export const deleteLead = async (id: string): Promise<void> => {
 
 export const getAppointments = async (): Promise<Appointment[]> => {
     const { data, error } = await supabase
-        .from('Appointment')
+        .from('appointments')
         .select('*')
         .order('dataInicio', { ascending: true });
 
@@ -172,7 +172,7 @@ export const getAppointments = async (): Promise<Appointment[]> => {
 
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
     const { error } = await supabase
-        .from('Appointment')
+        .from('appointments')
         .update({ ...updates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
@@ -181,7 +181,7 @@ export const updateAppointment = async (id: string, updates: Partial<Appointment
 
 export const createAppointment = async (appointment: Partial<Appointment>): Promise<Appointment> => {
     const { data, error } = await supabase
-        .from('Appointment')
+        .from('appointments')
         .insert([appointment])
         .select()
         .single();
@@ -192,7 +192,7 @@ export const createAppointment = async (appointment: Partial<Appointment>): Prom
 
 export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => {
     const { data, error } = await supabase
-        .from('LeadHistory')
+        .from('lead_history')
         .select('*')
         .eq('leadId', leadId)
         .order('dataEvento', { ascending: false });
@@ -203,7 +203,7 @@ export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => 
 
 export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
     const { data, error } = await supabase
-        .from('LeadHistory')
+        .from('lead_history')
         .insert([history])
         .select()
         .single();

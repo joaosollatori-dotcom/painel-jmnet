@@ -197,22 +197,37 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     <div className="bant-form">
                         <div className="q-field">
                             <label>Budget (Quanto paga hoje?)</label>
-                            <input type="number" value={qualifData.budget} onChange={e => setQualifData({ ...qualifData, budget: Number(e.target.value) })} />
+                            <input
+                                type="number"
+                                defaultValue={lead.valorPagoAtual || 0}
+                                onBlur={(e) => handleInlineEdit('valorPagoAtual', Number(e.target.value))}
+                            />
                         </div>
                         <div className="q-field">
                             <label>Authority (É o decisor?)</label>
-                            <select value={qualifData.authority} onChange={e => setQualifData({ ...qualifData, authority: e.target.value })}>
+                            <select
+                                value={lead.decisorIdentificado ? 'SIM' : 'NAO'}
+                                onChange={(e) => handleInlineEdit('decisorIdentificado', e.target.value === 'SIM')}
+                            >
                                 <option value="SIM">Sim, proprietário</option>
                                 <option value="NAO">Não, depende de outro</option>
                             </select>
                         </div>
                         <div className="q-field">
                             <label>Need (Velocidade/Plano)</label>
-                            <input type="text" value={qualifData.need} onChange={e => setQualifData({ ...qualifData, need: e.target.value })} placeholder="Ex: 500MB Fibra" />
+                            <input
+                                type="text"
+                                defaultValue={lead.interessePlano || ''}
+                                onBlur={(e) => handleInlineEdit('interessePlano', e.target.value)}
+                                placeholder="Ex: 500MB Fibra"
+                            />
                         </div>
                         <div className="q-field">
                             <label>Timeline (Quando quer?)</label>
-                            <select value={qualifData.timeline} onChange={e => setQualifData({ ...qualifData, timeline: e.target.value })}>
+                            <select
+                                value={qualifData.timeline}
+                                onChange={e => setQualifData({ ...qualifData, timeline: e.target.value })}
+                            >
                                 <option value="IMEDIATO">Imediato</option>
                                 <option value="15DIAS">Próximos 15 dias</option>
                                 <option value="PESQUISA">Apenas pesquisando</option>
@@ -227,19 +242,22 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         <div className="score-circle">
                             <svg viewBox="0 0 36 36">
                                 <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#1e293b" strokeWidth="3" />
-                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#0ea5e9" strokeWidth="3" strokeDasharray="85, 100" />
+                                <path d="M18 2.0845 a 15.9155 15.9155 0 0 1 0 31.831 a 15.9155 15.9155 0 0 1 0 -31.831" fill="none" stroke="#0ea5e9" strokeWidth="3" strokeDasharray={`${lead.scoreQualificacao || 0}, 100`} />
                             </svg>
-                            <div className="score-text">85<span>pts</span></div>
+                            <div className="score-text">{lead.scoreQualificacao || 0}<span>pts</span></div>
                         </div>
                         <div className="score-label">
-                            <strong>Lead Quente</strong>
-                            <span>Alta probabilidade de conversão</span>
+                            <strong>{lead.scoreQualificacao > 70 ? 'Lead Quente' : 'Em Nutrição'}</strong>
+                            <span>{lead.scoreQualificacao > 70 ? 'Alta probabilidade' : 'Ainda frio'}</span>
                         </div>
                     </div>
                     <div className="profile-details">
                         <div className="q-field">
                             <label>Perfil de Uso</label>
-                            <select value={qualifData.profile} onChange={e => setQualifData({ ...qualifData, profile: e.target.value as any })}>
+                            <select
+                                value={lead.perfilUso || 'RESIDENCIAL_BASICO'}
+                                onChange={(e) => handleInlineEdit('perfilUso', e.target.value)}
+                            >
                                 <option value="RESIDENCIAL_BASICO">Residencial Básico</option>
                                 <option value="RESIDENCIAL_PREMIUM">Residencial Premium (Gamer)</option>
                                 <option value="EMPRESARIAL_PEQUENO">Empresarial Pequeno</option>
@@ -247,7 +265,11 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         </div>
                         <div className="q-field">
                             <label>Nº Dispositivos</label>
-                            <input type="number" value={qualifData.devices} onChange={e => setQualifData({ ...qualifData, devices: Number(e.target.value) })} />
+                            <input
+                                type="number"
+                                defaultValue={lead.numDispositivos || 1}
+                                onBlur={(e) => handleInlineEdit('numDispositivos', Number(e.target.value))}
+                            />
                         </div>
                     </div>
                 </div>
@@ -257,45 +279,83 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
 
     const renderViabilityTab = () => (
         <div className="tab-pane-viability">
-            <div className="viab-card">
-                <div className="card-header"><HardDrives size={20} weight="duotone" /> <h4>Infraestrutura & Viabilidade Técnica</h4></div>
-                <div className="v-grid">
-                    <div className="v-item">
-                        <label>Status de Viabilidade</label>
-                        <select className="v-select" value={lead.statusViabilidade}>
-                            <option value="PENDENTE">Pendente</option>
-                            <option value="VIAVEL">Viável (Cobertura Confirmada)</option>
-                            <option value="INVIAVEL">Inviável (Sem Previsão)</option>
-                            <option value="EM_ANALISE">Em Análise (Engenharia)</option>
-                            <option value="ESPECIAL">Projeto Especial (Dedidaco)</option>
-                        </select>
-                    </div>
-                    <div className="v-item">
-                        <label>CTO Próxima (Cód.)</label>
-                        <input type="text" defaultValue={lead.ctoProxima || ''} placeholder="Ex: CTO-1R-A04" />
-                    </div>
-                    <div className="v-item">
-                        <label>Portas Livres</label>
-                        <input type="number" defaultValue={lead.portasDisponiveis || 0} />
-                    </div>
-                    <div className="v-item">
-                        <label>Distância da Caixa (m)</label>
-                        <input type="number" defaultValue={lead.distanciaDistribuidor || 0} />
+            <div className="viab-grid">
+                <div className="viab-info">
+                    <div className="viab-card">
+                        <div className="v-header">
+                            <HardDrives size={24} weight="duotone" />
+                            <div>
+                                <strong>Infraestrutura Técnica</strong>
+                                <span>{lead.statusViabilidade === 'VIAVEL' ? `Verificado em ${lead.dataVerificacao || 'hoje'}` : 'Aguardando vistoria técnica'}</span>
+                            </div>
+                        </div>
+                        <div className="v-details">
+                            <div className="v-stat">
+                                <small>Status Atual</small>
+                                <select
+                                    className="v-select"
+                                    value={lead.statusViabilidade}
+                                    onChange={(e) => handleInlineEdit('statusViabilidade', e.target.value)}
+                                    style={{ background: '#080a0f', border: 'none', color: '#fff', fontWeight: 800, padding: '4px 0', fontSize: '0.9rem', outline: 'none' }}
+                                >
+                                    <option value="PENDENTE">Pendente</option>
+                                    <option value="VIAVEL">Viável</option>
+                                    <option value="INVIAVEL">Inviável</option>
+                                    <option value="EM_ANALISE">Em Análise</option>
+                                    <option value="ESPECIAL">Especial</option>
+                                </select>
+                            </div>
+                            <div className="v-stat">
+                                <small>Caixa (CTO)</small>
+                                <input
+                                    type="text"
+                                    defaultValue={lead.ctoProxima || ''}
+                                    onBlur={(e) => handleInlineEdit('ctoProxima', e.target.value)}
+                                    placeholder="CTO-XXX"
+                                    style={{ background: 'none', border: 'none', color: '#fff', fontWeight: 800, width: '100%', outline: 'none' }}
+                                />
+                            </div>
+                            <div className="v-stat">
+                                <small>Portas Livres</small>
+                                <input
+                                    type="number"
+                                    defaultValue={lead.portasDisponiveis || 0}
+                                    onBlur={(e) => handleInlineEdit('portasDisponiveis', Number(e.target.value))}
+                                    style={{ background: 'none', border: 'none', color: '#fff', fontWeight: 800, width: '100%', outline: 'none' }}
+                                />
+                            </div>
+                            <div className="v-stat">
+                                <small>Distância (m)</small>
+                                <input
+                                    type="number"
+                                    defaultValue={lead.distanciaDistribuidor || 0}
+                                    onBlur={(e) => handleInlineEdit('distanciaDistribuidor', Number(e.target.value))}
+                                    style={{ background: 'none', border: 'none', color: '#fff', fontWeight: 800, width: '100%', outline: 'none' }}
+                                />
+                            </div>
+                        </div>
+                        <div className="v-obs" style={{ marginTop: '1.5rem' }}>
+                            <label style={{ fontSize: '0.7rem', color: '#475569', textTransform: 'uppercase', fontWeight: 800, display: 'block', marginBottom: '8px' }}>Observações da Engenharia</label>
+                            <textarea
+                                defaultValue={lead.obsTecnica || ''}
+                                onBlur={(e) => handleInlineEdit('obsTecnica', e.target.value)}
+                                placeholder="Notas técnicas..."
+                                style={{ width: '100%', background: '#080a0f', border: '1px solid #1e2430', borderRadius: '8px', padding: '10px', color: '#94a3b8', fontSize: '0.85rem', minHeight: '80px', resize: 'none' }}
+                            ></textarea>
+                        </div>
                     </div>
                 </div>
-            </div>
-
-            <div className="viab-card">
-                <div className="card-header"><Wrench size={20} weight="duotone" /> <h4>Observações da Engenharia</h4></div>
-                <textarea placeholder="Detalhes como restrições de posteamento, tipo de fachada ou dificuldade de lançamento." defaultValue={lead.obsTecnica || ''}></textarea>
-                <div className="v-footer">
-                    <span>Vistoriado por: {lead.verificadoPor || 'N/A'}</span>
-                    <button className="btn-primary" onClick={() => showToast('Viabilidade Atualizada e Notificada ao Comercial', 'success')}>Salvar e Atualizar CPO</button>
+                <div className="viab-map-view">
+                    <MapContainer center={[lead.latitude || -23.5505, lead.longitude || -46.6333]} zoom={18} scrollWheelZoom={false} style={{ height: '100%', borderRadius: '16px' }}>
+                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+                        <Marker position={[lead.latitude || -23.5505, lead.longitude || -46.6333]}>
+                            <Popup>{lead.nomeCompleto}</Popup>
+                        </Marker>
+                    </MapContainer>
                 </div>
             </div>
         </div>
     );
-
     const renderPropostaTab = () => (
         <div className="tab-pane-proposta">
             <div className="proposta-grid">
@@ -345,53 +405,6 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         </div >
     );
 
-    const renderViabilidadeTab = () => (
-        <div className="tab-pane-viabilidade">
-            <div className="viab-grid">
-                <div className="viab-info">
-                    <div className="viab-card active">
-                        <div className="v-header">
-                            <HardDrives size={24} weight="duotone" />
-                            <div>
-                                <strong>Viabilidade Confirmada</strong>
-                                <span>Verificado por Técnico (Gabriel) em 12/04</span>
-                            </div>
-                        </div>
-                        <div className="v-details">
-                            <div className="v-stat">
-                                <small>Caixa (CTO)</small>
-                                <strong>CTO-CENTRO-04</strong>
-                            </div>
-                            <div className="v-stat">
-                                <small>Portas Livres</small>
-                                <strong>03</strong>
-                            </div>
-                            <div className="v-stat">
-                                <small>Distância drop</small>
-                                <strong>45 metros</strong>
-                            </div>
-                            <div className="v-stat">
-                                <small>Tecnologia</small>
-                                <strong>FTTH (Fibra)</strong>
-                            </div>
-                        </div>
-                        <div className="v-obs">
-                            <label>Observação Técnica:</label>
-                            <p>Instalação padrão via poste frontal. Sem impedimentos. Necessário escada de 7 metros.</p>
-                        </div>
-                    </div>
-                </div>
-                <div className="viab-map-view">
-                    <MapContainer center={[lead.latitude || -23.5505, lead.longitude || -46.6333]} zoom={18} scrollWheelZoom={false} style={{ height: '100%', borderRadius: '16px' }}>
-                        <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-                        <Marker position={[lead.latitude || -23.5505, lead.longitude || -46.6333]}>
-                            <Popup>{lead.nomeCompleto}</Popup>
-                        </Marker>
-                    </MapContainer>
-                </div>
-            </div>
-        </div>
-    );
 
     return (
         <AnimatePresence>
@@ -579,10 +592,10 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                 )}
 
                 <style>{`
-                    .lead-detail-titan { flex: 1; display: flex; flex-direction: column; overflow: hidden; background: #080a0f; width: 100%; position: relative; }
+                    .lead-detail-titan { flex: 1; display: flex; flex-direction: column; height: 100vh; background: #080a0f; width: 100%; position: relative; overflow: hidden; }
                     
                     /* Header */
-                    .fixed-header { background: #0c0f16; border-bottom: 1px solid #1e2430; padding: 1.25rem 2.5rem; }
+                    .fixed-header { background: #0c0f16; border-bottom: 1px solid #1e2430; padding: 1.25rem 2.5rem; flex-shrink: 0; }
                     .header-nav { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
                     .btn-back { background: none; border: none; color: #64748b; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; }
                     .status-stepper { display: flex; align-items: center; gap: 10px; }
@@ -612,113 +625,76 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     .vendedor-widget img { width: 36px; height: 36px; border-radius: 50%; border: 2px solid #3b82f6; }
 
                     /* Layout Body */
-                    .detail-layout { display: grid; grid-template-columns: 1fr 340px; flex: 1; overflow: hidden; }
-                    .detail-tabs-area { overflow-y: auto; padding: 2rem 2.5rem; }
+                    .detail-layout { display: grid; grid-template-columns: 1fr 340px; flex: 1; overflow: hidden; min-height: 0; }
+                    .detail-tabs-area { overflow-y: auto; padding: 2rem 2.5rem; display: flex; flex-direction: column; }
                     
-                    .tab-menu { display: flex; gap: 1.5rem; border-bottom: 1px solid #1e2430; margin-bottom: 2rem; position: sticky; top: -2rem; background: #080a0f; z-index: 5; }
+                    .tab-menu { display: flex; gap: 1.5rem; border-bottom: 1px solid #1e2430; margin-bottom: 2rem; position: sticky; top: -2rem; background: #080a0f; z-index: 5; flex-shrink: 0; }
                     .tab-menu button { background: none; border: none; color: #64748b; padding: 1rem 0; font-weight: 700; font-size: 0.9rem; cursor: pointer; display: flex; align-items: center; gap: 8px; border-bottom: 2px solid transparent; transition: all 0.2s; }
                     .tab-menu button.active { color: #3b82f6; border-bottom-color: #3b82f6; }
-                    .tab-menu button:hover:not(.active) { color: #94a3b8; }
-
+                    
                     /* Sidebar */
                     .fixed-sidebar { background: #0c0f16; border-left: 1px solid #1e2430; padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem; overflow-y: auto; }
-                    .sidebar-section h3 { font-size: 0.75rem; text-transform: uppercase; color: #475569; letter-spacing: 0.1em; margin-bottom: 1rem; }
+                    .sidebar-section h3 { font-size: 0.75rem; text-transform: uppercase; color: #475569; letter-spacing: 0.1em; margin-bottom: 1rem; margin-top: 0; }
                     .task-card { background: #11141d; border: 1px solid #1e2430; padding: 1rem; border-radius: 12px; }
                     .task-card.overdue { border-left: 4px solid #ef4444; }
-                    .task-info strong { display: block; font-size: 0.85rem; color: #f8fafc; margin-bottom: 4px; }
-                    .task-info span { font-size: 0.75rem; color: #ef4444; font-weight: 700; }
-                    .task-actions { display: flex; gap: 8px; margin-top: 12px; }
-                    .task-actions button { flex: 1; height: 32px; background: #1e2430; border: none; color: #94a3b8; border-radius: 6px; cursor: pointer; }
-                    .btn-done:hover { background: #10b98120; color: #10b981; }
                     
                     .quick-logs { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-                    .quick-logs button { background: #1e2430; border: 1px solid #334155; color: #94a3b8; padding: 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; transition: all 0.2s; }
-                    .quick-logs button:hover { background: #3b82f610; border-color: #3b82f6; color: #3b82f6; }
+                    .quick-logs button { background: #1e2430; border: 1px solid #334155; color: #94a3b8; padding: 8px; border-radius: 8px; font-size: 0.75rem; font-weight: 600; cursor: pointer; }
                     
                     .manual-log textarea { width: 100%; background: #080a0f; border: 1px solid #1e2430; border-radius: 8px; padding: 10px; color: #fff; font-size: 0.85rem; min-height: 80px; resize: none; margin-bottom: 8px; }
                     .btn-save-note { width: 100%; padding: 10px; background: #3b82f620; color: #3b82f6; border: none; font-weight: 700; border-radius: 8px; cursor: pointer; }
 
                     .sidebar-shortcuts { display: flex; justify-content: space-between; margin-top: auto; padding-top: 1rem; border-top: 1px solid #1e2430; }
-                    .sidebar-shortcuts button { width: 50px; height: 50px; border-radius: 14px; border: none; cursor: pointer; color: #fff; transition: transform 0.2s; }
-                    .sc-call { background: #10b981; box-shadow: 0 4px 15px #10b98130; }
-                    .sc-whatsapp { background: #25d366; box-shadow: 0 4px 15px #25d36630; }
-                    .sc-task { background: #3b82f6; box-shadow: 0 4px 15px #3b82f630; }
-                    .sidebar-shortcuts button:hover { transform: translateY(-3px); }
+                    .sidebar-shortcuts button { width: 44px; height: 44px; border-radius: 12px; border: none; cursor: pointer; color: #fff; display: flex; align-items: center; justify-content: center; }
+                    .sc-call { background: #10b981; }
+                    .sc-whatsapp { background: #25d366; }
+                    .sc-task { background: #3b82f6; }
 
                     /* Tabs Content */
-                    .tab-viewport { min-height: 400px; }
+                    .tab-viewport { flex: 1; min-height: 0; }
                     .dados-section { background: #11141d; border-radius: 16px; padding: 1.5rem; border: 1px solid #1e2430; margin-bottom: 1.5rem; }
                     .dados-section h4 { color: #3b82f6; margin: 0 0 1.5rem 0; font-size: 0.95rem; }
                     .inline-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-                    .inline-grid .full { grid-column: 1 / -1; }
                     .i-group label { display: block; font-size: 0.7rem; color: #475569; margin-bottom: 6px; text-transform: uppercase; font-weight: 800; }
-                    .i-val { background: #080a0f; min-height: 40px; padding: 0 12px; border-radius: 8px; color: #f8fafc; font-weight: 600; cursor: pointer; display: flex; align-items: center; border: 1px solid transparent; width: 100%; box-sizing: border-box; }
-                    .i-val:hover { border-color: #3b82f640; }
-                    .i-val input { background: none; border: none; color: #fff; width: 100%; outline: none; padding: 10px 0; font-family: inherit; font-size: 0.9rem; }
-                    .val-content { display: flex; align-items: center; width: 100%; justify-content: space-between; overflow: hidden; }
-                    .val-text { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 0.9rem; }
-                    .v-icon { color: #64748b; flex-shrink: 0; margin-left: 8px; }
+                    .i-val { background: #080a0f; min-height: 40px; padding: 0 12px; border-radius: 8px; color: #f8fafc; cursor: pointer; display: flex; align-items: center; border: 1px solid #1e2430; }
+                    .i-val input { background: none; border: none; color: #fff; width: 100%; outline: none; padding: 10px 0; }
                     
-                    /* Qualif */
-                    .qualif-grid { display: grid; grid-template-columns: 1fr 300px; gap: 1.5rem; }
-                    .qualif-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1.5rem; }
-                    .card-header { display: flex; align-items: center; gap: 10px; color: #cbd5e1; margin-bottom: 1.5rem; }
-                    .card-header h4 { margin: 0; font-size: 0.95rem; }
-                    .bant-form { display: grid; grid-template-columns: 1fr 1fr; gap: 1.25rem; }
-                    .q-field label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 8px; }
-                    .q-field input, .q-field select { width: 100%; background: #080a0f; border: 1px solid #1e2430; color: #fff; padding: 10px; border-radius: 8px; font-weight: 600; }
-                    
-                    .score-widget { display: flex; align-items: center; gap: 20px; background: #080a0f; padding: 1.25rem; border-radius: 12px; margin-bottom: 1.5rem; border: 1px solid #3b82f620; }
-                    .score-circle { width: 60px; height: 60px; position: relative; }
-                    .score-text { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 1.1rem; font-weight: 800; color: #0ea5e9; }
-                    .score-text span { font-size: 0.6rem; margin-top: -4px; }
-                    .score-label strong { display: block; color: #10b981; }
-                    .score-label span { font-size: 0.75rem; color: #475569; }
-
-                    /* Proposta */
-                    .prop-section { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1.5rem; margin-bottom: 1.5rem; }
-                    .prop-section h4 { margin: 0 0 1.25rem 0; color: #cbd5e1; font-size: 0.9rem; }
-                    .p-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
-                    .p-item label { display: block; font-size: 0.7rem; color: #475569; margin-bottom: 4px; }
-                    .p-item strong { color: #f8fafc; font-size: 1.1rem; }
-                    .p-item strong.price { color: #3b82f6; }
-                    .contract-status-box { background: #080a0f; border-radius: 12px; padding: 1rem; display: flex; justify-content: space-between; align-items: center; }
-                    .c-badge { padding: 4px 10px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; display: inline-block; margin-bottom: 4px; }
-                    .c-badge.visualizada { background: #3b82f620; color: #3b82f6; }
-                    .c-info span { display: block; font-size: 0.8rem; color: #64748b; }
-                    .btn-resend { background: #3b82f620; border: none; color: #3b82f6; padding: 8px 16px; border-radius: 8px; font-weight: 700; cursor: pointer; display: flex; align-items: center; gap: 8px; }
-
-                    /* Timeline */
-                    .timeline-filters { display: flex; gap: 10px; margin-bottom: 2rem; }
-                    .timeline-filters button { background: #11141d; border: 1px solid #1e2430; color: #64748b; padding: 6px 14px; border-radius: 20px; font-size: 0.8rem; cursor: pointer; }
-                    .timeline-filters button.active { background: #3b82f6; color: #fff; border-color: #3b82f6; }
-                    .timeline-list { display: flex; flex-direction: column; gap: 1.5rem; }
-                    .timeline-item { display: flex; gap: 16px; }
-                    .t-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; }
-                    .t-icon.sys { background: #1e293b; color: #cbd5e1; }
-                    .t-icon.call { background: #f59e0b20; color: #f59e0b; }
-                    .t-icon.wa { background: #25d36620; color: #25d366; }
-                    .t-header { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
-                    .t-header strong { color: #e2e8f0; font-size: 0.9rem; }
-                    .t-header span { font-size: 0.75rem; color: #475569; }
-                    .t-content p { margin: 0; font-size: 0.85rem; color: #94a3b8; line-height: 1.5; }
-
-                    /* Viabilidade Grid */
-                    .viab-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; height: 450px; }
+                    /* Viabilidade */
+                    .tab-pane-viability { display: flex; flex-direction: column; gap: 1.5rem; }
+                    .viab-grid { display: grid; grid-template-columns: 320px 1fr; gap: 1.5rem; }
+                    .viab-card { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; padding: 1.5rem; display: flex; flex-direction: column; }
                     .v-header { display: flex; gap: 12px; margin-bottom: 1.5rem; color: #3b82f6; }
                     .v-header strong { display: block; font-size: 1rem; color: #f8fafc; }
-                    .v-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 1.5rem; }
+                    .v-details { display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; flex: 1; }
                     .v-stat small { display: block; font-size: 0.7rem; color: #475569; text-transform: uppercase; }
                     .v-stat strong { font-size: 0.95rem; color: #f8fafc; }
-                    .v-obs label { display: block; font-size: 0.75rem; color: #64748b; margin-bottom: 6px; }
-                    .v-obs p { font-size: 0.85rem; color: #94a3b8; line-height: 1.6; background: #080a0f; padding: 10px; border-radius: 8px; border: 1px solid #1e2430; }
+                    
+                    .viab-map-view { background: #11141d; border: 1px solid #1e2430; border-radius: 16px; height: 300px; overflow: hidden; }
 
+                    /* Modals */
+                    .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.85); backdrop-filter: blur(8px); z-index: 9999; display: flex; align-items: center; justify-content: center; }
+                    .modal-content { background: #11141d; border: 1px solid #1e2430; border-radius: 20px; width: 90%; max-width: 450px; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+                    .modal-header { padding: 1.5rem; border-bottom: 1px solid #1e2430; display: flex; justify-content: space-between; }
+                    .modal-header h2 { margin: 0; color: #f8fafc; font-size: 1.25rem; }
+                    .modal-body { padding: 1.5rem; }
+                    .modal-footer { padding: 1.25rem 1.5rem; background: #0c0f16; display: flex; justify-content: flex-end; gap: 1rem; }
+                    .form-group label { display: block; font-size: 0.8rem; color: #94a3b8; margin-bottom: 8px; }
+                    .form-group select { width: 100%; background: #080a0f; border: 1px solid #1e2430; color: #fff; padding: 12px; border-radius: 10px; outline: none; }
+                    .btn-cancel { background: transparent; border: 1px solid #334155; color: #94a3b8; padding: 10px 20px; border-radius: 8px; cursor: pointer; }
+                    .btn-submit { background: #3b82f6; border: none; color: #fff; padding: 10px 20px; border-radius: 8px; font-weight: 700; cursor: pointer; }
+
+                    .timeline-view { display: flex; flex-direction: column; height: 100%; }
+                    .timeline-list { flex: 1; overflow-y: auto; padding-right: 10px; }
+                    .timeline-item { display: flex; gap: 16px; margin-bottom: 1.5rem; }
+                    .t-icon { width: 36px; height: 36px; border-radius: 10px; display: flex; align-items: center; justify-content: center; flex-shrink: 0; background: #1e293b; color: #cbd5e1; }
+                    .t-icon.call { background: #f59e0b20; color: #f59e0b; }
+                    .t-icon.wa { background: #25d36620; color: #25d366; }
+                    
                     .appt-card-v2 { background: #11141d; border: 1px solid #1e2430; padding: 1.25rem; border-radius: 16px; display: flex; gap: 1rem; align-items: center; }
                     .a-status-icon { color: #3b82f6; background: #3b82f610; padding: 12px; border-radius: 12px; }
                     .a-main { flex: 1; }
                     .a-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
                     .a-status { font-size: 0.7rem; font-weight: 900; background: #3b82f620; color: #3b82f6; padding: 2px 8px; border-radius: 4px; }
-                    .a-details { display: flex; gap: 12px; font-size: 0.75rem; color: #64748b; }
                     .a-details span { display: flex; align-items: center; gap: 4px; }
                     
                     .empty-state { text-align: center; padding: 60px 0; color: #475569; }
