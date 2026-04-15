@@ -199,3 +199,40 @@
         grid-template-columns: 1fr;
     }
 }
+
+@media (max-width: 768px) {
+    .dashboard-container {
+        padding: var(--space-md);
+    }
+
+    .dashboard-header {
+        flex-direction: column;
+        gap: 1rem;
+    }
+
+    .dashboard-header h1 {
+        font-size: 1.4rem;
+    }
+
+    .stats-grid {
+        grid-template-columns: 1fr;
+        gap: 0.75rem;
+    }
+
+    .stat-card {
+        padding: 1rem;
+    }
+
+    .chart-content {
+        height: 200px;
+    }
+
+    .bar-container {
+        gap: 6px;
+    }
+
+    .bar-labels span:nth-child(even) {
+        display: none;
+        /* Esconde labels pares para economizar espaço no mobile */
+    }
+}

@@ -872,3 +872,49 @@
     font-size: 0.75rem;
     color: var(--text-secondary);
 }
+
+/* Mobile Responsiveness for Internal Chat */
+@media (max-width: 768px) {
+    .ic-sidebar {
+        display: none;
+        /* Em um cenário real, teríamos um toggle, mas para responsividade básica vamos priorizar o chat */
+    }
+
+    .ic-members-sidebar {
+        display: none !important;
+    }
+
+    .ic-main-header {
+        padding: 0 var(--space-md);
+        height: 60px;
+        min-height: 60px;
+    }
+
+    .ic-main-header .topic,
+    .ic-main-header .divider,
+    .ic-main-header .search-box {
+        display: none;
+    }
+
+    .ic-message {
+        padding: var(--space-sm) var(--space-md);
+    }
+
+    .ic-msg-avatar {
+        width: 32px;
+        height: 32px;
+        margin-right: var(--space-sm);
+    }
+
+    .ic-welcome h2 {
+        font-size: 1.5rem;
+    }
+
+    .ic-input-container {
+        padding: 0 var(--space-md) var(--space-md) var(--space-md);
+    }
+
+    .ic-input-wrapper {
+        border-radius: var(--radius-md);
+    }
+}

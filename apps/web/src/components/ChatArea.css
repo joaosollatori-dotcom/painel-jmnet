@@ -933,3 +933,52 @@
 .ca-modal-body::-webkit-scrollbar-thumb:hover {
     background-color: #666;
 }
+
+@media (max-width: 768px) {
+    .chat-header {
+        padding: 0 var(--space-md);
+    }
+
+    .chat-header .user-status {
+        display: none;
+    }
+
+    .chat-header .action-btn span {
+        display: none;
+    }
+
+    .chat-header .end-chat-btn {
+        padding: 8px !important;
+    }
+
+    .chat-main-content {
+        position: relative;
+    }
+
+    .chat-info-sidebar {
+        position: absolute;
+        top: 0;
+        right: 0;
+        bottom: 0;
+        z-index: 300;
+        width: 85%;
+        box-shadow: -10px 0 30px rgba(0, 0, 0, 0.5);
+    }
+
+    .message-wrapper {
+        max-width: 90%;
+    }
+
+    .chat-input-area {
+        padding: var(--space-sm) var(--space-md);
+        gap: var(--space-sm);
+    }
+
+    .input-actions {
+        gap: 4px;
+    }
+
+    .message-input-container textarea {
+        font-size: 0.9rem;
+    }
+}

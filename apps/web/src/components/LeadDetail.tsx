@@ -589,7 +589,18 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     .scheduling-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
                     .scheduling-actions { display: flex; justify-content: flex-end; }
 
-
+                    @media (max-width: 768px) {
+                        .lead-detail-titan { overflow-y: auto; height: auto; min-height: 100vh; }
+                        .detail-layout { flex-direction: column; }
+                        .sidebar-titan { width: 100%; border-left: none; border-top: 2px solid #334155; }
+                        .tab-nav-titan { overflow-x: auto; white-space: nowrap; padding: 0.5rem; }
+                        .tab-btn { flex-shrink: 0; }
+                        .fixed-header { padding: 1rem; }
+                        .header-main { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
+                        .header-actions { width: 100%; justify-content: space-between; }
+                        .timeline-table { display: block; overflow-x: auto; }
+                        .scheduling-grid { grid-template-columns: 1fr; }
+                    }
                 `}</style>
             </motion.div>
         </AnimatePresence>

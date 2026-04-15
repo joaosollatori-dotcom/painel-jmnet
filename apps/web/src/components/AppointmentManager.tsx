@@ -546,6 +546,22 @@ const AppointmentManager: React.FC = () => {
                 .month-appt-card { background: #1a1e2b; border-top: 2px solid #3b82f6; border-radius: 4px; padding: 4px 8px; font-size: 0.65rem; color: #fff; cursor: grab; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
                 .month-appt-card:active { cursor: grabbing; z-index: 1000; }
                 .etc-label { font-size: 0.6rem; color: #64748b; margin-top: 2px; text-align: center; }
+
+                @media (max-width: 768px) {
+                    .appt-dashboard { padding: 1rem; overflow-y: auto; height: auto; min-height: 100vh; }
+                    .appt-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
+                    .attention-panel { grid-template-columns: 1fr 1fr; }
+                    .calendar-view-pane { height: 800px; border-radius: 12px; }
+                    .lane-header { overflow-x: auto; -webkit-overflow-scrolling: touch; }
+                    .lane-col { min-width: 120px; }
+                    .lane-grid { overflow-x: auto; }
+                    .grid-content { min-width: 840px; } /* Mantém a grade legível com scroll horizontal no celular */
+                    .month-grid { grid-template-columns: repeat(7, 1fr); grid-auto-rows: 80px; }
+                    .appt-table { overflow-x: auto; padding: 0.5rem; }
+                    .table-header, .table-row { grid-template-columns: 150px 100px 100px 80px 40px; gap: 8px; }
+                    .stat-info h3 { font-size: 0.75rem; }
+                    .stat-info p { font-size: 0.65rem; }
+                }
             `}</style>
         </div >
     );

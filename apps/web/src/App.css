@@ -18,10 +18,20 @@
 }
 
 @media (max-width: 768px) {
+  .app-container {
+    overflow-x: hidden;
+  }
+
   .main-layout {
-    flex-direction: column;
+    width: 100vw;
+    padding-left: 0 !important;
+  }
+
+  .sidebar-placeholder {
+    display: none;
   }
 }
+
 .welcome-screen {
   flex: 1;
   display: flex;
@@ -40,4 +50,53 @@
 .welcome-content p {
   color: var(--text-secondary);
   font-size: 1.1rem;
+}
+
+/* Mobile Controls */
+.mobile-menu-trigger {
+  display: none;
+  position: fixed;
+  top: 1rem;
+  right: 1rem;
+  z-index: 1001;
+  width: 44px;
+  height: 44px;
+  background: var(--bg-surface-light);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+}
+
+.hamburger {
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  position: relative;
+}
+
+.hamburger::before,
+.hamburger::after {
+  content: '';
+  position: absolute;
+  width: 20px;
+  height: 2px;
+  background: var(--text-primary);
+  left: 0;
+}
+
+.hamburger::before {
+  top: -6px;
+}
+
+.hamburger::after {
+  top: 6px;
+}
+
+@media (max-width: 768px) {
+  .mobile-menu-trigger {
+    display: flex;
+  }
 }

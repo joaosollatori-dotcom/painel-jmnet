@@ -28,7 +28,24 @@
 
 .sidebar.expanded {
     width: 280px;
-    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.2);
+    box-shadow: 20px 0 50px rgba(0, 0, 0, 0.4);
+}
+
+@media (max-width: 768px) {
+    .sidebar {
+        width: 280px;
+        transform: translateX(-100%);
+        box-shadow: none;
+    }
+
+    .sidebar.expanded {
+        transform: translateX(0);
+        box-shadow: 50px 0 100px rgba(0, 0, 0, 0.8);
+    }
+
+    .retracted {
+        transform: translateX(-100%);
+    }
 }
 
 .sidebar-header {

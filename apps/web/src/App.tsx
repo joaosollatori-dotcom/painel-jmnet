@@ -221,7 +221,10 @@ const App: React.FC = () => {
         theme={theme}
         onToggleTheme={toggleTheme}
       />
-      <main className="main-layout" onClick={retractSidebar}>
+      <button className="mobile-menu-trigger" onClick={toggleSidebar}>
+        <div className="hamburger" />
+      </button>
+      <main className="main-layout" onClick={() => { if (window.innerWidth <= 768 && !isRetracted) setIsRetracted(true); }}>
         <Routes>
           <Route path="/" element={<Navigate to="/atendimento" replace />} />
 
