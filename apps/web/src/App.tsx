@@ -58,21 +58,25 @@ const AgentsPage: React.FC = () => {
 const Atendimento: React.FC = () => {
   const { chatId } = useParams();
   const navigate = useNavigate();
+  const isMobile = window.innerWidth <= 768;
+
+  const showList = !isMobile || !chatId;
+  const showChat = chatId && (!isMobile || !!chatId);
 
   return (
-    <>
-      <ChatList selectedChatId={chatId || null} onSelectChat={(id) => navigate(`/atendimento/${id}`)} />
-      {chatId ? (
+    <div className="atendimento-layout">
+      {showList && <ChatList selectedChatId={chatId || null} onSelectChat={(id) => navigate(`/atendimento/${id}`)} />}
+      {showChat ? (
         <ChatArea chatId={chatId} />
-      ) : (
+      ) : (!chatId && !isMobile) ? (
         <div className="welcome-screen">
           <div className="welcome-content">
             <h2>Bem-vindo ao TITÃ | ISP</h2>
             <p>Gestão completa de atendimento e infraestrutura.</p>
           </div>
         </div>
-      )}
-    </>
+      ) : null}
+    </div>
   );
 };
 
