@@ -11,7 +11,7 @@ import {
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
-import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations } from '../services/chatService';
+import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations, uploadChatFile } from '../services/chatService';
 import { createLead } from '../services/leadService';
 import type { Message, Conversation } from '../services/chatService';
 import CameraCaptureModal from './CameraCaptureModal';
@@ -180,16 +180,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
-        if (file) {
-            // In a real app, upload to Supabase Storage first
-            // For now, we'll just send a message with the filename
-            const icon = file.type.startsWith('image/') ? '📷' : file.type.startsWith('video/') ? '🎥' : '📎';
-            await sendMessage(chatId, {
-                sender: 'Você',
-                text: `${icon} ${file.name}`,
-                is_user: true,
-                is_bot: false
-            });
+        if (file && chatId) {
+            try {
+                const { url, name } = await uploadChatFile(file);
+                const icon = file.type.startsWith('image/') ? '📷' : file.type.startsWith('video/') ? '🎥' : '📎';
+                await sendMessage(chatId, {
+                    sender: 'Você',
+                    text: `${icon} ${file.name}`,
+                    is_user: true,
+                    is_bot: false,
+                    file_url: url,
+                    file_name: name
+                });
+            } catch (err) {
+                console.error('Error uploading:', err);
+            }
         }
         e.target.value = '';
         setIsAttachmentMenuOpen(false);
@@ -425,7 +430,23 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                                     <div className="message-content">
                                         <div className="message-bubble">
-                                            <p>{msg.text}</p>
+                                            {msg.file_url ? (
+                                                <div className="msg-file-container">
+                                                    {msg.file_url.match(/\.(jpeg|jpg|gif|png|webp)$/i) ? (
+                                                        <img src={msg.file_url} alt={msg.file_name} className="msg-img-preview" onClick={() => window.open(msg.file_url, '_blank')} />
+                                                    ) : (
+                                                        <a href={msg.file_url} target="_blank" rel="noopener noreferrer" className="msg-file-link">
+                                                            <div className="file-icon-box"><FileText size={24} /></div>
+                                                            <div className="file-info">
+                                                                <span className="file-name">{msg.file_name || 'Documento'}</span>
+                                                                <span className="file-size">Anexo</span>
+                                                            </div>
+                                                        </a>
+                                                    )}
+                                                </div>
+                                            ) : (
+                                                <p>{msg.text}</p>
+                                            )}
                                             {!isSystem && (
                                                 <div className="message-footer">
                                                     <span className="message-time">{formatTime(msg.created_at)}</span>

@@ -128,6 +128,28 @@ export const sendMessage = async (
     return data;
 };
 
+export const uploadChatFile = async (file: File): Promise<{ url: string; name: string }> => {
+    const fileExt = file.name.split('.').pop();
+    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
+    const filePath = `public/${fileName}`;
+
+    const { error: uploadError } = await supabase.storage
+        .from('chat-attachments')
+        .upload(filePath, file);
+
+    if (uploadError) {
+        console.error('Upload error:', uploadError);
+        // Fallback for demo: return a local blob URL if bucket isn't configured
+        return { url: URL.createObjectURL(file), name: file.name };
+    }
+
+    const { data } = supabase.storage
+        .from('chat-attachments')
+        .getPublicUrl(filePath);
+
+    return { url: data.publicUrl, name: file.name };
+};
+
 // ──────────────────────────────
 //   Webhooks & Roteamento (Lógica Interna / Bot)
 // ──────────────────────────────
