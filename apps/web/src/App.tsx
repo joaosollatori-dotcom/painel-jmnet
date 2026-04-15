@@ -248,6 +248,7 @@ const App: React.FC = () => {
           <Route path="/relatorios" element={<LeadReports leads={[]} />} />
           <Route path="/financeiro" element={<FinanceManager />} />
           <Route path="/os" element={<OSManager />} />
+          <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ajustes" element={<SettingsPageWrapper theme={theme} onToggleTheme={toggleTheme} />} />
