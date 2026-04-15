@@ -156,12 +156,19 @@
 
 .message-wrapper.received .message-bubble {
     background-color: var(--bg-surface-light);
+    border: 1px solid var(--border);
     border-bottom-left-radius: 2px;
+}
+
+[data-theme='light'] .message-wrapper.received .message-bubble {
+    background-color: #f1f5f9;
+    border-color: #e2e8f0;
 }
 
 .message-wrapper.sent .message-bubble {
     background-color: var(--accent);
     color: white;
+    box-shadow: 0 4px 12px var(--accent-soft);
     border-bottom-right-radius: 2px;
 }
 
