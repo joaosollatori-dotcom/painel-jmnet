@@ -416,45 +416,52 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     <div className="messages-container">
                         <div className="chat-day-separator">Hoje</div>
 
-                        {messages.map((msg) => (
-                            <div key={msg.id} className={`message-wrapper ${msg.is_user || msg.is_bot ? 'sent' : 'received'} ${msg.is_bot ? 'bot' : ''}`}>
-                                {!msg.is_user && !msg.is_bot && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
-                                {msg.is_bot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
+                        {messages.map((msg) => {
+                            const isSystem = msg.sender === 'Sistema' || msg.sender === 'System';
+                            return (
+                                <div key={msg.id} className={`message-wrapper ${isSystem ? 'system' : (msg.is_user || msg.is_bot ? 'sent' : 'received')} ${msg.is_bot ? 'bot' : ''}`}>
+                                    {!msg.is_user && !msg.is_bot && !isSystem && <div className="msg-avatar">{msg.sender.charAt(0)}</div>}
+                                    {msg.is_bot && <div className="msg-avatar bot"><Lightning size={14} weight="fill" /></div>}
 
-                                <div className="message-content">
-                                    <div className="message-bubble">
-                                        <p>{msg.text}</p>
-                                        <div className="message-footer">
-                                            <span className="message-time">{formatTime(msg.created_at)}</span>
-                                            {(msg.is_user || msg.is_bot) && (
-                                                (msg as any).pending ?
-                                                    <Clock size={14} className="status-icon" weight="regular" style={{ opacity: 0.6 }} /> :
-                                                    <Checks size={14} className="status-icon" weight="bold" />
+                                    <div className="message-content">
+                                        <div className="message-bubble">
+                                            <p>{msg.text}</p>
+                                            {!isSystem && (
+                                                <div className="message-footer">
+                                                    <span className="message-time">{formatTime(msg.created_at)}</span>
+                                                    {(msg.is_user || msg.is_bot) && (
+                                                        (msg as any).pending ?
+                                                            <Clock size={14} className="status-icon" weight="regular" style={{ opacity: 0.6 }} /> :
+                                                            <Checks size={14} className="status-icon" weight="bold" />
+                                                    )}
+                                                </div>
+                                            )}
+
+                                            {!isSystem && (
+                                                <div className="message-reactions">
+                                                    {(msg.reactions || []).map((r, i) => (
+                                                        <span key={i} className="reaction-badge">{r}</span>
+                                                    ))}
+                                                    <button className="add-reaction-btn" onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}>
+                                                        <Smiley size={14} weight="bold" />
+                                                    </button>
+                                                    <button className="add-reaction-btn" title="Registrar no BI" onClick={() => handleRegisterBI(msg.id)}>
+                                                        <ChartLineUp size={14} weight="bold" />
+                                                    </button>
+                                                </div>
+                                            )}
+
+                                            {activeMessageId === msg.id && (
+                                                <div className="emoji-picker-container">
+                                                    <EmojiPicker onEmojiClick={handleReaction} emojiStyle={EmojiStyle.GOOGLE} theme={Theme.DARK} lazyLoadEmojis height={350} width={300} skinTonesDisabled />
+                                                </div>
                                             )}
                                         </div>
-
-                                        <div className="message-reactions">
-                                            {(msg.reactions || []).map((r, i) => (
-                                                <span key={i} className="reaction-badge">{r}</span>
-                                            ))}
-                                            <button className="add-reaction-btn" onClick={() => setActiveMessageId(activeMessageId === msg.id ? null : msg.id)}>
-                                                <Smiley size={14} weight="bold" />
-                                            </button>
-                                            <button className="add-reaction-btn" title="Registrar no BI" onClick={() => handleRegisterBI(msg.id)}>
-                                                <ChartLineUp size={14} weight="bold" />
-                                            </button>
-                                        </div>
-
-                                        {activeMessageId === msg.id && (
-                                            <div className="emoji-picker-container">
-                                                <EmojiPicker onEmojiClick={handleReaction} emojiStyle={EmojiStyle.GOOGLE} theme={Theme.DARK} lazyLoadEmojis height={350} width={300} skinTonesDisabled />
-                                            </div>
-                                        )}
+                                        {msg.is_bot && <span className="bot-label">{conversation?.ai_active ? '🤖 Titã AI — Ativo' : 'Titã AI Orchestrator'}</span>}
                                     </div>
-                                    {msg.is_bot && <span className="bot-label">{conversation?.ai_active ? '🤖 Titã AI — Ativo' : 'Titã AI Orchestrator'}</span>}
                                 </div>
-                            </div>
-                        ))}
+                            );
+                        })}
                         <div ref={messagesEndRef} />
                     </div>
 
