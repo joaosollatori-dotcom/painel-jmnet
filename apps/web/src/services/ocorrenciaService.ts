@@ -7,9 +7,9 @@ export interface Ocorrencia {
     assunto: string;
     prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
     status: 'ABERTA' | 'EM_ANALISE' | 'AGUARDANDO_CLIENTE' | 'RESOLVIDA' | 'CANCELADA';
-    dataAbertura: string;
-    ultimaAtualizacao: string;
-    vendedorId?: string;
+    data_abertura: string;
+    ultima_atualizacao: string;
+    vendedor_id?: string;
     descricao?: string;
     comentarios?: any[];
     anexos?: any[];
@@ -17,9 +17,9 @@ export interface Ocorrencia {
 
 export const getOcorrencias = async (): Promise<Ocorrencia[]> => {
     const { data, error } = await supabase
-        .from('ocorrencias')
+        .from('customer_occurrences')
         .select('*')
-        .order('ultimaAtualizacao', { ascending: false });
+        .order('ultima_atualizacao', { ascending: false });
 
     if (error) {
         console.warn('Tabela ocorrencias não encontrada. Verifique o banco.');
@@ -30,11 +30,11 @@ export const getOcorrencias = async (): Promise<Ocorrencia[]> => {
 
 export const createOcorrencia = async (oco: Partial<Ocorrencia>): Promise<Ocorrencia> => {
     const { data, error } = await supabase
-        .from('ocorrencias')
+        .from('customer_occurrences')
         .insert([{
             ...oco,
-            dataAbertura: new Date().toISOString(),
-            ultimaAtualizacao: new Date().toISOString()
+            data_abertura: new Date().toISOString(),
+            ultima_atualizacao: new Date().toISOString()
         }])
         .select()
         .single();
@@ -45,8 +45,8 @@ export const createOcorrencia = async (oco: Partial<Ocorrencia>): Promise<Ocorre
 
 export const updateOcorrencia = async (id: string, updates: Partial<Ocorrencia>): Promise<void> => {
     const { error } = await supabase
-        .from('ocorrencias')
-        .update({ ...updates, ultimaAtualizacao: new Date().toISOString() })
+        .from('customer_occurrences')
+        .update({ ...updates, ultima_atualizacao: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;

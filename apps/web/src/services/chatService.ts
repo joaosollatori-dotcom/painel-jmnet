@@ -134,7 +134,7 @@ export const uploadChatFile = async (file: File): Promise<{ url: string; name: s
     const filePath = `public/${fileName}`;
 
     const { error: uploadError } = await supabase.storage
-        .from('chat-attachments')
+        .from('chat_attachments')
         .upload(filePath, file);
 
     if (uploadError) {
@@ -144,7 +144,7 @@ export const uploadChatFile = async (file: File): Promise<{ url: string; name: s
     }
 
     const { data } = supabase.storage
-        .from('chat-attachments')
+        .from('chat_attachments')
         .getPublicUrl(filePath);
 
     return { url: data.publicUrl, name: file.name };

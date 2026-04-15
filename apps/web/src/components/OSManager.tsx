@@ -62,6 +62,7 @@ const OSManager: React.FC = () => {
     const [pinError, setPinError] = useState(false);
     const userRole = 'atendente';
     const MASTER_PIN = 'X7R2A9';
+    const isCritical = selectedOS?.prioridade === 'URGENTE';
 
     const handleFinishOS = async () => {
         if (!selectedOS) return;
@@ -85,10 +86,13 @@ const OSManager: React.FC = () => {
 
     const handleResolveLinkedOco = async () => {
         if (!selectedOS?.ocorrencia_id) return;
-        if (pin !== MASTER_PIN) {
+
+        // Only validate PIN if the OS is marked as URGENTE (Mapping to "Crítica")
+        if (isCritical && pin !== MASTER_PIN) {
             setPinError(true);
             return;
         }
+
         try {
             await updateOcorrencia(selectedOS.ocorrencia_id, {
                 status: 'RESOLVIDA',
@@ -330,11 +334,11 @@ const OSManager: React.FC = () => {
                                                                 style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#fff', height: '100px', resize: 'none', outline: 'none' }}
                                                             />
                                                             <button
-                                                                onClick={() => setWizardStep('VERIFICATION')}
+                                                                onClick={() => isCritical ? setWizardStep('VERIFICATION') : handleResolveLinkedOco()}
                                                                 disabled={!conclusionSummary}
-                                                                style={{ padding: '12px', borderRadius: '10px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', opacity: conclusionSummary ? 1 : 0.5 }}
+                                                                style={{ padding: '12px', borderRadius: '10px', background: isCritical ? 'var(--accent)' : '#10b981', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', opacity: conclusionSummary ? 1 : 0.5 }}
                                                             >
-                                                                Próximo: Segurança
+                                                                {isCritical ? 'Próximo: Segurança' : 'Finalizar Atendimento'}
                                                             </button>
                                                         </>
                                                     )}

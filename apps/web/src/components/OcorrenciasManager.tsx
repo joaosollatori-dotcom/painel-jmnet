@@ -19,9 +19,9 @@ interface Ocorrencia {
     assunto: string;
     prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
     status: 'ABERTA' | 'EM_ANALISE' | 'AGUARDANDO_CLIENTE' | 'RESOLVIDA' | 'CANCELADA';
-    dataAbertura: string;
-    ultimaAtualizacao: string;
-    vendedorId?: string;
+    data_abertura: string;
+    ultima_atualizacao: string;
+    vendedor_id?: string;
 }
 
 const OcorrenciasManager: React.FC = () => {
@@ -64,6 +64,10 @@ const OcorrenciasManager: React.FC = () => {
 
     const [localStatus, setLocalStatus] = useState<Ocorrencia['status']>('ABERTA');
     const [saveStatus, setSaveStatus] = useState<'IDLE' | 'SAVING' | 'ERROR_PENDING_OS'>('IDLE');
+    const [showPinInput, setShowPinInput] = useState(false);
+    const [pin, setPin] = useState('');
+    const [pinError, setPinError] = useState(false);
+    const MASTER_PIN = 'X7R2A9';
 
     const handleSave = async () => {
         if (!selectedOco) return;
@@ -71,6 +75,7 @@ const OcorrenciasManager: React.FC = () => {
 
         try {
             if (localStatus === 'RESOLVIDA') {
+                // 1. Check for pending Service Orders
                 const linkedOS = await getOSByOcorrencia(selectedOco.id);
                 const hasPendingOS = linkedOS.some(os => os.status !== 'FINALIZADA');
 
@@ -78,11 +83,25 @@ const OcorrenciasManager: React.FC = () => {
                     setSaveStatus('ERROR_PENDING_OS');
                     return;
                 }
+
+                // 2. Check for Critical Priority requiring PIN
+                if (selectedOco.prioridade === 'CRITICA' && !showPinInput) {
+                    setShowPinInput(true);
+                    setSaveStatus('IDLE');
+                    return;
+                }
+            }
+
+            if (showPinInput && pin !== MASTER_PIN) {
+                setPinError(true);
+                setSaveStatus('IDLE');
+                return;
             }
 
             await updateOcorrencia(selectedOco.id, { status: localStatus });
             await fetchOco();
             setSaveStatus('IDLE');
+            setShowPinInput(false);
             navigate('/ocorrencias');
         } catch (err) {
             console.error('Erro ao salvar:', err);
@@ -199,7 +218,7 @@ const OcorrenciasManager: React.FC = () => {
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: '#666' }}>
                                         <Clock size={14} />
-                                        {new Date(oco.ultimaAtualizacao).toLocaleDateString()}
+                                        {oco.ultima_atualizacao ? new Date(oco.ultima_atualizacao).toLocaleDateString() : 'N/A'}
                                     </div>
                                 </td>
                                 <td style={{ padding: '16px' }}>
@@ -312,6 +331,26 @@ const OcorrenciasManager: React.FC = () => {
                                                     {saveStatus === 'ERROR_PENDING_OS' && (
                                                         <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
                                                             <Warning size={16} /> Não é possível resolver: Existem ordens de serviço pendentes vinculadas.
+                                                        </div>
+                                                    )}
+                                                    {showPinInput && (
+                                                        <div style={{ marginTop: '1.5rem', padding: '1.5rem', background: 'rgba(239, 68, 68, 0.05)', border: '1px solid rgba(239, 68, 68, 0.2)', borderRadius: '16px', textAlign: 'center' }}>
+                                                            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#ef4444', fontWeight: 700, marginBottom: '8px' }}>
+                                                                <Gear size={20} /> Autenticação Crítica Requerida
+                                                            </div>
+                                                            <p style={{ fontSize: '0.8rem', color: '#666', marginBottom: '1rem' }}>Esta ocorrência é crítica. Insira o PIN para autorizar a resolução.</p>
+                                                            <input
+                                                                type="text"
+                                                                maxLength={6}
+                                                                value={pin}
+                                                                onChange={(e) => {
+                                                                    setPin(e.target.value.toUpperCase());
+                                                                    setPinError(false);
+                                                                }}
+                                                                style={{ width: '100%', letterSpacing: '8px', textAlign: 'center', fontSize: '1.2rem', padding: '12px', borderRadius: '8px', background: '#000', border: pinError ? '1px solid #ef4444' : '1px solid #333', color: '#fff' }}
+                                                                placeholder="******"
+                                                            />
+                                                            {pinError && <div style={{ color: '#ef4444', fontSize: '0.75rem', marginTop: '8px' }}>PIN Incorreto</div>}
                                                         </div>
                                                     )}
                                                 </div>
