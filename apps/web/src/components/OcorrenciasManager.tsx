@@ -191,12 +191,12 @@ const OcorrenciasManager: React.FC = () => {
                         ) : filteredOco.map(oco => (
                             <tr key={oco.id} style={{ borderBottom: '1px solid var(--border)', transition: 'background 0.2s' }} className="table-row-hover">
                                 <td style={{ padding: '16px' }}>
-                                    <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>#{oco.protocolo}</span>
+                                    <span style={{ fontWeight: 600, color: 'var(--primary-color)' }}>#{oco.protocol}</span>
                                 </td>
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                                        <div style={{ fontWeight: 600 }}>{oco.cliente}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{oco.assunto}</div>
+                                        <div style={{ fontWeight: 600 }}>{oco.customer_name}</div>
+                                        <div style={{ fontSize: '0.8rem', color: '#aaa' }}>{oco.subject}</div>
                                     </div>
                                 </td>
                                 <td style={{ padding: '16px' }}>
@@ -255,8 +255,8 @@ const OcorrenciasManager: React.FC = () => {
                                         <Warning size={28} weight="duotone" />
                                     </div>
                                     <div>
-                                        <h2 style={{ fontSize: '1.4rem', margin: 0 }}>#{selectedOco.protocolo} — {selectedOco.cliente}</h2>
-                                        <p style={{ fontSize: '0.85rem', color: '#666', margin: '4px 0 0 0' }}>{selectedOco.assunto}</p>
+                                        <h2 style={{ fontSize: '1.4rem', margin: 0 }}>#{selectedOco.protocol} — {selectedOco.customer_name}</h2>
+                                        <p style={{ fontSize: '0.85rem', color: '#666', margin: '4px 0 0 0' }}>{selectedOco.subject}</p>
                                     </div>
                                 </div>
                                 <div style={{ display: 'flex', gap: '8px' }}>

@@ -809,27 +809,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                                         // 1. Create the mandatory Occurrence first
                                         const newOco = await createOcorrencia({
-                                            protocolo: `OC-${Date.now().toString().slice(-8)}`,
-                                            cliente: conversation?.contact_name || 'Desconhecido',
-                                            assunto: 'OS Associada: Instalação/Manutenção',
+                                            protocol: `OC-${Date.now().toString().slice(-8)}`,
+                                            customer_name: conversation?.contact_name || 'Desconhecido',
+                                            subject: 'OS Associada: Instalação/Manutenção',
                                             status: 'ABERTA',
-                                            prioridade: 'MEDIA'
+                                            priority: 'MEDIA'
                                         });
 
                                         // 2. Create the OS linked to the Occurrence
                                         const newOS = await createServiceOrder({
-                                            tipo: 'Instalação',
-                                            prioridade: 'NORMAL',
-                                            cliente_nome: conversation?.contact_name || 'Desconhecido',
-                                            cliente_endereco: 'Consultar histórico',
-                                            descricao: 'Gerada via Chat',
+                                            order_type: 'Instalação',
+                                            priority: 'NORMAL',
+                                            customer_name: conversation?.contact_name || 'Desconhecido',
+                                            customer_address: 'Consultar histórico',
+                                            description: 'Gerada via Chat',
                                             conversation_id: chatId,
-                                            ocorrencia_id: newOco.id
+                                            occurrence_id: newOco.id
                                         });
 
                                         await sendMessage(chatId, {
                                             sender: 'Sistema',
-                                            text: `🛠️ Ordem de Serviço ${newOS.id.slice(0, 8)} e Ocorrência ${newOco.protocolo} geradas com sucesso.\nStatus: Aberta.`,
+                                            text: `🛠️ Ordem de Serviço ${newOS.id.slice(0, 8)} e Ocorrência ${newOco.protocol} geradas com sucesso.\nStatus: Aberta.`,
                                             is_user: false,
                                             is_bot: false
                                         });

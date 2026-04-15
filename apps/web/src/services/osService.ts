@@ -2,16 +2,16 @@ import { supabase } from '../lib/supabase';
 
 export interface ServiceOrder {
     id: string;
-    tipo: string;
+    order_type: string;
     status: 'ABERTA' | 'EM_EXECUCAO' | 'FINALIZADA' | 'CANCELADA';
-    descricao: string;
-    prioridade: 'NORMAL' | 'ALTA' | 'URGENTE';
-    data_agendamento?: string;
-    cliente_nome: string;
-    cliente_endereco: string;
+    description: string;
+    priority: 'NORMAL' | 'ALTA' | 'URGENTE';
+    scheduled_date?: string;
+    customer_name: string;
+    customer_address: string;
     conversation_id?: string;
-    ocorrencia_id?: string;
-    data_conclusao?: string;
+    occurrence_id?: string;
+    completion_date?: string;
     created_at: string;
 }
 
@@ -34,7 +34,7 @@ export const createServiceOrder = async (os: Partial<ServiceOrder>): Promise<Ser
         .insert([{
             ...os,
             status: os.status || 'ABERTA',
-            prioridade: os.prioridade || 'NORMAL',
+            priority: os.priority || 'NORMAL',
             created_at: new Date().toISOString()
         }])
         .select()
@@ -53,11 +53,11 @@ export const updateServiceOrder = async (id: string, updates: Partial<ServiceOrd
     if (error) throw error;
 };
 
-export const getOSByOcorrencia = async (ocorrenciaId: string): Promise<ServiceOrder[]> => {
+export const getOSByOcorrencia = async (occurrenceId: string): Promise<ServiceOrder[]> => {
     const { data, error } = await supabase
         .from('service_orders')
         .select('*')
-        .eq('ocorrencia_id', ocorrenciaId);
+        .eq('occurrence_id', occurrenceId);
 
     if (error) return [];
     return data || [];

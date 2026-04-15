@@ -62,18 +62,18 @@ const OSManager: React.FC = () => {
     const [pinError, setPinError] = useState(false);
     const userRole = 'atendente';
     const MASTER_PIN = 'X7R2A9';
-    const isCritical = selectedOS?.prioridade === 'URGENTE';
+    const isCritical = selectedOS?.priority === 'URGENTE';
 
     const handleFinishOS = async () => {
         if (!selectedOS) return;
         try {
             await updateServiceOrder(selectedOS.id, {
                 status: 'FINALIZADA',
-                data_conclusao: new Date().toISOString()
+                completion_date: new Date().toISOString()
             });
-            setOss(prev => prev.map(o => o.id === selectedOS.id ? { ...o, status: 'FINALIZADA', data_conclusao: new Date().toISOString() } : o));
+            setOss(prev => prev.map(o => o.id === selectedOS.id ? { ...o, status: 'FINALIZADA', completion_date: new Date().toISOString() } : o));
 
-            if (selectedOS.ocorrencia_id) {
+            if (selectedOS.occurrence_id) {
                 setShowOcoReminder(true);
                 setWizardStep('PROMPT');
             } else {
@@ -85,7 +85,7 @@ const OSManager: React.FC = () => {
     };
 
     const handleResolveLinkedOco = async () => {
-        if (!selectedOS?.ocorrencia_id) return;
+        if (!selectedOS?.occurrence_id) return;
 
         // Only validate PIN if the OS is marked as URGENTE (Mapping to "Crítica")
         if (isCritical && pin !== MASTER_PIN) {
@@ -94,9 +94,9 @@ const OSManager: React.FC = () => {
         }
 
         try {
-            await updateOcorrencia(selectedOS.ocorrencia_id, {
+            await updateOcorrencia(selectedOS.occurrence_id, {
                 status: 'RESOLVIDA',
-                descricao: selectedOS.descricao + (conclusionSummary ? `\n\nRESUMO DA CONCLUSÃO: ${conclusionSummary}` : '')
+                description: selectedOS.description + (conclusionSummary ? `\n\nRESUMO DA CONCLUSÃO: ${conclusionSummary}` : '')
             });
             navigate('/os');
         } catch (err) {
@@ -149,29 +149,12 @@ const OSManager: React.FC = () => {
                     </div>
                 ) : filteredOSS.map(os => (
                     <div key={os.id} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start' }}>
-                            <span style={{ fontSize: '0.75rem', padding: '4px 10px', borderRadius: '999px', background: `${getStatusColor(os.status)}20`, color: getStatusColor(os.status), fontWeight: 700 }}>{os.status}</span>
-                            <span style={{ color: os.prioridade === 'URGENTE' ? '#ef4444' : 'var(--text-secondary)', fontSize: '0.75rem', fontWeight: 700 }}>{os.prioridade}</span>
-                        </div>
-                        <h3 style={{ fontSize: '1.1rem' }}>{os.tipo}</h3>
-                        <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem' }}>{os.descricao}</p>
-
-                        <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-md)' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
-                                <User size={16} />
-                                <strong>{os.cliente_nome}</strong>
-                            </div>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
-                                <MapPin size={16} />
-                                <span>{os.cliente_endereco}</span>
-                            </div>
-                        </div>
-
-                        <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
-                                <Calendar size={16} />
-                                <span>{os.data_agendamento ? new Date(os.data_agendamento).toLocaleDateString() : 'A definir'}</span>
-                            </div>
+                        <div style={{ fontSize: '0.8rem', opacity: 0.6, marginBottom: '6px' }}>#{os.id.slice(0, 8)} • {os.order_type}</div>
+                        <div style={{ fontWeight: 600, fontSize: '0.95rem', marginBottom: '8px' }}>{os.customer_name}</div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                            <span style={{ fontSize: '0.75rem', padding: '4px 8px', borderRadius: '6px', background: os.priority === 'URGENTE' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(255, 255, 255, 0.05)', color: os.priority === 'URGENTE' ? '#ef4444' : '#888' }}>
+                                {os.priority}
+                            </span>
                             <button
                                 onClick={() => navigate(`/os/${os.id}`)}
                                 style={{ padding: '6px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}
@@ -200,8 +183,8 @@ const OSManager: React.FC = () => {
                                         <Wrench size={24} weight="duotone" />
                                     </div>
                                     <div>
-                                        <h2 style={{ fontSize: '1.2rem', marginBottom: '2px' }}>{selectedOS.tipo}</h2>
-                                        <p style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Protocolo: {selectedOS.id.slice(0, 8).toUpperCase()}</p>
+                                        <div className="header-type">{selectedOS.order_type}</div>
+                                        <h2 className="header-title">#{selectedOS.id.slice(0, 8)}</h2>
                                     </div>
                                 </div>
                                 <button onClick={() => navigate('/os')} style={{ color: 'var(--text-secondary)', padding: '8px', background: 'transparent', border: 'none', cursor: 'pointer' }}><X size={24} /></button>
@@ -212,23 +195,33 @@ const OSManager: React.FC = () => {
                                     <section>
                                         <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}><ChatCircleText size={18} /> Descrição do Chamado</h4>
                                         <div style={{ background: 'var(--bg-deep)', padding: '1.25rem', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', fontSize: '0.95rem', lineHeight: '1.6' }}>
-                                            {selectedOS.descricao}
+                                            {selectedOS.description}
                                         </div>
                                     </section>
 
                                     <section>
                                         <h4 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginBottom: '0.75rem', display: 'flex', alignItems: 'center', gap: '8px' }}><User size={18} /> Cliente / Assinante</h4>
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                                                <div style={{ width: '44px', height: '44px', borderRadius: '50%', background: 'var(--bg-surface-light)', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 700 }}>{selectedOS.cliente_nome.charAt(0)}</div>
+                                            <div className="info-item">
+                                                <User size={16} />
                                                 <div>
-                                                    <div style={{ fontWeight: 600 }}>{selectedOS.cliente_nome}</div>
-                                                    <div style={{ fontSize: '0.85rem', color: 'var(--text-secondary)' }}>Assinante VIP • Fibra 500M</div>
+                                                    <div className="label">Cliente</div>
+                                                    <div className="value">{selectedOS.customer_name}</div>
                                                 </div>
                                             </div>
-                                            <div style={{ marginTop: '8px', display: 'flex', alignItems: 'start', gap: '10px', color: 'var(--text-secondary)', fontSize: '0.9rem' }}>
-                                                <MapPin size={18} style={{ marginTop: '2px' }} />
-                                                <span>{selectedOS.cliente_endereco}</span>
+                                            <div className="info-item">
+                                                <MapPin size={16} />
+                                                <div>
+                                                    <div className="label">Endereço</div>
+                                                    <div className="value">{selectedOS.customer_address}</div>
+                                                </div>
+                                            </div>
+                                            <div className="info-item">
+                                                <Clock size={16} />
+                                                <div>
+                                                    <div className="label">Agendado para</div>
+                                                    <div className="value">{selectedOS.scheduled_date ? new Date(selectedOS.scheduled_date).toLocaleString() : 'Não definido'}</div>
+                                                </div>
                                             </div>
                                         </div>
                                     </section>
@@ -251,22 +244,6 @@ const OSManager: React.FC = () => {
                                             <option value="FINALIZADA">FINALIZADA</option>
                                             <option value="CANCELADA">CANCELADA</option>
                                         </select>
-                                    </section>
-
-                                    <section>
-                                        <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Prioridade</h4>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: selectedOS.prioridade === 'URGENTE' ? '#ef4444' : 'var(--text-secondary)', fontWeight: 700 }}>
-                                            <WarningCircle size={20} />
-                                            {selectedOS.prioridade}
-                                        </div>
-                                    </section>
-
-                                    <section>
-                                        <h4 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)', marginBottom: '0.5rem', textTransform: 'uppercase' }}>Técnico Atribuído</h4>
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                                            <UserGear size={20} color="var(--accent)" />
-                                            <span style={{ fontSize: '0.9rem' }}>A definir (Fila Local)</span>
-                                        </div>
                                     </section>
 
                                     <section style={{ marginTop: 'auto' }}>
@@ -310,14 +287,6 @@ const OSManager: React.FC = () => {
                                                                 >
                                                                     Sim, Encerrar Ocorrência
                                                                 </button>
-                                                                {userRole !== 'atendente' && (
-                                                                    <button
-                                                                        onClick={() => navigate('/os')}
-                                                                        style={{ padding: '12px', borderRadius: '10px', background: 'transparent', color: '#666', border: '1px solid #333', cursor: 'pointer' }}
-                                                                    >
-                                                                        Não (Apenas OS)
-                                                                    </button>
-                                                                )}
                                                             </div>
                                                         </>
                                                     )}

@@ -2,15 +2,15 @@ import { supabase } from '../lib/supabase';
 
 export interface Ocorrencia {
     id: string;
-    protocolo: string;
-    cliente: string;
-    assunto: string;
-    prioridade: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
+    protocol: string;
+    customer_name: string;
+    subject: string;
+    priority: 'BAIXA' | 'MEDIA' | 'ALTA' | 'CRITICA';
     status: 'ABERTA' | 'EM_ANALISE' | 'AGUARDANDO_CLIENTE' | 'RESOLVIDA' | 'CANCELADA';
-    data_abertura: string;
-    ultima_atualizacao: string;
-    vendedor_id?: string;
-    descricao?: string;
+    opening_date: string;
+    last_update: string;
+    seller_id?: string;
+    description?: string;
     comentarios?: any[];
     anexos?: any[];
 }
@@ -19,7 +19,7 @@ export const getOcorrencias = async (): Promise<Ocorrencia[]> => {
     const { data, error } = await supabase
         .from('customer_occurrences')
         .select('*')
-        .order('ultima_atualizacao', { ascending: false });
+        .order('last_update', { ascending: false });
 
     if (error) {
         console.warn('Tabela ocorrencias não encontrada. Verifique o banco.');
@@ -33,8 +33,8 @@ export const createOcorrencia = async (oco: Partial<Ocorrencia>): Promise<Ocorre
         .from('customer_occurrences')
         .insert([{
             ...oco,
-            data_abertura: new Date().toISOString(),
-            ultima_atualizacao: new Date().toISOString()
+            opening_date: new Date().toISOString(),
+            last_update: new Date().toISOString()
         }])
         .select()
         .single();
@@ -46,7 +46,7 @@ export const createOcorrencia = async (oco: Partial<Ocorrencia>): Promise<Ocorre
 export const updateOcorrencia = async (id: string, updates: Partial<Ocorrencia>): Promise<void> => {
     const { error } = await supabase
         .from('customer_occurrences')
-        .update({ ...updates, ultima_atualizacao: new Date().toISOString() })
+        .update({ ...updates, last_update: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;
