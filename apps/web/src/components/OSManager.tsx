@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel } from '@phosphor-icons/react';
 import { genericFilter } from '../utils/filterUtils';
 import LoadingScreen from './LoadingScreen';
+import { getServiceOrders, ServiceOrder } from '../services/osService';
 
 interface OS {
     id: string;
@@ -20,41 +21,23 @@ interface OS {
 }
 
 const OSManager: React.FC = () => {
-    const [oss, setOss] = useState<OS[]>([]);
+    const [oss, setOss] = useState<ServiceOrder[]>([]);
     const [searchTerm, setSearchTerm] = useState('');
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        setLoading(true);
-        const mockOS: OS[] = [
-            {
-                id: '1',
-                tipo: 'INSTALACAO',
-                status: 'ABERTA',
-                descricao: 'Instalação de fibra 500mb',
-                prioridade: 'ALTA',
-                assinante: {
-                    nome: 'Marcos Oliveira',
-                    enderecos: [{ logradouro: 'Rua das Flores', numero: '123' }]
-                }
-            },
-            {
-                id: '2',
-                tipo: 'REPARO',
-                status: 'EM_EXECUCAO',
-                descricao: 'Sem sinal de internet',
-                prioridade: 'URGENTE',
-                dataAgendamento: new Date().toISOString(),
-                assinante: {
-                    nome: 'Ana Paula',
-                    enderecos: [{ logradouro: 'Av Central', numero: '500' }]
-                }
+        const fetchOS = async () => {
+            setLoading(true);
+            try {
+                const data = await getServiceOrders();
+                setOss(data);
+            } catch (err) {
+                console.error('Erro ao buscar OS:', err);
+            } finally {
+                setLoading(false);
             }
-        ];
-        setTimeout(() => {
-            setOss(mockOS);
-            setLoading(false);
-        }, 1000);
+        };
+        fetchOS();
     }, []);
 
     const getStatusColor = (status: string) => {
@@ -111,18 +94,18 @@ const OSManager: React.FC = () => {
                         <div style={{ background: 'rgba(255,255,255,0.03)', padding: '12px', borderRadius: 'var(--radius-md)' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem' }}>
                                 <User size={16} />
-                                <strong>{os.assinante.nome}</strong>
+                                <strong>{os.cliente_nome}</strong>
                             </div>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>
                                 <MapPin size={16} />
-                                <span>{os.assinante.enderecos[0].logradouro}, {os.assinante.enderecos[0].numero}</span>
+                                <span>{os.cliente_endereco}</span>
                             </div>
                         </div>
 
                         <div style={{ marginTop: '10px', paddingTop: '10px', borderTop: '1px solid var(--border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
                                 <Calendar size={16} />
-                                <span>{os.dataAgendamento ? new Date(os.dataAgendamento).toLocaleDateString() : 'Não agendado'}</span>
+                                <span>{os.data_agendamento ? new Date(os.data_agendamento).toLocaleDateString() : 'A definir'}</span>
                             </div>
                             <button style={{ padding: '6px 12px', borderRadius: 'var(--radius-md)', border: '1px solid var(--accent)', background: 'transparent', color: 'var(--accent)', cursor: 'pointer' }}>Gerenciar</button>
                         </div>
