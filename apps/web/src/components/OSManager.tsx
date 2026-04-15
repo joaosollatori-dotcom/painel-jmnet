@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel, X, Clock, UserGear, Info, ChatCircleText, WarningCircle, Warning, ChatText } from '@phosphor-icons/react';
+import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel, X, Clock, UserGear, Info, ChatCircleText, WarningCircle, Warning, ChatText, Gear } from '@phosphor-icons/react';
 import { genericFilter } from '../utils/filterUtils';
 import LoadingScreen from './LoadingScreen';
 import { getServiceOrders, ServiceOrder, updateServiceOrder } from '../services/osService';
@@ -56,7 +56,7 @@ const OSManager: React.FC = () => {
     }, []);
 
     const [showOcoReminder, setShowOcoReminder] = useState(false);
-    const [wizardStep, setWizardStep] = useState<'PROMPT' | 'SUMMARY'>('PROMPT');
+    const [wizardStep, setWizardStep] = useState<'PROMPT' | 'SUMMARY' | 'VERIFICATION'>('PROMPT');
     const [conclusionSummary, setConclusionSummary] = useState('');
     const [pin, setPin] = useState('');
     const [pinError, setPinError] = useState(false);
@@ -371,17 +371,14 @@ const OSManager: React.FC = () => {
                                                 </motion.div>
                                             )}
                                         </AnimatePresence>
-                                    </motion.div>
-                                            )}
-                                </AnimatePresence>
-                            </section>
-                    </div>
+                                    </section>
+                                </div>
                             </div>
-                        </motion.div >
-                    </div >
+                        </motion.div>
+                    </div>
                 )}
-            </AnimatePresence >
-        </div >
+            </AnimatePresence>
+        </div>
     );
 };
 

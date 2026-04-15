@@ -52,3 +52,13 @@ export const updateServiceOrder = async (id: string, updates: Partial<ServiceOrd
 
     if (error) throw error;
 };
+
+export const getOSByOcorrencia = async (ocorrenciaId: string): Promise<ServiceOrder[]> => {
+    const { data, error } = await supabase
+        .from('service_orders')
+        .select('*')
+        .eq('ocorrencia_id', ocorrenciaId);
+
+    if (error) return [];
+    return data || [];
+};

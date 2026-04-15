@@ -7,8 +7,10 @@ import {
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { genericFilter } from '../utils/filterUtils';
-import { getOcorrencias, updateOcorrencia, Ocorrencia } from '../services/ocorrenciaService';
+import { getOcorrencias, updateOcorrencia } from '../services/ocorrenciaService';
 import { useNavigate, useParams } from 'react-router-dom';
+import { getOSByOcorrencia } from '../services/osService';
+import { useState, useEffect } from 'react';
 
 interface Ocorrencia {
     id: string;
@@ -30,11 +32,15 @@ const OcorrenciasManager: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [selectedOco, setSelectedOco] = useState<Ocorrencia | null>(null);
     const [activeTab, setActiveTab] = useState<'TECNICO' | 'GESTAO' | 'ATENDIMENTO'>('ATENDIMENTO');
+    const [showModal, setShowModal] = useState(false);
 
     useEffect(() => {
         if (ocoId && ocorrencias.length > 0) {
             const found = ocorrencias.find(o => o.id === ocoId);
-            if (found) setSelectedOco(found);
+            if (found) {
+                setSelectedOco(found);
+                setLocalStatus(found.status);
+            }
         } else if (!ocoId) {
             setSelectedOco(null);
         }
@@ -56,6 +62,33 @@ const OcorrenciasManager: React.FC = () => {
         fetchOco();
     }, []);
 
+    const [localStatus, setLocalStatus] = useState<Ocorrencia['status']>('ABERTA');
+    const [saveStatus, setSaveStatus] = useState<'IDLE' | 'SAVING' | 'ERROR_PENDING_OS'>('IDLE');
+
+    const handleSave = async () => {
+        if (!selectedOco) return;
+        setSaveStatus('SAVING');
+
+        try {
+            if (localStatus === 'RESOLVIDA') {
+                const linkedOS = await getOSByOcorrencia(selectedOco.id);
+                const hasPendingOS = linkedOS.some(os => os.status !== 'FINALIZADA');
+
+                if (hasPendingOS) {
+                    setSaveStatus('ERROR_PENDING_OS');
+                    return;
+                }
+            }
+
+            await updateOcorrencia(selectedOco.id, { status: localStatus });
+            await fetchOco();
+            setSaveStatus('IDLE');
+            navigate('/ocorrencias');
+        } catch (err) {
+            console.error('Erro ao salvar:', err);
+            setSaveStatus('IDLE');
+        }
+    };
     const getStatusColor = (status: Ocorrencia['status']) => {
         switch (status) {
             case 'ABERTA': return '#3b82f6';
@@ -260,6 +293,30 @@ const OcorrenciasManager: React.FC = () => {
                                     {activeTab === 'ATENDIMENTO' && (
                                         <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                                             <section>
+                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><WarningCircle size={18} /> Status da Ocorrência</h4>
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.25rem' }}>
+                                                    <select
+                                                        value={localStatus}
+                                                        onChange={(e) => {
+                                                            setLocalStatus(e.target.value as any);
+                                                            setSaveStatus('IDLE');
+                                                        }}
+                                                        style={{ width: '100%', padding: '12px', borderRadius: '10px', background: '#222', border: '1px solid #333', color: '#fff', outline: 'none', cursor: 'pointer' }}
+                                                    >
+                                                        <option value="ABERTA">Aberta</option>
+                                                        <option value="EM_ANALISE">Em Análise</option>
+                                                        <option value="AGUARDANDO_CLIENTE">Aguardando Cliente</option>
+                                                        <option value="RESOLVIDA">Resolvida</option>
+                                                        <option value="CANCELADA">Cancelada</option>
+                                                    </select>
+                                                    {saveStatus === 'ERROR_PENDING_OS' && (
+                                                        <div style={{ marginTop: '12px', padding: '10px', borderRadius: '8px', background: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: '#ef4444', fontSize: '0.8rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                                            <Warning size={16} /> Não é possível resolver: Existem ordens de serviço pendentes vinculadas.
+                                                        </div>
+                                                    )}
+                                                </div>
+                                            </section>
+                                            <section>
                                                 <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><Calendar size={18} /> Agendamento e Logística</h4>
                                                 <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.25rem' }}>
                                                     <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Compartilhamento de informações do módulo de agendamento...</p>
@@ -330,7 +387,13 @@ const OcorrenciasManager: React.FC = () => {
 
                             <footer style={{ padding: '1.25rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
                                 <button onClick={() => navigate('/ocorrencias')} style={{ padding: '10px 20px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', cursor: 'pointer' }}>Fechar</button>
-                                <button style={{ padding: '10px 24px', borderRadius: '10px', background: 'var(--primary-color)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Salvar Alterações</button>
+                                <button
+                                    onClick={handleSave}
+                                    disabled={saveStatus === 'SAVING'}
+                                    style={{ padding: '10px 24px', borderRadius: '10px', background: 'var(--primary-color)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer', opacity: saveStatus === 'SAVING' ? 0.5 : 1 }}
+                                >
+                                    {saveStatus === 'SAVING' ? 'Salvando...' : 'Salvar Alterações'}
+                                </button>
                             </footer>
                         </motion.div>
                     </div>
