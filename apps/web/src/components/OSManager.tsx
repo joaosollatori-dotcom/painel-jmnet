@@ -54,6 +54,20 @@ const OSManager: React.FC = () => {
         fetchOS();
     }, []);
 
+    const handleFinishOS = async () => {
+        if (!selectedOS) return;
+        try {
+            await updateServiceOrder(selectedOS.id, {
+                status: 'FINALIZADA',
+                data_conclusao: new Date().toISOString()
+            });
+            setOss(prev => prev.map(o => o.id === selectedOS.id ? { ...o, status: 'FINALIZADA', data_conclusao: new Date().toISOString() } : o));
+            navigate('/os');
+        } catch (err) {
+            console.error('Erro ao finalizar OS:', err);
+        }
+    };
+
     const getStatusColor = (status: string) => {
         switch (status) {
             case 'ABERTA': return '#3b82f6';
@@ -220,7 +234,11 @@ const OSManager: React.FC = () => {
                                     </section>
 
                                     <section style={{ marginTop: 'auto' }}>
-                                        <button className="flex-center" style={{ width: '100%', padding: '14px', background: 'var(--accent)', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, gap: '10px', cursor: 'pointer' }}>
+                                        <button
+                                            onClick={handleFinishOS}
+                                            className="flex-center"
+                                            style={{ width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, gap: '10px', cursor: 'pointer' }}
+                                        >
                                             <CheckCircle size={20} weight="bold" />
                                             Finalizar Atendimento
                                         </button>

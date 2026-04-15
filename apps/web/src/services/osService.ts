@@ -10,6 +10,7 @@ export interface ServiceOrder {
     cliente_nome: string;
     cliente_endereco: string;
     conversation_id?: string;
+    data_conclusao?: string;
     created_at: string;
 }
 
