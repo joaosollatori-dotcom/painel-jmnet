@@ -1,12 +1,14 @@
-import React, { useState, useEffect } from 'react';
 import {
     WarningCircle, Plus, MagnifyingGlass, Funnel,
     ChatCircleDots, User, Clock, CheckCircle,
     CaretDown, DotsThreeVertical, PencilSimple, Trash,
-    Warning
+    Warning, X, Image as ImageIcon, VideoCamera, ChatText,
+    ChartBar, Headset, Gear, Hammer, Calendar, Paperclip
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { genericFilter } from '../utils/filterUtils';
+import { getOcorrencias, updateOcorrencia, Ocorrencia } from '../services/ocorrenciaService';
+import { useNavigate, useParams } from 'react-router-dom';
 
 interface Ocorrencia {
     id: string;
@@ -21,50 +23,37 @@ interface Ocorrencia {
 }
 
 const OcorrenciasManager: React.FC = () => {
+    const { ocoId } = useParams();
+    const navigate = useNavigate();
     const [ocorrencias, setOcorrencias] = useState<Ocorrencia[]>([]);
     const [loading, setLoading] = useState(true);
     const [searchTerm, setSearchTerm] = useState('');
-    const [showModal, setShowModal] = useState(false);
     const [selectedOco, setSelectedOco] = useState<Ocorrencia | null>(null);
+    const [activeTab, setActiveTab] = useState<'TECNICO' | 'GESTAO' | 'ATENDIMENTO'>('ATENDIMENTO');
 
     useEffect(() => {
-        // Mock data
-        const mock: Ocorrencia[] = [
-            {
-                id: '1',
-                protocolo: '20260412001',
-                cliente: 'Marcos Oliveira',
-                assunto: 'Internet Lenta / Oscilação',
-                prioridade: 'ALTA',
-                status: 'ABERTA',
-                dataAbertura: new Date().toISOString(),
-                ultimaAtualizacao: new Date().toISOString(),
-            },
-            {
-                id: '2',
-                protocolo: '20260412002',
-                cliente: 'Ana Paula',
-                assunto: 'Dúvida sobre Fatura',
-                prioridade: 'MEDIA',
-                status: 'EM_ANALISE',
-                dataAbertura: new Date().toISOString(),
-                ultimaAtualizacao: new Date().toISOString(),
-            },
-            {
-                id: '3',
-                protocolo: '20260412003',
-                cliente: 'Empresa Alpha',
-                assunto: 'Upgrade de Plano',
-                prioridade: 'MEDIA',
-                status: 'RESOLVIDA',
-                dataAbertura: new Date().toISOString(),
-                ultimaAtualizacao: new Date().toISOString(),
-            }
-        ];
-        setTimeout(() => {
-            setOcorrencias(mock);
+        if (ocoId && ocorrencias.length > 0) {
+            const found = ocorrencias.find(o => o.id === ocoId);
+            if (found) setSelectedOco(found);
+        } else if (!ocoId) {
+            setSelectedOco(null);
+        }
+    }, [ocoId, ocorrencias]);
+
+    const fetchOco = async () => {
+        setLoading(true);
+        try {
+            const data = await getOcorrencias();
+            setOcorrencias(data);
+        } catch (err) {
+            console.error('Erro ao buscar ocorrencias:', err);
+        } finally {
             setLoading(false);
-        }, 800);
+        }
+    };
+
+    useEffect(() => {
+        fetchOco();
     }, []);
 
     const getStatusColor = (status: Ocorrencia['status']) => {
@@ -182,7 +171,12 @@ const OcorrenciasManager: React.FC = () => {
                                 </td>
                                 <td style={{ padding: '16px' }}>
                                     <div style={{ display: 'flex', gap: '8px' }}>
-                                        <button className="action-btn-table"><ChatCircleDots size={20} /></button>
+                                        <button
+                                            onClick={() => navigate(`/ocorrencias/${oco.id}`)}
+                                            className="action-btn-table"
+                                        >
+                                            <ChatCircleDots size={20} />
+                                        </button>
                                         <button className="action-btn-table"><PencilSimple size={20} /></button>
                                     </div>
                                 </td>
@@ -191,6 +185,157 @@ const OcorrenciasManager: React.FC = () => {
                     </tbody>
                 </table>
             </div>
+
+            <AnimatePresence>
+                {selectedOco && (
+                    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.85)', backdropFilter: 'blur(10px)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '2rem' }} onClick={() => navigate('/ocorrencias')}>
+                        <motion.div
+                            initial={{ opacity: 0, scale: 0.9, y: 30 }}
+                            animate={{ opacity: 1, scale: 1, y: 0 }}
+                            exit={{ opacity: 0, scale: 0.9, y: 30 }}
+                            className="oco-modal"
+                            style={{ background: '#111', border: '1px solid rgba(255,255,255,0.1)', borderRadius: '24px', width: '100%', maxWidth: '1000px', height: '85vh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}
+                            onClick={e => e.stopPropagation()}
+                        >
+                            <header style={{ padding: '1.5rem 2rem', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                                    <div style={{ width: '48px', height: '48px', borderRadius: '16px', background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                        <Warning size={28} weight="duotone" />
+                                    </div>
+                                    <div>
+                                        <h2 style={{ fontSize: '1.4rem', margin: 0 }}>#{selectedOco.protocolo} — {selectedOco.cliente}</h2>
+                                        <p style={{ fontSize: '0.85rem', color: '#666', margin: '4px 0 0 0' }}>{selectedOco.assunto}</p>
+                                    </div>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                    <div style={{
+                                        padding: '4px 12px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700,
+                                        background: `${getStatusColor(selectedOco.status)}20`, color: getStatusColor(selectedOco.status)
+                                    }}>
+                                        {selectedOco.status}
+                                    </div>
+                                    <button onClick={() => navigate('/ocorrencias')} style={{ background: 'transparent', border: 'none', color: '#666', cursor: 'pointer' }}><X size={24} /></button>
+                                </div>
+                            </header>
+
+                            <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
+                                {/* Sidebar Tabs */}
+                                <aside style={{ width: '220px', borderRight: '1px solid rgba(255,255,255,0.05)', background: 'rgba(255,255,255,0.01)', padding: '1rem' }}>
+                                    <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                                        <button
+                                            onClick={() => setActiveTab('ATENDIMENTO')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px',
+                                                background: activeTab === 'ATENDIMENTO' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                color: activeTab === 'ATENDIMENTO' ? '#fff' : '#666', transition: 'all 0.2s', border: 'none', cursor: 'pointer', textAlign: 'left'
+                                            }}
+                                        >
+                                            <Headset size={20} weight={activeTab === 'ATENDIMENTO' ? 'fill' : 'regular'} /> Atendimento
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('TECNICO')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px',
+                                                background: activeTab === 'TECNICO' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                color: activeTab === 'TECNICO' ? '#fff' : '#666', transition: 'all 0.2s', border: 'none', cursor: 'pointer', textAlign: 'left'
+                                            }}
+                                        >
+                                            <Hammer size={20} weight={activeTab === 'TECNICO' ? 'fill' : 'regular'} /> Técnico
+                                        </button>
+                                        <button
+                                            onClick={() => setActiveTab('GESTAO')}
+                                            style={{
+                                                display: 'flex', alignItems: 'center', gap: '12px', padding: '12px', borderRadius: '12px',
+                                                background: activeTab === 'GESTAO' ? 'rgba(255,255,255,0.05)' : 'transparent',
+                                                color: activeTab === 'GESTAO' ? '#fff' : '#666', transition: 'all 0.2s', border: 'none', cursor: 'pointer', textAlign: 'left'
+                                            }}
+                                        >
+                                            <ChartBar size={20} weight={activeTab === 'GESTAO' ? 'fill' : 'regular'} /> Gestão
+                                        </button>
+                                    </div>
+                                </aside>
+
+                                {/* Content Area */}
+                                <main style={{ flex: 1, overflowY: 'auto', padding: '2rem' }}>
+                                    {activeTab === 'ATENDIMENTO' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                            <section>
+                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><Calendar size={18} /> Agendamento e Logística</h4>
+                                                <div style={{ background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', borderRadius: '16px', padding: '1.25rem' }}>
+                                                    <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Compartilhamento de informações do módulo de agendamento...</p>
+                                                    <button style={{ background: 'rgba(59, 130, 246, 0.1)', color: '#3b82f6', border: 'none', padding: '8px 16px', borderRadius: '8px', fontSize: '0.85rem', marginTop: '12px', cursor: 'pointer' }}>Acessar Calendário</button>
+                                                </div>
+                                            </section>
+                                            <section>
+                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><Paperclip size={18} /> Anexos e Documentos</h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(150px, 1fr))', gap: '1rem' }}>
+                                                    <div style={{ aspectRatio: '1', borderRadius: '12px', border: '2px dashed rgba(255,255,255,0.1)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '8px', color: '#666', fontSize: '0.8rem', cursor: 'pointer' }}>
+                                                        <Plus size={24} /> Adicionar
+                                                    </div>
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'TECNICO' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                            <section>
+                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><ImageIcon size={18} /> Evidências de Campo</h4>
+                                                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))', gap: '1.5rem' }}>
+                                                    <div style={{ width: '100%', height: '140px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                                                        <VideoCamera size={40} />
+                                                    </div>
+                                                    <div style={{ width: '100%', height: '140px', background: 'rgba(255,255,255,0.02)', borderRadius: '16px', border: '1px solid rgba(255,255,255,0.05)', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#666' }}>
+                                                        <ImageIcon size={40} />
+                                                    </div>
+                                                </div>
+                                            </section>
+                                            <section>
+                                                <h4 style={{ display: 'flex', alignItems: 'center', gap: '8px', color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}><ChatText size={18} /> Diário de Operação</h4>
+                                                <textarea
+                                                    placeholder="Registrar comentários técnicos ou pendências de campo..."
+                                                    style={{ width: '100%', padding: '1rem', borderRadius: '16px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)', color: '#fff', resize: 'none', height: '120px', outline: 'none' }}
+                                                />
+                                            </section>
+                                        </div>
+                                    )}
+
+                                    {activeTab === 'GESTAO' && (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '2rem' }}>
+                                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem' }}>
+                                                <div style={{ background: 'rgba(16, 185, 129, 0.05)', border: '1px solid rgba(16, 185, 129, 0.1)', padding: '1.5rem', borderRadius: '20px' }}>
+                                                    <span style={{ fontSize: '0.8rem', color: '#10b981', fontWeight: 700 }}>SLA DE ATENDIMENTO</span>
+                                                    <h3 style={{ fontSize: '1.8rem', margin: '8px 0 0 0' }}>94%</h3>
+                                                </div>
+                                                <div style={{ background: 'rgba(245, 158, 11, 0.05)', border: '1px solid rgba(245, 158, 11, 0.1)', padding: '1.5rem', borderRadius: '20px' }}>
+                                                    <span style={{ fontSize: '0.8rem', color: '#f59e0b', fontWeight: 700 }}>TURNOVER TÉCNICO</span>
+                                                    <h3 style={{ fontSize: '1.8rem', margin: '8px 0 0 0' }}>1.2d</h3>
+                                                </div>
+                                            </div>
+                                            <section>
+                                                <h4 style={{ color: '#fff', fontSize: '1rem', marginBottom: '1rem' }}>Log Geral de Auditoria</h4>
+                                                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                                    {[1, 2, 3].map(i => (
+                                                        <div key={i} style={{ padding: '12px', borderBottom: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'space-between', fontSize: '0.85rem' }}>
+                                                            <span style={{ color: '#aaa' }}>Alteração de status por Sistema</span>
+                                                            <span style={{ color: '#666' }}>12/04 - 14:3{i}</span>
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            </section>
+                                        </div>
+                                    )}
+                                </main>
+                            </div>
+
+                            <footer style={{ padding: '1.25rem 2rem', background: 'rgba(255,255,255,0.02)', borderTop: '1px solid rgba(255,255,255,0.05)', display: 'flex', justifyContent: 'flex-end', gap: '12px' }}>
+                                <button onClick={() => navigate('/ocorrencias')} style={{ padding: '10px 20px', borderRadius: '10px', background: 'transparent', border: '1px solid rgba(255,255,255,0.1)', color: '#aaa', cursor: 'pointer' }}>Fechar</button>
+                                <button style={{ padding: '10px 24px', borderRadius: '10px', background: 'var(--primary-color)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}>Salvar Alterações</button>
+                            </footer>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
 
             <style>{`
                 .action-btn-table { background: transparent; border: none; color: #666; cursor: pointer; transition: color 0.2s; }

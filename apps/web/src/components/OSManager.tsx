@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel, X, Clock, UserGear, Info, ChatCircleText, WarningCircle } from '@phosphor-icons/react';
+import { Wrench, Calendar, User, MapPin, CheckCircle, MagnifyingGlass, Funnel, X, Clock, UserGear, Info, ChatCircleText, WarningCircle, Warning, ChatText } from '@phosphor-icons/react';
 import { genericFilter } from '../utils/filterUtils';
 import LoadingScreen from './LoadingScreen';
 import { getServiceOrders, ServiceOrder, updateServiceOrder } from '../services/osService';
+import { updateOcorrencia } from '../services/ocorrenciaService';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 
@@ -54,6 +55,14 @@ const OSManager: React.FC = () => {
         fetchOS();
     }, []);
 
+    const [showOcoReminder, setShowOcoReminder] = useState(false);
+    const [wizardStep, setWizardStep] = useState<'PROMPT' | 'SUMMARY'>('PROMPT');
+    const [conclusionSummary, setConclusionSummary] = useState('');
+    const [pin, setPin] = useState('');
+    const [pinError, setPinError] = useState(false);
+    const userRole = 'atendente';
+    const MASTER_PIN = 'X7R2A9';
+
     const handleFinishOS = async () => {
         if (!selectedOS) return;
         try {
@@ -62,9 +71,32 @@ const OSManager: React.FC = () => {
                 data_conclusao: new Date().toISOString()
             });
             setOss(prev => prev.map(o => o.id === selectedOS.id ? { ...o, status: 'FINALIZADA', data_conclusao: new Date().toISOString() } : o));
-            navigate('/os');
+
+            if (selectedOS.ocorrencia_id) {
+                setShowOcoReminder(true);
+                setWizardStep('PROMPT');
+            } else {
+                navigate('/os');
+            }
         } catch (err) {
             console.error('Erro ao finalizar OS:', err);
+        }
+    };
+
+    const handleResolveLinkedOco = async () => {
+        if (!selectedOS?.ocorrencia_id) return;
+        if (pin !== MASTER_PIN) {
+            setPinError(true);
+            return;
+        }
+        try {
+            await updateOcorrencia(selectedOS.ocorrencia_id, {
+                status: 'RESOLVIDA',
+                descricao: selectedOS.descricao + (conclusionSummary ? `\n\nRESUMO DA CONCLUSÃO: ${conclusionSummary}` : '')
+            });
+            navigate('/os');
+        } catch (err) {
+            console.error('Erro ao resolver ocorrência:', err);
         }
     };
 
@@ -234,22 +266,122 @@ const OSManager: React.FC = () => {
                                     </section>
 
                                     <section style={{ marginTop: 'auto' }}>
-                                        <button
-                                            onClick={handleFinishOS}
-                                            className="flex-center"
-                                            style={{ width: '100%', padding: '14px', background: '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, gap: '10px', cursor: 'pointer' }}
-                                        >
-                                            <CheckCircle size={20} weight="bold" />
-                                            Finalizar Atendimento
-                                        </button>
-                                    </section>
-                                </div>
-                            </div>
-                        </motion.div>
+                                        <AnimatePresence mode="wait">
+                                            {!showOcoReminder ? (
+                                                <motion.button
+                                                    key="finish-btn"
+                                                    disabled={selectedOS.status === 'FINALIZADA'}
+                                                    initial={{ opacity: 0 }}
+                                                    animate={{ opacity: 1 }}
+                                                    exit={{ opacity: 0 }}
+                                                    onClick={handleFinishOS}
+                                                    className="flex-center"
+                                                    style={{ width: '100%', padding: '14px', background: selectedOS.status === 'FINALIZADA' ? '#333' : '#10b981', color: 'white', border: 'none', borderRadius: '10px', fontWeight: 700, gap: '10px', cursor: selectedOS.status === 'FINALIZADA' ? 'not-allowed' : 'pointer' }}
+                                                >
+                                                    <CheckCircle size={20} weight="bold" />
+                                                    {selectedOS.status === 'FINALIZADA' ? 'Atendimento Finalizado' : 'Finalizar Atendimento'}
+                                                </motion.button>
+                                            ) : (
+                                                <motion.div
+                                                    key="oco-reminder"
+                                                    initial={{ opacity: 0, scale: 0.95 }}
+                                                    animate={{ opacity: 1, scale: 1 }}
+                                                    className="oco-reminder-card"
+                                                    style={{ background: 'rgba(255, 255, 255, 0.02)', border: '1px solid rgba(255, 255, 255, 0.1)', padding: '1.5rem', borderRadius: '16px', display: 'flex', flexDirection: 'column', gap: '1rem' }}
+                                                >
+                                                    {wizardStep === 'PROMPT' && (
+                                                        <>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#f59e0b', fontWeight: 700 }}>
+                                                                <Warning size={24} /> Ocorrência Aberta
+                                                            </div>
+                                                            <p style={{ fontSize: '0.9rem', color: '#aaa', margin: 0 }}>
+                                                                {userRole === 'atendente'
+                                                                    ? 'Como atendente, você deve encerrar a ocorrência vinculada para poder finalizar este atendimento.'
+                                                                    : 'Identificamos uma ocorrência em aberto vinculada a esta OS. Deseja encerrá-la agora?'}
+                                                            </p>
+                                                            <div style={{ display: 'flex', gap: '12px', flexDirection: userRole === 'atendente' ? 'column' : 'row' }}>
+                                                                <button
+                                                                    onClick={() => setWizardStep('SUMMARY')}
+                                                                    style={{ flex: 1, padding: '12px', borderRadius: '10px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: 600, cursor: 'pointer' }}
+                                                                >
+                                                                    Sim, Encerrar Ocorrência
+                                                                </button>
+                                                                {userRole !== 'atendente' && (
+                                                                    <button
+                                                                        onClick={() => navigate('/os')}
+                                                                        style={{ padding: '12px', borderRadius: '10px', background: 'transparent', color: '#666', border: '1px solid #333', cursor: 'pointer' }}
+                                                                    >
+                                                                        Não (Apenas OS)
+                                                                    </button>
+                                                                )}
+                                                            </div>
+                                                        </>
+                                                    )}
+
+                                                    {wizardStep === 'SUMMARY' && (
+                                                        <>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: 'var(--accent)', fontWeight: 700 }}>
+                                                                <ChatText size={24} /> Resumo da Conclusão
+                                                            </div>
+                                                            <textarea
+                                                                value={conclusionSummary}
+                                                                onChange={(e) => setConclusionSummary(e.target.value)}
+                                                                placeholder="Descreva a solução técnica aqui..."
+                                                                style={{ width: '100%', padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.2)', border: '1px solid #333', color: '#fff', height: '100px', resize: 'none', outline: 'none' }}
+                                                            />
+                                                            <button
+                                                                onClick={() => setWizardStep('VERIFICATION')}
+                                                                disabled={!conclusionSummary}
+                                                                style={{ padding: '12px', borderRadius: '10px', background: 'var(--accent)', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer', opacity: conclusionSummary ? 1 : 0.5 }}
+                                                            >
+                                                                Próximo: Segurança
+                                                            </button>
+                                                        </>
+                                                    )}
+
+                                                    {wizardStep === 'VERIFICATION' && (
+                                                        <>
+                                                            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', color: '#ef4444', fontWeight: 700 }}>
+                                                                <Gear size={24} /> Autenticação Requerida
+                                                            </div>
+                                                            <p style={{ fontSize: '0.85rem', color: '#666', margin: 0 }}>Insira o PIN de 6 dígitos (Service Key) para autorizar o encerramento do protocolo.</p>
+                                                            <input
+                                                                type="text"
+                                                                maxLength={6}
+                                                                value={pin}
+                                                                onChange={(e) => {
+                                                                    setPin(e.target.value.toUpperCase());
+                                                                    setPinError(false);
+                                                                }}
+                                                                style={{ letterSpacing: '8px', textAlign: 'center', fontSize: '1.5rem', fontWeight: 700, padding: '12px', borderRadius: '10px', background: 'rgba(0,0,0,0.5)', border: pinError ? '2px solid #ef4444' : '1px solid #333', color: pinError ? '#ef4444' : 'var(--accent)', outline: 'none' }}
+                                                                placeholder="******"
+                                                            />
+                                                            {pinError && <span style={{ color: '#ef4444', fontSize: '0.75rem', textAlign: 'center' }}>PIN inválido ou incorreto. Repita a operação.</span>}
+                                                            <div style={{ display: 'flex', gap: '12px' }}>
+                                                                <button
+                                                                    onClick={handleResolveLinkedOco}
+                                                                    style={{ flex: 1, padding: '12px', borderRadius: '10px', background: '#10b981', color: '#fff', border: 'none', fontWeight: 700, cursor: 'pointer' }}
+                                                                >
+                                                                    Confirmar Encerramento
+                                                                </button>
+                                                                <button onClick={() => setWizardStep('SUMMARY')} style={{ color: '#666', background: 'transparent', border: 'none', cursor: 'pointer' }}>Voltar</button>
+                                                            </div>
+                                                        </>
+                                                    )}
+                                                </motion.div>
+                                            )}
+                                        </AnimatePresence>
+                                    </motion.div>
+                                            )}
+                                </AnimatePresence>
+                            </section>
                     </div>
+                            </div>
+                        </motion.div >
+                    </div >
                 )}
-            </AnimatePresence>
-        </div>
+            </AnimatePresence >
+        </div >
     );
 };
 

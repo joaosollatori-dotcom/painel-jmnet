@@ -14,6 +14,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getMessages, sendMessage, addReaction, subscribeToMessages, updateConversation, getConversations, uploadChatFile } from '../services/chatService';
 import { createLead } from '../services/leadService';
 import { createServiceOrder } from '../services/osService';
+import { createOcorrencia } from '../services/ocorrenciaService';
 import type { Message, Conversation } from '../services/chatService';
 import CameraCaptureModal from './CameraCaptureModal';
 import LoadingScreen from './LoadingScreen';
@@ -806,18 +807,29 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                         // Ideally we should have used state for these fields. 
                                         // Let's assume some defaults or better, I will quickly add state for the OS form in the next step or use what's there.
 
+                                        // 1. Create the mandatory Occurrence first
+                                        const newOco = await createOcorrencia({
+                                            protocolo: `OC-${Date.now().toString().slice(-8)}`,
+                                            cliente: conversation?.contact_name || 'Desconhecido',
+                                            assunto: 'OS Associada: Instalação/Manutenção',
+                                            status: 'ABERTA',
+                                            prioridade: 'MEDIA'
+                                        });
+
+                                        // 2. Create the OS linked to the Occurrence
                                         const newOS = await createServiceOrder({
-                                            tipo: 'Instalação', // Fallback for demo
+                                            tipo: 'Instalação',
                                             prioridade: 'NORMAL',
                                             cliente_nome: conversation?.contact_name || 'Desconhecido',
                                             cliente_endereco: 'Consultar histórico',
                                             descricao: 'Gerada via Chat',
-                                            conversation_id: chatId
+                                            conversation_id: chatId,
+                                            ocorrencia_id: newOco.id
                                         });
 
                                         await sendMessage(chatId, {
                                             sender: 'Sistema',
-                                            text: `🛠️ Ordem de Serviço ${newOS.id.slice(0, 8)} gerada com sucesso para ${conversation?.contact_name}.\nStatus: Aberta.`,
+                                            text: `🛠️ Ordem de Serviço ${newOS.id.slice(0, 8)} e Ocorrência ${newOco.protocolo} geradas com sucesso.\nStatus: Aberta.`,
                                             is_user: false,
                                             is_bot: false
                                         });
