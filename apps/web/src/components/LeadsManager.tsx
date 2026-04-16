@@ -110,6 +110,11 @@ const LeadsManager: React.FC = () => {
         }
     };
 
+    const copyToClipboard = (text: string, label: string) => {
+        navigator.clipboard.writeText(text);
+        showToast(`${label} copiado ✓`, 'success');
+    };
+
     const stats = useMemo(() => {
         const now = new Date();
         const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -293,7 +298,14 @@ const LeadsManager: React.FC = () => {
                                                         <div className="cell-id">
                                                             <div className="id-avatar">{lead.nomeCompleto.split(' ').map(n => n[0]).join('').slice(0, 2)}</div>
                                                             <div className="id-info">
-                                                                <strong>{lead.nomeCompleto} <span className={`type-tag ${lead.tipoPessoa.toLowerCase()}`}>{lead.tipoPessoa}</span></strong>
+                                                                <strong
+                                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.nomeCompleto, 'Nome'); }}
+                                                                    style={{ cursor: 'copy' }}
+                                                                    title="Clique para copiar"
+                                                                >
+                                                                    {lead.nomeCompleto}
+                                                                    <span className={`type-tag ${lead.tipoPessoa.toLowerCase()}`}>{lead.tipoPessoa}</span>
+                                                                </strong>
                                                                 <small>Entrada em {new Date(lead.dataEntrada).toLocaleDateString()}</small>
                                                             </div>
                                                         </div>
@@ -301,7 +313,13 @@ const LeadsManager: React.FC = () => {
                                                     <td>
                                                         <div className="cell-contact">
                                                             <div className="contact-main">
-                                                                {lead.telefonePrincipal}
+                                                                <span
+                                                                    onClick={(e) => { e.stopPropagation(); copyToClipboard(lead.telefonePrincipal, 'Telefone'); }}
+                                                                    style={{ cursor: 'copy' }}
+                                                                    title="Clique para copiar"
+                                                                >
+                                                                    {lead.telefonePrincipal}
+                                                                </span>
                                                                 <button style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#3b82f6' }} onClick={e => { e.stopPropagation(); dispatchWhatsApp(lead.telefonePrincipal, 'Olá!', lead.id); }}><WhatsappLogo size={18} weight="fill" /></button>
                                                             </div>
                                                             <div className="channel-tag">
