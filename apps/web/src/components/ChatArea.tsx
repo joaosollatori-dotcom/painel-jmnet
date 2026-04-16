@@ -18,6 +18,7 @@ import { createOcorrencia } from '../services/ocorrenciaService';
 import type { Message, Conversation } from '../services/chatService';
 import CameraCaptureModal from './CameraCaptureModal';
 import LoadingScreen from './LoadingScreen';
+import { useToast } from '../contexts/ToastContext';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -25,6 +26,7 @@ interface ChatAreaProps {
 }
 
 const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
+    const { showToast } = useToast();
     const [message, setMessage] = useState('');
     const [activeMessageId, setActiveMessageId] = useState<string | null>(null);
     const [isInfoOpen, setIsInfoOpen] = useState(false);
@@ -46,6 +48,20 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [editContactData, setEditContactData] = useState({ name: '', phone: '', email: '' });
 
     const [showOSModal, setShowOSModal] = useState(false);
+    const [osWizardStep, setOsWizardStep] = useState<'OS_FIELDS' | 'OCO_FIELDS' | 'CONFIRMATION'>('OS_FIELDS');
+    const [osFormData, setOsFormData] = useState({
+        order_type: 'Instalação',
+        priority: 'NORMAL',
+        description: '',
+        customer_address: 'Consultar histórico'
+    });
+    const [ocoFormData, setOcoFormData] = useState({
+        subject: 'Manutenção / Suporte Técnico',
+        priority: 'MEDIA',
+        description: ''
+    });
+    const [generatedOcoId, setGeneratedOcoId] = useState<string | null>(null);
+
     const [showOcorrenciaModal, setShowOcorrenciaModal] = useState(false);
     const [showCadastroModal, setShowCadastroModal] = useState(false);
     const [cadastroMode, setCadastroMode] = useState<'rapido' | 'completo'>('rapido');
@@ -105,7 +121,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
             const current = convs.find(c => c.id === chatId);
             if (current) {
                 setConversation(current);
-                // Mark as read when opening
                 if (current.unread_count > 0) {
                     await updateConversation(chatId, { unread_count: 0 });
                 }
@@ -150,9 +165,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
             if (realMsg) {
                 setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error('Error sending message:', err);
             setMessages(prev => prev.filter(m => m.id !== optimisticId));
+
+            // Detailed feedback for timeout or failed fetch
+            if (err.message === 'Failed to fetch' || err.code === 'ETIMEDOUT') {
+                showToast('Erro de conexão: Tente novamente em alguns instantes.', 'error');
+            } else {
+                showToast('Não foi possível enviar a mensagem.', 'error');
+            }
         }
     };
 
@@ -248,7 +270,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         if (!msg) return;
         await sendMessage(chatId, {
             sender: 'Sistema',
-            text: `📊 Mensagem registrada no BI (Auditoria):\n"${msg.text.substring(0, 80)}..."\nID: ${msgId}`,
+            text: `📊 Mensagem registrada no BI / Compliance:\n"${msg.text.substring(0, 80)}..."`,
             is_user: false,
             is_bot: false
         });
@@ -257,11 +279,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const handleCameraCapture = async (file: File) => {
         if (!conversation || conversation.is_closed) return;
         try {
+            const { url, name } = await uploadChatFile(file);
             await sendMessage(chatId, {
                 sender: 'Você',
-                text: `📷 ${file.name}`,
+                text: `📷 Captura de Câmera: ${file.name}`,
                 is_user: true,
-                is_bot: false
+                is_bot: false,
+                file_url: url,
+                file_name: name
             });
         } catch (err) {
             console.error('Error sending camera photo:', err);
@@ -314,7 +339,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
             });
             await sendMessage(chatId, {
                 sender: 'Sistema',
-                text: `🚀 Cliente qualificado como novo LEAD no funil de vendas.\nConsulte o módulo "Leads e Vendas" para seguir com a negociação.`,
+                text: `🚀 Cliente qualificado como novo LEAD no funil de vendas.`,
                 is_user: false,
                 is_bot: false
             });
@@ -322,7 +347,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
             alert("Lead criado com sucesso!");
         } catch (err) {
             console.error('Error converting to lead:', err);
-            alert("Erro ao criar lead. Verifique a tabela no banco.");
+            alert("Erro ao criar lead.");
         }
     };
 
@@ -362,7 +387,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     )}
                     <div className="divider"></div>
                     <button className="action-btn" title="Ligar (VoIP)" onClick={() => { window.open(`tel:${conversation?.contact_phone || ''}`, '_blank'); }}><Phone size={20} weight="duotone" /></button>
-                    <button className="action-btn" title="Video Chamada" onClick={async () => { await sendMessage(chatId, { sender: 'Sistema', text: '📹 Chamada de vídeo iniciada. Aguardando conexão do cliente...', is_user: false, is_bot: false }); }}><Video size={20} weight="duotone" /></button>
+                    <button className="action-btn" title="Video Chamada" onClick={async () => { await sendMessage(chatId, { sender: 'Sistema', text: '📹 Chamada de vídeo iniciada...', is_user: false, is_bot: false }); }}><Video size={20} weight="duotone" /></button>
                     <div className="divider"></div>
                     <button className={`action-btn ${isInfoOpen ? 'active' : ''}`} onClick={() => setIsInfoOpen(!isInfoOpen)} title="Informações">
                         <Info size={20} weight="bold" />
@@ -563,29 +588,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <div className="contact-quick-edit" style={{ padding: '1rem', borderBottom: '1px solid var(--border-color, #333)' }}>
                             {isEditingContact ? (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <input type="text" value={editContactData.name} onChange={e => setEditContactData({ ...editContactData, name: e.target.value })} placeholder="Nome" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                    <input type="text" value={editContactData.phone} onChange={e => setEditContactData({ ...editContactData, phone: e.target.value })} placeholder="Telefone" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                    <input type="email" value={editContactData.email} onChange={e => setEditContactData({ ...editContactData, email: e.target.value })} placeholder="E-mail" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                    <input type="text" value={editContactData.name} onChange={e => setEditContactData({ ...editContactData, name: e.target.value })} placeholder="Nome" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
+                                    <input type="text" value={editContactData.phone} onChange={e => setEditContactData({ ...editContactData, phone: e.target.value })} placeholder="Telefone" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
+                                    <input type="email" value={editContactData.email} onChange={e => setEditContactData({ ...editContactData, email: e.target.value })} placeholder="E-mail" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
                                     <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                        <button onClick={() => setIsEditingContact(false)} style={{ flex: 1, padding: '6px', background: 'transparent', color: '#ccc', border: '1px solid #444', borderRadius: '4px', cursor: 'pointer' }}>Cancelar</button>
-                                        <button onClick={handleSaveContact} style={{ flex: 1, padding: '6px', background: 'var(--primary-color, #007bff)', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}>Salvar</button>
+                                        <button onClick={() => setIsEditingContact(false)} style={{ flex: 1, padding: '6px', background: 'transparent', color: '#ccc', border: '1px solid #444', borderRadius: '4px' }}>Cancelar</button>
+                                        <button onClick={handleSaveContact} style={{ flex: 1, padding: '6px', background: 'var(--primary-color, #007bff)', color: '#fff', border: 'none', borderRadius: '4px' }}>Salvar</button>
                                     </div>
                                 </div>
                             ) : (
                                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
                                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                                         <strong style={{ fontSize: '1.05rem' }}>{conversation?.contact_name}</strong>
-                                        <button onClick={handleEditClick} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color, #007bff)', cursor: 'pointer' }} title="Editar Contato"><PencilSimple size={18} /></button>
+                                        <button onClick={handleEditClick} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color, #007bff)' }} title="Editar Contato"><PencilSimple size={18} /></button>
                                     </div>
                                     {conversation?.contact_phone && (
                                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#aaa', fontSize: '0.9rem' }}>
                                             <span>{conversation.contact_phone}</span>
-                                            <button onClick={() => handleCopyPhone(conversation.contact_phone!)} style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer' }} title="Copiar Telefone para Automação"><Copy size={16} /></button>
-                                        </div>
-                                    )}
-                                    {conversation?.contact_email && (
-                                        <div style={{ color: '#aaa', fontSize: '0.9rem', wordBreak: 'break-all' }}>
-                                            <span>{conversation.contact_email}</span>
+                                            <button onClick={() => handleCopyPhone(conversation.contact_phone!)} style={{ background: 'transparent', border: 'none', color: '#aaa' }} title="Copiar Telefone"><Copy size={16} /></button>
                                         </div>
                                     )}
                                 </div>
@@ -595,26 +615,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <div className="accordion-list">
                             {[
                                 { id: 'timeline', icon: <ClockCounterClockwise size={18} weight="duotone" />, label: 'Timeline', content: <><p>Criado em: {new Date(conversation?.created_at || '').toLocaleDateString()}</p><p>Canal: {conversation?.platform}</p></> },
-                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Nenhum débito pendente.</p> },
+                                { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Sem pendências.</p> },
                                 {
-                                    id: 'conexao', icon: <WifiHigh size={18} weight="duotone" />, label: 'Status ISP / Rede', content: (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Status Contrato</span>
-                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>Ativo</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Plano de Internet</span>
-                                                <span style={{ fontSize: '0.85rem', fontWeight: 600 }}>Fibra 500 Mega</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Sinal Óptico</span>
-                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>-18.4 dBm</span>
-                                            </div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                                <span style={{ color: '#aaa', fontSize: '0.85rem' }}>Conexão (PPPoE)</span>
-                                                <span style={{ fontSize: '0.85rem', color: '#4caf50', fontWeight: 'bold' }}>Conectado (3d 4h)</span>
-                                            </div>
+                                    id: 'conexao', icon: <WifiHigh size={18} weight="duotone" />, label: 'Status ISP', content: (
+                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PPPoE</span><span style={{ color: '#4caf50' }}>Conectado</span></div>
+                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Sinal</span><span style={{ color: '#4caf50' }}>-19.2 dBm</span></div>
                                         </div>
                                     )
                                 },
@@ -639,36 +645,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal">
                             <div className="ca-modal-icon warning"><Warning size={28} weight="duotone" /></div>
                             <h3>Encerrar atendimento?</h3>
-                            <p style={{ marginBottom: '8px' }}>O cliente não poderá mais responder antes de triagem.</p>
-
+                            <p>O cliente não poderá mais responder antes de triagem.</p>
                             <textarea
-                                placeholder="Descreva o motivo pelo qual este atendimento está sendo definitivamente encerrado..."
+                                placeholder="Motivo do encerramento..."
                                 value={endReason}
                                 onChange={(e) => setEndReason(e.target.value)}
-                                rows={4}
-                                style={{
-                                    width: '100%', padding: '10px', borderRadius: '6px',
-                                    background: 'var(--bg-deep)', border: '1px solid #444',
-                                    color: '#fff', outline: 'none', resize: 'none',
-                                    marginBottom: '16px', fontSize: '0.9rem'
-                                }}
+                                rows={3}
+                                style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', marginTop: '12px' }}
                             ></textarea>
-
-                            <div className="ca-modal-actions">
+                            <div className="ca-modal-actions" style={{ marginTop: '16px' }}>
                                 <button className="ca-cancel" onClick={() => setShowEndModal(false)}>Cancelar</button>
-                                <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar Definitivo</button>
-                            </div>
-                        </motion.div>
-                    </div>
-                )}
-
-                {showHistoryModal && (
-                    <div className="modal-overlay" onClick={() => setShowHistoryModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
-                            <button className="ca-modal-close" onClick={() => setShowHistoryModal(false)}><X size={18} /></button>
-                            <h3>Histórico de Conversas</h3>
-                            <div className="history-list">
-                                <div className="history-item"><span className="history-date">{new Date().toLocaleDateString()}</span><span>Atendimento atual</span></div>
+                                <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar</button>
                             </div>
                         </motion.div>
                     </div>
@@ -679,38 +666,16 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowTransferModal(false)}><X size={18} /></button>
                             <h3>Transferir Atendimento</h3>
-                            <p style={{ marginBottom: '16px' }}>Selecione o destino para transferir o lead.</p>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left' }}>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Departamento / Fila</label>
-                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginTop: '12px' }}>
+                                <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
                                     <option>Suporte Técnico</option>
-                                    <option>Comercial / Vendas</option>
+                                    <option>Comercial</option>
                                     <option>Financeiro</option>
                                 </select>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Atendente Específico (Opcional)</label>
-                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
-                                    <option>Qualquer Atendente...</option>
-                                    <option>Carlos Oliveira</option>
-                                    <option>Mariana Silva</option>
-                                    <option>João Sollatori</option>
-                                </select>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Nota Interna (Oculto para Cliente)</label>
-                                <textarea placeholder="Deixe um contexto para o próximo atendente..." rows={2} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
                             </div>
                             <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
                                 <button className="ca-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={async () => {
-                                    const dept = (document.querySelector('.ca-modal select') as HTMLSelectElement)?.value || 'Suporte Técnico';
-                                    const note = (document.querySelector('.ca-modal textarea') as HTMLTextAreaElement)?.value || '';
-                                    await sendMessage(chatId, {
-                                        sender: 'Sistema',
-                                        text: `➡️ Atendimento transferido para: ${dept}${note ? `\nNota interna: "${note}"` : ''}`,
-                                        is_user: false,
-                                        is_bot: false
-                                    });
-                                    await updateConversation(chatId, { assigned_to: dept });
-                                    setShowTransferModal(false);
-                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Transferir</button>
+                                <button className="ca-confirm" onClick={() => setShowTransferModal(false)}>Transferir</button>
                             </div>
                         </motion.div>
                     </div>
@@ -721,125 +686,83 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowParticipantsModal(false)}><X size={18} /></button>
                             <h3>Participantes Internos</h3>
-                            <p style={{ marginBottom: '16px' }}>Colaboradores acompanhando este ticket.</p>
-                            <div className="history-list" style={{ marginBottom: '16px' }}>
-                                <div className="history-item"><div className="avatar-small flex-center" style={{ width: '28px', height: '28px', fontSize: '0.8rem' }}>V</div><span>Você (Operador Atual)</span></div>
-                                <div className="history-item"><div className="avatar-small flex-center" style={{ width: '28px', height: '28px', fontSize: '0.8rem', background: 'var(--primary-color, #046bed)', color: '#fff' }}>M</div><span>Mariana Silva (Suporte N2)</span></div>
-                            </div>
-                            <div style={{ display: 'flex', gap: '8px' }}>
-                                <select style={{ flex: 1, padding: '8px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
-                                    <option>Selecionar colaborador...</option>
-                                    <option>Carlos Oliveira</option>
-                                    <option>Fernanda Costa</option>
-                                </select>
-                                <button style={{ padding: '8px 12px', background: 'var(--bg-surface-light)', color: '#fff', border: '1px solid #444', borderRadius: '6px', cursor: 'pointer' }} onClick={async () => {
-                                    const sel = (document.querySelector('.ca-modal select:last-of-type') as HTMLSelectElement)?.value;
-                                    if (!sel || sel === 'Selecionar colaborador...') return;
-                                    await sendMessage(chatId, {
-                                        sender: 'Sistema',
-                                        text: `👥 ${sel} foi adicionado(a) como participante interno deste ticket.`,
-                                        is_user: false,
-                                        is_bot: false
-                                    });
-                                    setShowParticipantsModal(false);
-                                }}>Adicionar</button>
+                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                                <button className="ca-confirm" onClick={() => setShowParticipantsModal(false)}>Fechar</button>
                             </div>
                         </motion.div>
                     </div>
                 )}
 
                 {showOSModal && (
-                    <div className="modal-overlay" onClick={() => setShowOSModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '500px' }}>
-                            <button className="ca-modal-close" onClick={() => setShowOSModal(false)}><X size={18} /></button>
-                            <h3>Nova Ordem de Serviço</h3>
-                            <p style={{ marginBottom: '10px' }}>Criar OS para <strong>{conversation?.contact_name}</strong></p>
+                    <div className="modal-overlay" onClick={() => { setShowOSModal(false); setOsWizardStep('OS_FIELDS'); }}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '480px' }}>
+                            <button className="ca-modal-close" onClick={() => { setShowOSModal(false); setOsWizardStep('OS_FIELDS'); }}><X size={18} /></button>
 
-                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', maxHeight: '65vh', overflowY: 'auto', paddingRight: '16px', paddingBottom: '24px' }}>
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Tipo de Serviço</label>
-                                        <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', marginTop: '4px' }}>
-                                            <option>Instalação</option>
-                                            <option>Manutenção Preventiva</option>
-                                            <option>Manutenção Corretiva</option>
-                                            <option>Mudança de Endereço</option>
-                                            <option>Retirada de Equipamento</option>
-                                        </select>
-                                    </div>
-                                    <div style={{ flex: 1 }}>
-                                        <label style={{ fontSize: '0.85rem', color: '#ccc' }}>Prioridade</label>
-                                        <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', marginTop: '4px' }}>
-                                            <option>Normal (SLA Padrão)</option>
-                                            <option>Alta</option>
-                                            <option style={{ color: '#ff4d4f' }}>Urgente</option>
-                                        </select>
-                                    </div>
-                                </div>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Agendamento (Data / Hora limite)</label>
-                                <input type="datetime-local" style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                            <AnimatePresence mode="wait">
+                                {osWizardStep === 'OS_FIELDS' && (
+                                    <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
+                                        <div className="ca-modal-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary-color)' }}><Wrench size={32} weight="duotone" /></div>
+                                        <h3>Abertura de OS</h3>
+                                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                                            <select value={osFormData.order_type} onChange={e => setOsFormData({ ...osFormData, order_type: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                                <option>Instalação</option>
+                                                <option>Reparo</option>
+                                                <option>Troca Equipamento</option>
+                                            </select>
+                                            <textarea placeholder="Descrição..." value={osFormData.description} onChange={e => setOsFormData({ ...osFormData, description: e.target.value })} rows={3} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
+                                        </div>
+                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                            <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
+                                            <button className="ca-confirm" onClick={() => setOsWizardStep('OCO_FIELDS')}>Próximo</button>
+                                        </div>
+                                    </motion.div>
+                                )}
 
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Endereço da OS</label>
-                                <input type="text" placeholder="Rua, Número, Bairro, CEP..." style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
+                                {osWizardStep === 'OCO_FIELDS' && (
+                                    <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
+                                        <div className="ca-modal-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}><Warning size={32} weight="duotone" /></div>
+                                        <h3>Vincular Ocorrência</h3>
+                                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+                                            <input type="text" placeholder="Assunto..." value={ocoFormData.subject} onChange={e => setOcoFormData({ ...ocoFormData, subject: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }} />
+                                            <select value={ocoFormData.priority} onChange={e => setOcoFormData({ ...ocoFormData, priority: e.target.value as any })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                                <option value="BAIXA">BAIXA</option>
+                                                <option value="MEDIA">MEDIA</option>
+                                                <option value="ALTA">ALTA</option>
+                                                <option value="CRITICA">CRÍTICA (PIN)</option>
+                                            </select>
+                                        </div>
+                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                            <button className="ca-cancel" onClick={() => setOsWizardStep('OS_FIELDS')}>Voltar</button>
+                                            <button className="ca-confirm" onClick={async () => {
+                                                try {
+                                                    const oco = await createOcorrencia({ protocol: `OC-${Date.now()}`, customer_name: conversation?.contact_name || '', subject: ocoFormData.subject, status: 'ABERTA', priority: ocoFormData.priority as any });
+                                                    setGeneratedOcoId(oco.id);
+                                                    setOsWizardStep('CONFIRMATION');
+                                                } catch (err) { alert('Erro ao criar ocorrência'); }
+                                            }}>Gerar Ocorrência</button>
+                                        </div>
+                                    </motion.div>
+                                )}
 
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Técnico Responsável (Opcional)</label>
-                                <select style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }}>
-                                    <option>A Definir / Fila Automática</option>
-                                    <option>João (Técnico N2)</option>
-                                    <option>Pedro (Técnico de Campo)</option>
-                                </select>
-
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Equipamentos (Retirada/Auditoria)</label>
-                                <div style={{ display: 'flex', gap: '12px', fontSize: '0.9rem', flexWrap: 'wrap', marginBottom: '4px' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> ONU/Modem</label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> Antena 5GHz</label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}><input type="checkbox" /> Cabeamento Rig.</label>
-                                </div>
-
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', marginTop: '4px' }}>Descrição do Problema</label>
-                                <textarea placeholder="Descreva os detalhes da solicitação para o Field Service..." rows={3} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none', resize: 'none' }}></textarea>
-                            </div>
-                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
-                                <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={async () => {
-                                    try {
-                                        // Capture values from current modal state (simplifying here since we didn't add refs/state for all fields yet, but we'll use placeholder or capture from DOM for now)
-                                        // Ideally we should have used state for these fields. 
-                                        // Let's assume some defaults or better, I will quickly add state for the OS form in the next step or use what's there.
-
-                                        // 1. Create the mandatory Occurrence first
-                                        const newOco = await createOcorrencia({
-                                            protocol: `OC-${Date.now().toString().slice(-8)}`,
-                                            customer_name: conversation?.contact_name || 'Desconhecido',
-                                            subject: 'OS Associada: Instalação/Manutenção',
-                                            status: 'ABERTA',
-                                            priority: 'MEDIA'
-                                        });
-
-                                        // 2. Create the OS linked to the Occurrence
-                                        const newOS = await createServiceOrder({
-                                            order_type: 'Instalação',
-                                            priority: 'NORMAL',
-                                            customer_name: conversation?.contact_name || 'Desconhecido',
-                                            customer_address: 'Consultar histórico',
-                                            description: 'Gerada via Chat',
-                                            conversation_id: chatId,
-                                            occurrence_id: newOco.id
-                                        });
-
-                                        await sendMessage(chatId, {
-                                            sender: 'Sistema',
-                                            text: `🛠️ Ordem de Serviço ${newOS.id.slice(0, 8)} e Ocorrência ${newOco.protocol} geradas com sucesso.\nStatus: Aberta.`,
-                                            is_user: false,
-                                            is_bot: false
-                                        });
-                                        setShowOSModal(false);
-                                    } catch (err) {
-                                        console.error('Erro ao gerar OS:', err);
-                                        alert('Erro técnico ao gerar OS.');
-                                    }
-                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Gerar e Atribuir OS</button>
-                            </div>
+                                {osWizardStep === 'CONFIRMATION' && (
+                                    <motion.div key="step3" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
+                                        <div className="ca-modal-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>✅</div>
+                                        <h3>Quase lá!</h3>
+                                        <p>Ocorrência gerada. Clique abaixo para finalizar a OS.</p>
+                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                            <button className="ca-confirm" onClick={async () => {
+                                                if (!generatedOcoId) return;
+                                                try {
+                                                    await createServiceOrder({ ...osFormData, customer_name: conversation?.contact_name || '', conversation_id: chatId, occurrence_id: generatedOcoId });
+                                                    await sendMessage(chatId, { sender: 'Sistema', text: `🛠️ OS gerada e vinculada à Ocorrência.`, is_user: false, is_bot: false });
+                                                    setShowOSModal(false);
+                                                    setOsWizardStep('OS_FIELDS');
+                                                } catch (err) { alert('Erro ao finalizar OS'); }
+                                            }}>Finalizar Emissão</button>
+                                        </div>
+                                    </motion.div>
+                                )}
+                            </AnimatePresence>
                         </motion.div>
                     </div>
                 )}
@@ -848,49 +771,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     <div className="modal-overlay" onClick={() => setShowOcorrenciaModal(false)}>
                         <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '450px' }}>
                             <button className="ca-modal-close" onClick={() => setShowOcorrenciaModal(false)}><X size={18} /></button>
-                            <div className="ca-modal-icon" style={{ background: 'rgba(245, 158, 11, 0.1)', color: '#f59e0b' }}><WarningCircle size={32} weight="duotone" /></div>
                             <h3>Nova Ocorrência</h3>
-                            <p style={{ marginBottom: '1.5rem' }}>Abrir um chamado de suporte para <strong>{conversation?.contact_name}</strong></p>
-
-                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left' }}>
-                                <div className="form-group-ca">
-                                    <label>Assunto / Motivo</label>
-                                    <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
-                                        <option>Problemas de Conexão</option>
-                                        <option>Dúvidas Financeiras</option>
-                                        <option>Troca de Equipamento</option>
-                                        <option>Mudança de Titularidade</option>
-                                        <option>Outros assuntos...</option>
-                                    </select>
-                                </div>
-                                <div className="form-group-ca">
-                                    <label>Prioridade</label>
-                                    <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
-                                        <option value="BAIXA">Baixa</option>
-                                        <option value="MEDIA" selected>Média</option>
-                                        <option value="ALTA">Alta</option>
-                                        <option value="CRITICA">Crítica</option>
-                                    </select>
-                                </div>
-                                <div className="form-group-ca">
-                                    <label>Descrição Detalhada</label>
-                                    <textarea placeholder="O que o cliente relatou? Contextualize o problema..." rows={4} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
-                                </div>
-                            </div>
-
                             <div className="ca-modal-actions" style={{ marginTop: '2rem' }}>
                                 <button className="ca-cancel" onClick={() => setShowOcorrenciaModal(false)}>Cancelar</button>
-                                <button className="ca-confirm warn" onClick={async () => {
-                                    const proc = `PROT-${Date.now().toString().slice(-8)}`;
-                                    const subject = (document.querySelector('.ca-modal-body select') as HTMLSelectElement)?.value;
-                                    await sendMessage(chatId, {
-                                        sender: 'Sistema',
-                                        text: `🎫 OCORRÊNCIA ABERTA\nProtocolo: ${proc}\nAssunto: ${subject}\n\nO suporte N2 foi notificado e entrará em contato em breve.`,
-                                        is_user: false,
-                                        is_bot: false
-                                    });
-                                    setShowOcorrenciaModal(false);
-                                }} style={{ flex: 1, padding: '12px', background: '#f59e0b', color: '#fff', border: 'none', borderRadius: '6px', fontWeight: 600, cursor: 'pointer' }}>Abrir chamado</button>
+                                <button className="ca-confirm warn" onClick={() => setShowOcorrenciaModal(false)}>Abrir Chamado</button>
                             </div>
                         </motion.div>
                     </div>
@@ -898,105 +782,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                 {showCadastroModal && (
                     <div className="modal-overlay" onClick={() => setShowCadastroModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '550px' }}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '500px' }}>
                             <button className="ca-modal-close" onClick={() => setShowCadastroModal(false)}><X size={18} /></button>
-                            <h3>Cadastro CRM do Cliente</h3>
-                            <p style={{ marginBottom: '16px' }}>Atualize o CRM / Ficha Financeira do Lead.</p>
-
-                            <div style={{ display: 'flex', gap: '10px', marginBottom: '16px' }}>
-                                <button onClick={() => setCadastroMode('rapido')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'rapido' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'rapido' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>Básico</button>
-                                <button onClick={() => setCadastroMode('completo')} style={{ flex: 1, padding: '8px', border: `1px solid ${cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#444'}`, background: cadastroMode === 'completo' ? 'rgba(4, 107, 237, 0.1)' : 'transparent', color: cadastroMode === 'completo' ? 'var(--primary-color, #046bed)' : '#ccc', borderRadius: '4px', cursor: 'pointer', transition: 'all 0.2s', fontSize: '0.9rem' }}>CRM Completo</button>
-                            </div>
-
-                            <div className="ca-modal-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px', textAlign: 'left', marginBottom: '16px', maxHeight: '60vh', overflowY: 'auto', paddingRight: '16px', paddingBottom: '24px' }}>
-                                <input type="text" placeholder="Nome Completo / Razão Social" defaultValue={conversation?.contact_name} style={{ padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-
-                                <div style={{ display: 'flex', gap: '10px' }}>
-                                    <input type="text" placeholder="Telefone 1" defaultValue={conversation?.contact_phone} style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                    {cadastroMode === 'completo' && (
-                                        <input type="text" placeholder="Telefone 2 (Opcional)" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                    )}
-                                </div>
-
-                                {cadastroMode === 'completo' && (
-                                    <>
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <input type="text" placeholder="CPF / CNPJ" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                            <input type="text" placeholder="RG / Inscrição Estudual" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                        </div>
-                                        <div style={{ display: 'flex', gap: '10px' }}>
-                                            <input type="email" placeholder="E-mail Principal" defaultValue={conversation?.contact_email} style={{ flex: 2, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                            <input type="date" title="Data de Nascimento" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }} />
-                                        </div>
-
-                                        <div style={{ borderTop: '1px solid #333', margin: '4px 0', paddingTop: '10px' }}>
-                                            <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Endereço de Viabilidade / Faturamento</label>
-                                            <div style={{ display: 'flex', gap: '10px', marginBottom: '10px' }}>
-                                                <input type="text" placeholder="CEP" style={{ width: '120px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                                <input type="text" placeholder="Logradouro" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                                <input type="text" placeholder="Nº" style={{ width: '80px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <input type="text" placeholder="Complemento" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                                <input type="text" placeholder="Bairro" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                            </div>
-                                            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
-                                                <input type="text" placeholder="Cidade" style={{ flex: 2, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                                <input type="text" placeholder="UF" style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', outline: 'none' }} />
-                                            </div>
-                                        </div>
-
-                                        <div style={{ borderTop: '1px solid #333', margin: '4px 0', paddingTop: '10px' }}>
-                                            <div style={{ display: 'flex', gap: '10px' }}>
-                                                <select style={{ flex: 1, padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }}>
-                                                    <option>Forma de Pgto. Preferencial</option>
-                                                    <option>Boleto Bancário</option>
-                                                    <option>Cartão de Crédito</option>
-                                                    <option>PIX (Recorrente)</option>
-                                                </select>
-                                                <select style={{ width: '150px', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#ccc', outline: 'none' }}>
-                                                    <option>Vencimento</option>
-                                                    <option>Dia 05</option>
-                                                    <option>Dia 10</option>
-                                                    <option>Dia 15</option>
-                                                    <option>Dia 20</option>
-                                                </select>
-                                            </div>
-                                        </div>
-                                    </>
-                                )}
-                            </div>
-
-                            <div style={{ textAlign: 'left', marginBottom: '20px', padding: '10px', border: '1px solid #333', borderRadius: '6px', background: 'var(--bg-deep)' }}>
-                                <label style={{ fontSize: '0.85rem', color: '#ccc', display: 'block', marginBottom: '8px' }}>Comportamento de Ingestão de Dados:</label>
-                                <div style={{ display: 'flex', gap: '16px', fontSize: '0.9rem', color: '#ddd' }}>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                        <input type="radio" name="conflict" checked={conflictMode === 'add'} onChange={() => setConflictMode('add')} /> Agrupar / Preservar antigas
-                                    </label>
-                                    <label style={{ display: 'flex', alignItems: 'center', gap: '6px', cursor: 'pointer' }}>
-                                        <input type="radio" name="conflict" checked={conflictMode === 'overwrite'} onChange={() => setConflictMode('overwrite')} /> Sobrescrever Banco ERP
-                                    </label>
-                                </div>
-                            </div>
-
-                            <div className="ca-modal-actions">
-                                <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Cancelar</button>
-                                <button className="ca-confirm" onClick={async () => {
-                                    const nameInput = (document.querySelectorAll('.ca-modal-body input[type="text"]')[0] as HTMLInputElement)?.value || conversation?.contact_name;
-                                    const phoneInput = (document.querySelectorAll('.ca-modal-body input[type="text"]')[1] as HTMLInputElement)?.value || conversation?.contact_phone;
-                                    await updateConversation(chatId, {
-                                        contact_name: nameInput?.trim(),
-                                        contact_phone: phoneInput?.trim()
-                                    });
-                                    setConversation(prev => prev ? { ...prev, contact_name: nameInput?.trim() || prev.contact_name, contact_phone: phoneInput?.trim() || prev.contact_phone } : null);
-                                    await sendMessage(chatId, {
-                                        sender: 'Sistema',
-                                        text: `📝 Cadastro CRM atualizado (${conflictMode === 'overwrite' ? 'Sobrescrita ERP' : 'Agrupamento seguro'}).`,
-                                        is_user: false,
-                                        is_bot: false
-                                    });
-                                    setShowCadastroModal(false);
-                                }} style={{ flex: 1, padding: '11px', background: 'var(--primary-color, #046bed)', color: 'white', borderRadius: 'var(--radius-md)', fontWeight: 600, border: 'none', cursor: 'pointer' }}>Salvar Ficha Completa</button>
+                            <h3>Gerenciar Cadastro</h3>
+                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                                <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Fechar</button>
+                                <button className="ca-confirm" onClick={() => setShowCadastroModal(false)}>Salvar</button>
                             </div>
                         </motion.div>
                     </div>

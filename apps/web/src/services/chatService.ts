@@ -108,24 +108,39 @@ export const sendMessage = async (
     conversationId: string,
     partial: Partial<Omit<Message, 'id' | 'created_at' | 'conversation_id' | 'reactions'>>
 ): Promise<Message> => {
-    const { data, error } = await supabase
+    // 1. Inserir a mensagem
+    const { data: insertedData, error: insertError } = await supabase
         .from('messages')
-        .insert([{ conversation_id: conversationId, reactions: [], ...partial }])
+        .insert([{
+            conversation_id: conversationId,
+            reactions: [],
+            ...partial
+        }])
         .select()
         .single();
-    if (error) throw error;
 
-    // update conversation last_message
-    await supabase
-        .from('conversations')
-        .update({
-            last_message: partial.text,
-            last_message_at: new Date().toISOString(),
-            updated_at: new Date().toISOString(),
-        })
-        .eq('id', conversationId);
+    if (insertError) {
+        console.error('Supabase Insert Error:', insertError);
+        throw insertError;
+    }
 
-    return data;
+    // 2. Atualizar a conversa (Last Message)
+    // Fazemos isso em background ou tratamos o erro separadamente para não travar o envio
+    try {
+        await supabase
+            .from('conversations')
+            .update({
+                last_message: partial.text,
+                last_message_at: new Date().toISOString(),
+                updated_at: new Date().toISOString(),
+            })
+            .eq('id', conversationId);
+    } catch (updateErr) {
+        console.warn('Silent Error updating conversation metadata:', updateErr);
+        // Não jogamos erro aqui para que a mensagem seja considerada "enviada"
+    }
+
+    return insertedData;
 };
 
 export const uploadChatFile = async (file: File): Promise<{ url: string; name: string }> => {
