@@ -21,14 +21,15 @@ import {
     CaretRight,
     WarningCircle,
     User,
-    ChartLine
+    ChartLine,
+    Palette
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
 interface SidebarProps {
     isRetracted: boolean;
     onToggleRetraction: () => void;
-    theme: 'light' | 'dark';
+    theme: 'light' | 'dark' | 'soft';
     onToggleTheme: () => void;
 }
 
@@ -237,8 +238,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                 <div className="footer-toolbar">
                     {!isRetracted && (
                         <button className="footer-item" onClick={onToggleTheme}
-                            title={theme === 'dark' ? 'Modo Claro' : 'Modo Escuro'}>
-                            {theme === 'dark' ? <Sun size={22} weight="duotone" /> : <Moon size={22} weight="duotone" />}
+                            title={theme === 'dark' ? 'Modo Claro' : theme === 'light' ? 'Modo Soft' : 'Modo Escuro'}>
+                            {theme === 'dark' ? <Sun size={22} weight="duotone" /> : theme === 'light' ? <Moon size={22} weight="duotone" /> : <Palette size={22} weight="duotone" />}
                         </button>
                     )}
 

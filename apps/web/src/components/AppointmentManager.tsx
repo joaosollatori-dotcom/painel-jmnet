@@ -458,25 +458,60 @@ const AppointmentManager: React.FC = () => {
                     </div>
                 ) : (
                     <div className="appt-table">
-                        <div className="table-header"><div>Identificação</div><div>Temporal</div><div>Status</div><div>Responsável</div><div>Ações</div></div>
-                        {filteredAppointments.map(a => (
-                            <div key={a.id} className="table-row">
-                                <div><strong>{a.titulo}</strong><br /><small>{a.tipo}</small></div>
-                                <div>{new Date(a.dataInicio).toLocaleDateString()} {new Date(a.dataInicio).toLocaleTimeString()}</div>
-                                <div>
-                                    <select
-                                        className="status-select-table"
-                                        style={{ background: getStatusStyle(a.status).bg, color: getStatusStyle(a.status).color }}
-                                        value={a.status}
-                                        onChange={(e) => handleStatusUpdate(a.id, e.target.value)}
-                                    >
-                                        {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
-                                    </select>
+                        <div className="table-header">
+                            <div>Identificação</div>
+                            <div>Temporal</div>
+                            <div className="flex-center">Status</div>
+                            <div>Responsável</div>
+                            <div className="flex-center">Ações</div>
+                        </div>
+                        <div className="table-body">
+                            {filteredAppointments.length === 0 ? (
+                                <div className="empty-titan">
+                                    <Calendar size={48} weight="duotone" />
+                                    <h4>Nenhum agendamento encontrado</h4>
+                                    <p>Tente ajustar os filtros ou a data selecionada.</p>
                                 </div>
-                                <div>{a.vendedorId || 'S/R'}</div>
-                                <div><button onClick={() => setSelectedApptId(a.id)}><ArrowSquareOut /></button></div>
-                            </div>
-                        ))}
+                            ) : filteredAppointments.map(a => (
+                                <div key={a.id} className="table-row">
+                                    <div className="ident-cell">
+                                        <div className="op-icon">
+                                            {a.tipo === 'INSTALACAO' ? <Checks size={20} weight="fill" /> : <Calendar size={20} />}
+                                        </div>
+                                        <div>
+                                            <strong>{a.titulo}</strong>
+                                            <span className="sub-label">{a.tipo}</span>
+                                        </div>
+                                    </div>
+                                    <div className="temporal-cell">
+                                        <Clock size={14} className="accent-text" />
+                                        <span>{new Date(a.dataInicio).toLocaleDateString('pt-BR')} {new Date(a.dataInicio).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}</span>
+                                    </div>
+                                    <div className="flex-center">
+                                        <div className="status-selector-wrapper" style={{ background: getStatusStyle(a.status).bg }}>
+                                            <select
+                                                className="status-select-titan"
+                                                style={{ color: getStatusStyle(a.status).color }}
+                                                value={a.status}
+                                                onChange={(e) => handleStatusUpdate(a.id, e.target.value)}
+                                            >
+                                                {STATUS_OPTIONS.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}
+                                            </select>
+                                            <CaretDown size={12} style={{ color: getStatusStyle(a.status).color }} />
+                                        </div>
+                                    </div>
+                                    <div className="resp-cell">
+                                        <div className="resp-mini-avatar">{getTeamName(a.vendedorId).charAt(0)}</div>
+                                        <span>{getTeamName(a.vendedorId)}</span>
+                                    </div>
+                                    <div className="flex-center">
+                                        <button className="btn-action-view" onClick={() => setSelectedApptId(a.id)}>
+                                            <ArrowSquareOut size={20} weight="bold" />
+                                        </button>
+                                    </div>
+                                </div>
+                            ))}
+                        </div>
                     </div>
                 )}
             </main>
@@ -484,83 +519,137 @@ const AppointmentManager: React.FC = () => {
             <AnimatePresence>{selectedApptId && <AppointmentDetailModal apptId={selectedApptId} onClose={() => setSelectedApptId(null)} />}</AnimatePresence>
 
             <style>{`
-                .appt-dashboard { padding: 2.5rem; background: #080a0f; height: 100vh; display: flex; flex-direction: column; gap: 1.5rem; overflow: hidden; }
+                .appt-dashboard { 
+                    padding: 2rem; 
+                    background: var(--bg-deep); 
+                    height: 100vh; 
+                    display: flex; 
+                    flex-direction: column; 
+                    gap: 1.5rem; 
+                    overflow: hidden; 
+                    font-family: var(--font-body);
+                }
+
                 .appt-header { display: flex; justify-content: space-between; align-items: center; }
-                .date-nav-controls { display: flex; align-items: center; gap: 1rem; background: #11141d; padding: 4px 12px; border-radius: 12px; border: 1px solid #1e2430; }
-                .nav-btn { background: none; border: none; color: #fff; cursor: pointer; }
-                .view-selector { background: #11141d; padding: 4px; border-radius: 12px; display: flex; border: 1px solid #1e2430; }
-                .view-selector button { background: none; border: none; color: #64748b; padding: 8px 16px; border-radius: 8px; font-size: 0.75rem; font-weight: 800; cursor: pointer; }
-                .view-selector button.active { background: #1e2430; color: #fff; }
+                .title-group h1 { font-size: 1.8rem; margin: 0; color: var(--text-primary); font-weight: 800; }
+                .count-badge { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
+
+                .date-nav-controls { 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 1rem; 
+                    background: var(--bg-surface-light); 
+                    padding: 4px 16px; 
+                    border-radius: 99px; 
+                    border: 1px solid var(--border-light); 
+                    backdrop-filter: var(--glass);
+                }
+                .nav-btn { color: var(--text-secondary); padding: 8px; }
+                .nav-btn:hover { color: var(--accent); }
+                .current-date-label { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
+
+                .view-selector { background: var(--bg-surface-light); padding: 4px; border-radius: 12px; display: flex; border: 1px solid var(--border-light); }
+                .view-selector button { color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
+                .view-selector button.active { background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow); }
+
                 .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-                .stat-card { background: #11141d; border: 1px solid #1e2430; padding: 1rem; border-radius: 16px; display: flex; align-items: center; gap: 1rem; transition: all 0.3s ease; }
-                .stat-card.clickable { cursor: pointer; }
-                .stat-card.clickable:hover { border-color: #3b82f6; background: #1a1e2b; transform: translateY(-2px); }
-                .stat-card.active { border-color: #3b82f6; background: #1a1e2b; box-shadow: 0 4px 20px rgba(59, 130, 246, 0.1); }
-                .stat-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
-                .stat-icon.blue { background: #3b82f615; color: #3b82f6; }
-                .calendar-view-pane { background: #11141d; border-radius: 20px; flex: 1; display: flex; flex-direction: column; overflow: hidden; border: 1px solid #1e2430; }
-                .lane-header { display: flex; background: #0c0f16; border-bottom: 1px solid #1e2430; }
-                .lane-col { flex: 1; padding: 12px; text-align: center; border-right: 1px solid #ffffff05; }
-                .lane-col img { width: 24px; height: 24px; border-radius: 50%; margin-bottom: 4px; }
-                .lane-grid { flex: 1; display: flex; overflow-y: auto; background: repeating-linear-gradient(#1e243005, #1e243005 79px, #1e243020 80px); }
-                .time-labels { width: 60px; border-right: 1px solid #1e2430; }
-                .time-slot-label { height: 80px; font-size: 0.65rem; color: #475569; text-align: center; padding: 10px; }
-                .grid-content { flex: 1; position: relative; min-height: 1040px; }
-                .appt-block { position: absolute; background: #1e2430; border: 1px solid #3b82f640; border-radius: 8px; display: flex; overflow: hidden; cursor: pointer; }
-                .block-tag { width: 4px; }
-                .block-info { padding: 8px; flex: 1; }
-                .block-info strong { font-size: 0.7rem; color: #fff; display: block; }
-                .block-meta { display: flex; justify-content: space-between; align-items: center; font-size: 0.6rem; color: #64748b; margin-top: 4px; }
-                .block-chrono { background: #10b98120; color: #10b981; padding: 2px 6px; border-radius: 4px; display: flex; align-items: center; gap: 4px; font-weight: 800; }
-                .resize-handle { position: absolute; bottom: 0; left: 0; right: 0; height: 8px; cursor: ns-resize; }
-                .pulse-active { animation: pulse 2s infinite; border-color: #8b5cf6; }
-                @keyframes pulse { 0% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.4); } 70% { box-shadow: 0 0 0 10px rgba(139, 92, 246, 0); } 100% { box-shadow: 0 0 0 0 rgba(139, 92, 246, 0); } }
-                .week-view-container { display: flex; flex-direction: column; background: #11141d; flex: 1; border-radius: 20px; overflow: hidden; }
-                .week-grid-header { display: flex; background: #0c0f16; border-bottom: 1px solid #1e2430; }
-                .week-day-col { flex: 1; padding: 12px; text-align: center; border-right: 1px solid #ffffff05; }
-                .week-day-col span { display: block; font-size: 0.6rem; color: #64748b; text-transform: uppercase; }
-                .week-day-col strong { color: #fff; font-size: 1rem; }
-                .week-grid-content { display: flex; flex: 1; position: relative; height: 1000px; }
-                .week-lane { flex: 1; position: relative; border-right: 1px solid #ffffff05; }
-                .week-appt-mini { position: absolute; width: 95%; left: 2.5%; background: #1e2430; font-size: 0.6rem; color: #fff; padding: 4px; border-radius: 4px; overflow: hidden; }
-                .appt-table { background: #11141d; border-radius: 20px; padding: 1rem; }
-                .table-header { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr; padding-bottom: 12px; color: #475569; font-size: 0.7rem; font-weight: 800; }
-                .table-row { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1fr 0.5fr; align-items: center; padding: 12px 0; border-top: 1px solid #1e2430; font-size: 0.8rem; color: #fff; }
-                .status-badge { padding: 4px 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; }
-                .status-select-table { border: none; padding: 4px 12px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; outline: none; cursor: pointer; }
-                .status-selector-modern { background: #10b98115; color: #10b981; border: 1px solid #10b98130; padding: 6px 14px; border-radius: 99px; font-size: 0.8rem; font-weight: 800; outline: none; cursor: pointer; }
-                .mini-status-toggle { background: transparent; border: 1px solid #ffffff20; color: #fff; font-size: 0.6rem; border-radius: 4px; padding: 0 4px; height: 16px; cursor: pointer; outline: none; }
-                .block-header-title { display: flex; justify-content: space-between; align-items: flex-start; gap: 4px; }
+                .stat-card { 
+                    background: var(--bg-surface); 
+                    border: 1px solid var(--border-light); 
+                    padding: 1.25rem; 
+                    border-radius: var(--radius-lg); 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 1.25rem; 
+                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+                    position: relative;
+                    overflow: hidden;
+                }
+                .stat-card.active { border-color: var(--accent); background: var(--accent-soft); }
+                .stat-card.clickable:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
 
-                /* MONTH VIEW STYLES */
-                .month-grid-container { display: flex; flex-direction: column; flex: 1; background: #11141d; border-radius: 20px; border: 1px solid #1e2430; overflow: hidden; }
-                .month-days-header { display: grid; grid-template-columns: repeat(7, 1fr); background: #0c0f16; border-bottom: 1px solid #1e2430; }
-                .month-days-header div { padding: 12px; text-align: center; font-size: 0.7rem; font-weight: 900; color: #475569; }
-                .month-grid { display: grid; grid-template-columns: repeat(7, 1fr); grid-auto-rows: minmax(100px, 1fr); flex: 1; overflow-y: auto; }
-                .month-cell { border-right: 1px solid #ffffff05; border-bottom: 1px solid #ffffff05; padding: 8px; display: flex; flex-direction: column; gap: 4px; position: relative; }
-                .month-cell.empty { background: #080a0f40; }
-                .month-cell.today { background: #3b82f605; }
-                .month-cell.today .day-num { color: #3b82f6; font-weight: 900; }
-                .day-num { font-size: 0.75rem; color: #475569; margin-bottom: 4px; }
-                .day-appts { display: flex; flex-direction: column; gap: 4px; flex: 1; }
-                .month-appt-card { background: #1a1e2b; border-top: 2px solid #3b82f6; border-radius: 4px; padding: 4px 8px; font-size: 0.65rem; color: #fff; cursor: grab; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-                .month-appt-card:active { cursor: grabbing; z-index: 1000; }
-                .etc-label { font-size: 0.6rem; color: #64748b; margin-top: 2px; text-align: center; }
+                .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
+                .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
+                .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
+                .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
+                .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
 
-                @media (max-width: 768px) {
-                    .appt-dashboard { padding: 1rem; overflow-y: auto; height: auto; min-height: 100vh; }
-                    .appt-header { flex-direction: column; align-items: flex-start; gap: 1rem; }
-                    .attention-panel { grid-template-columns: 1fr 1fr; }
-                    .calendar-view-pane { height: 800px; border-radius: 12px; }
-                    .lane-header { overflow-x: auto; -webkit-overflow-scrolling: touch; }
-                    .lane-col { min-width: 120px; }
-                    .lane-grid { overflow-x: auto; }
-                    .grid-content { min-width: 840px; } /* Mantém a grade legível com scroll horizontal no celular */
-                    .month-grid { grid-template-columns: repeat(7, 1fr); grid-auto-rows: 80px; }
-                    .appt-table { overflow-x: auto; padding: 0.5rem; }
-                    .table-header, .table-row { grid-template-columns: 150px 100px 100px 80px 40px; gap: 8px; }
-                    .stat-info h3 { font-size: 0.75rem; }
-                    .stat-info p { font-size: 0.65rem; }
+                .stat-info h3 { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; margin: 0; font-weight: 800; letter-spacing: 0.5px; }
+                .stat-info p { font-size: 1.1rem; color: var(--text-primary); margin: 0; font-weight: 700; }
+
+                .appt-content { flex: 1; overflow-y: auto; padding-right: 4px; }
+
+                /* List View - Titan Table */
+                .appt-table { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
+                .table-header { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1.2fr 80px; padding: 1rem 1.5rem; background: var(--bg-surface-light); border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
+                .table-row { 
+                    display: grid; 
+                    grid-template-columns: 2fr 1.5fr 1fr 1.2fr 80px; 
+                    padding: 1.25rem 1.5rem; 
+                    align-items: center; 
+                    border-bottom: 1px solid var(--border-light); 
+                    transition: all 0.2s;
+                    cursor: pointer;
+                }
+                .table-row:hover { background: var(--accent-soft); }
+                
+                .ident-cell { display: flex; align-items: center; gap: 12px; }
+                .op-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-deep); color: var(--accent); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
+                .ident-cell strong { font-size: 0.95rem; color: var(--text-primary); display: block; }
+                .sub-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; }
+
+                .temporal-cell { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
+
+                /* Status Selector Titan */
+                .status-selector-wrapper { 
+                    display: flex; 
+                    align-items: center; 
+                    gap: 8px; 
+                    padding: 6px 14px; 
+                    border-radius: 99px; 
+                    min-width: 130px; 
+                    justify-content: center;
+                    position: relative;
+                    transition: transform 0.2s;
+                }
+                .status-selector-wrapper:hover { transform: scale(1.05); }
+                .status-select-titan { 
+                    background: none; 
+                    border: none; 
+                    font-size: 0.75rem; 
+                    font-weight: 900; 
+                    outline: none; 
+                    cursor: pointer; 
+                    -webkit-appearance: none;
+                    text-transform: uppercase;
+                }
+                .status-select-titan option { background: var(--bg-surface); color: var(--text-primary); }
+
+                .resp-cell { display: flex; align-items: center; gap: 10px; }
+                .resp-mini-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--border); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 900; }
+                .resp-cell span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
+
+                .btn-action-view { color: var(--text-secondary); padding: 8px; transition: all 0.2s; }
+                .btn-action-view:hover { color: var(--accent); transform: translate(2px, -2px); }
+
+                /* Day View Styles */
+                .calendar-view-pane { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
+                .lane-header { background: var(--bg-surface-light); border-bottom: 2px solid var(--border); }
+                .lane-col { border-right: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 4px; }
+                .lane-col img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent); }
+                .lane-col span { font-size: 0.75rem; font-weight: 800; color: var(--text-primary); }
+
+                .grid-content { background-image: linear-gradient(var(--border) 1px, transparent 1px); background-size: 100% 80px; }
+                .appt-block { box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.05); }
+                .block-header-title strong { line-height: 1.2; }
+
+                .empty-titan { text-align: center; padding: 5rem 0; opacity: 0.4; }
+                .empty-titan h4 { margin: 1rem 0 0.5rem; font-size: 1.1rem; }
+
+                @media (max-width: 1024px) {
+                    .attention-panel { grid-template-columns: repeat(2, 1fr); }
+                    .table-header, .table-row { grid-template-columns: 1.5fr 1fr 100px 100px 50px; padding: 1rem; }
+                    .resp-cell span { display: none; }
                 }
             `}</style>
         </div >

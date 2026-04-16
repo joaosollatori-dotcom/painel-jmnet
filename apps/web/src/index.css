@@ -55,6 +55,24 @@
   --primary-color: #0284c7;
 }
 
+[data-theme='soft'] {
+  --bg-deep: #fcfaf2;
+  /* Creme suave */
+  --bg-surface: #ffffff;
+  --bg-surface-light: #f5f2e6;
+  /* Off-white creme */
+  --text-primary: #423d33;
+  /* Marrom escuro quase preto */
+  --text-secondary: #7d7768;
+  --accent: #c9a66b;
+  /* Dourado/Bronze suave */
+  --accent-soft: rgba(201, 166, 107, 0.1);
+  --border: #e8e4d0;
+  --border-light: #f0ede0;
+  --shadow: 0 10px 40px -10px rgba(66, 61, 51, 0.1);
+  --primary-color: #c9a66b;
+}
+
 body,
 html,
 #root {

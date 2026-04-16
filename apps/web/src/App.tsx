@@ -106,7 +106,7 @@ const LeadView: React.FC = () => {
   );
 };
 
-const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: () => void }> = ({ theme, onToggleTheme }) => {
+const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggleTheme: () => void }> = ({ theme, onToggleTheme }) => {
   const [notif, setNotif] = useState(true);
   const [sound, setSound] = useState(true);
   const [autoAI, setAutoAI] = useState(true);
@@ -122,7 +122,7 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: ()
     { label: 'Notificações Desktop', desc: 'Receber alertas de novas mensagens', value: notif, toggle: () => setNotif(!notif) },
     { label: 'Sons', desc: 'Reproduzir som ao receber mensagem', value: sound, toggle: () => setSound(!sound) },
     { label: 'IA Automática', desc: 'Ativar Titã AI em novos atendimentos por padrão', value: autoAI, toggle: () => setAutoAI(!autoAI) },
-    { label: theme === 'dark' ? 'Modo Escuro' : 'Modo Claro', desc: 'Alternar aparência da plataforma', value: theme === 'dark', toggle: onToggleTheme },
+    { label: theme === 'dark' ? 'Modo Escuro' : theme === 'soft' ? 'Modo Soft' : 'Modo Claro', desc: 'Alternar aparência da plataforma (Dark, Light, Soft)', value: theme !== 'light', toggle: onToggleTheme },
   ];
   return (
     <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
@@ -176,7 +176,7 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark'; onToggleTheme: ()
 };
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<'dark' | 'light'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>('dark');
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -185,7 +185,13 @@ const App: React.FC = () => {
     document.documentElement.setAttribute('data-theme', theme);
   }, [theme]);
 
-  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleTheme = () => {
+    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  };
+
+  const toggleSoftTheme = () => {
+    setTheme(prev => prev === 'soft' ? 'dark' : 'soft');
+  };
   const toggleSidebar = () => setIsRetracted(prev => !prev);
   const retractSidebar = () => {
     if (!isRetracted) setIsRetracted(true);
@@ -200,6 +206,10 @@ const App: React.FC = () => {
       if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
         toggleTheme();
+      }
+      if (e.shiftKey && e.code === 'Space') {
+        e.preventDefault();
+        toggleSoftTheme();
       }
       if (e.ctrlKey && e.shiftKey) {
         if (e.key === '<' || e.key === ',') {
@@ -223,7 +233,14 @@ const App: React.FC = () => {
         isRetracted={isRetracted}
         onToggleRetraction={toggleSidebar}
         theme={theme}
-        onToggleTheme={toggleTheme}
+        onToggleTheme={() => {
+          // Na sidebar, podemos ciclar entre os 3 ou manter a lógica do usuário
+          setTheme(prev => {
+            if (prev === 'dark') return 'light';
+            if (prev === 'light') return 'soft';
+            return 'dark';
+          });
+        }}
       />
       <button className="mobile-menu-trigger" onClick={toggleSidebar}>
         <div className="hamburger" />

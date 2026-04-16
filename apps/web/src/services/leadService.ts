@@ -82,6 +82,7 @@ export interface Lead {
     dataProximoContato?: string;
     tentativasContato: number;
     isFrio: boolean;
+    statusAgendamento?: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
     updatedAt: string;
     createdAt: string;
 
@@ -174,7 +175,7 @@ export const getAppointments = async (): Promise<Appointment[]> => {
     // We pull real lead data that has an installation date set
     const { data, error } = await supabase
         .from('leads')
-        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao')
+        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao, statusAgendamento')
         .not('dataInstalacao', 'is', null)
         .order('dataInstalacao', { ascending: true });
 
@@ -189,9 +190,8 @@ export const getAppointments = async (): Promise<Appointment[]> => {
         leadId: l.id,
         titulo: `Instalação: ${l.nomeCompleto}`,
         dataInicio: l.dataInstalacao,
-        // Since there's no specific status field in the schema yet, we use a default
-        // or map from another field if necessary.
-        status: (l.statusQualificacao === 'CONCLUIDO' ? 'CONCLUIDO' : 'AGENDADO') as Appointment['status'],
+        // Mapeamos o status real do banco, ou fallback para AGENDADO
+        status: (l.statusAgendamento || (l.statusQualificacao === 'CONCLUIDO' ? 'CONCLUIDO' : 'AGENDADO')) as Appointment['status'],
         tecnicoId: l.tecnicoId,
         vendedorId: l.vendedorId,
         tipo: 'INSTALACAO',
@@ -204,6 +204,7 @@ export const getAppointments = async (): Promise<Appointment[]> => {
 export const updateAppointment = async (id: string, updates: Partial<Appointment>): Promise<void> => {
     const leadUpdates: any = {};
     if (updates.dataInicio) leadUpdates.dataInstalacao = updates.dataInicio;
+    if (updates.status) leadUpdates.statusAgendamento = updates.status;
 
     const { error } = await supabase
         .from('leads')
