@@ -65,14 +65,9 @@ const LeadsManager: React.FC = () => {
         try {
             await createAppointment({
                 leadId: showApptModal.id,
-                tipo: 'Instalação',
-                status: 'Confirmado',
+                tipo: 'INSTALACAO',
+                status: 'CONFIRMADO',
                 dataInicio: apptData.dataInicio,
-                dadosCliente: {
-                    nome: showApptModal.nomeCompleto,
-                    endereco: showApptModal.logradouro || '',
-                    coords: showApptModal.latitude ? { lat: showApptModal.latitude, lng: showApptModal.longitude } : null
-                }
             } as any);
             showToast('Agendamento Técnico criado!', 'success');
             await logInteraction(showApptModal.id, 'SYS', 'Agendamento Criado', `Instalação marcada para ${apptData.dataInicio}`);
@@ -85,9 +80,17 @@ const LeadsManager: React.FC = () => {
 
     const handleAdvanceLead = async (lead: Lead) => {
         try {
-            await updateLead(lead.id, { statusQualificacao: 'QUALIFICADO' });
-            await logInteraction(lead.id, 'SYS', 'Avanço Rápido de Etapa', 'Lead movido via Listagem.');
-            showToast('Funil Avançado', 'success');
+            let nextStage: Lead['statusQualificacao'] = 'QUALIFICADO';
+            if (lead.statusQualificacao === 'PENDENTE') nextStage = 'EM_ANALISE';
+            else if (lead.statusQualificacao === 'EM_ANALISE') nextStage = 'QUALIFICADO';
+            else if (lead.statusQualificacao === 'QUALIFICADO') {
+                showToast('Lead já está qualificado.', 'info');
+                return;
+            }
+
+            await updateLead(lead.id, { statusQualificacao: nextStage });
+            await logInteraction(lead.id, 'SYS', 'Mudança de Estágio', `Lead movido para ${nextStage} via atalho rápido na listagem.`);
+            showToast(`Avançado para ${nextStage}`, 'success');
             loadLeads();
         } catch (e) {
             showToast('Erro ao mover lead', 'error');
