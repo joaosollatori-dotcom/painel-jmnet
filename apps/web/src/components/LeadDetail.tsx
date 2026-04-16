@@ -82,15 +82,68 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     };
 
     const handleAdvanceStage = async () => {
-        showToast('Analisando pré-requisitos...', 'info');
-        setTimeout(() => {
-            handleActionLog('SYS', 'Avanço de etapa solicitado');
-        }, 800);
+        try {
+            let updates: Partial<Lead> = {};
+            let logMsg = '';
+
+            // Lógica de Funil Inteligente
+            if (lead.statusQualificacao === 'PENDENTE' || !lead.statusQualificacao) {
+                updates.statusQualificacao = 'EM_ANALISE';
+                logMsg = 'Lead movido para Em Análise de Qualificação';
+            } else if (lead.statusQualificacao === 'EM_ANALISE') {
+                updates.statusQualificacao = 'QUALIFICADO';
+                logMsg = 'Lead QUALIFICADO com sucesso';
+            } else if (lead.statusQualificacao === 'QUALIFICADO' && (lead.statusViabilidade === 'PENDENTE' || !lead.statusViabilidade)) {
+                updates.statusViabilidade = 'EM_ANALISE';
+                logMsg = 'Iniciada análise técnica de viabilidade';
+            } else if (lead.statusViabilidade === 'EM_ANALISE') {
+                updates.statusViabilidade = 'VIAVEL';
+                logMsg = 'Viabilidade técnica confirmada (VIÁVEL)';
+            } else if (lead.statusViabilidade === 'VIAVEL' && !lead.statusProposta) {
+                updates.statusProposta = 'ENVIADA';
+                logMsg = 'Proposta comercial enviada ao cliente';
+            } else if (lead.statusProposta === 'ENVIADA') {
+                updates.statusProposta = 'ACEITA';
+                logMsg = 'Proposta ACEITA pelo cliente';
+            } else if (lead.statusProposta === 'ACEITA') {
+                showToast('Lead pronto para Instalação. Agende a visita na aba correspondente.', 'info');
+                return;
+            } else {
+                showToast('Lead já está em estágio avançado.', 'info');
+                return;
+            }
+
+            await updateLead(lead.id, updates);
+            await logInteraction(lead.id, 'SYS', 'Avanço de Etapa', logMsg);
+            showToast('Estágio atualizado!', 'success');
+            onUpdate();
+            loadLeadContext();
+        } catch (err) {
+            showToast('Erro ao avançar estágio', 'error');
+        }
     };
 
     const renderHeader = () => {
-        const stages = ['Novo', 'Qualif', 'Viab', 'Prop', 'Assin', 'Instal'];
-        const currentIdx = 2; // Logic can be expanded based on lead.status
+        const stages = [
+            { id: 'NOVO', label: 'Novo', field: 'statusQualificacao', value: 'PENDENTE' },
+            { id: 'QUALIF', label: 'Qualif', field: 'statusQualificacao', value: 'EM_ANALISE' },
+            { id: 'VIAB', label: 'Viab', field: 'statusViabilidade', value: 'EM_ANALISE' },
+            { id: 'PROP', label: 'Prop', field: 'statusProposta', value: 'ENVIADA' },
+            { id: 'ASSIN', label: 'Assin', field: 'statusProposta', value: 'ACEITA' },
+            { id: 'INSTAL', label: 'Instal', field: 'statusQualificacao', value: 'CONCLUIDO' }
+        ];
+
+        // Lógica dinâmica para o Stepper
+        let currentIdx = -1;
+        if (lead.statusQualificacao === 'PENDENTE') currentIdx = 0;
+        if (lead.statusQualificacao === 'EM_ANALISE') currentIdx = 1;
+        if (lead.statusQualificacao === 'QUALIFICADO') currentIdx = 1;
+        if (lead.statusViabilidade === 'EM_ANALISE') currentIdx = 2;
+        if (lead.statusViabilidade === 'VIAVEL') currentIdx = 2;
+        if (lead.statusProposta === 'ENVIADA') currentIdx = 3;
+        if (lead.statusProposta === 'VISUALIZADA') currentIdx = 3;
+        if (lead.statusProposta === 'ACEITA') currentIdx = 4;
+        if (lead.statusQualificacao === 'CONCLUIDO') currentIdx = 5;
 
         return (
             <header className="fixed-header">
@@ -98,12 +151,12 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                     <button onClick={onClose} className="btn-back"><ArrowLeft weight="bold" /> VOLTAR</button>
                     <div className="status-stepper">
                         {stages.map((s, idx) => (
-                            <React.Fragment key={s}>
+                            <React.Fragment key={s.id}>
                                 <div className={`step ${idx <= currentIdx ? 'active' : ''}`}>
                                     <div className="step-point">{idx + 1}</div>
-                                    <span>{s}</span>
+                                    <span>{s.label}</span>
                                 </div>
-                                {idx < stages.length - 1 && <div className={`step-line ${idx < currentIdx ? 'active' : ''}`} style={{ width: '20px', height: '2px', background: idx < currentIdx ? '#2563eb' : '#334155' }} />}
+                                {idx < stages.length - 1 && <div className={`step-line ${idx < currentIdx ? 'active' : ''}`} style={{ width: '20px', height: '2px', background: idx < currentIdx ? 'var(--accent)' : 'var(--border)' }} />}
                             </React.Fragment>
                         ))}
                     </div>
@@ -273,7 +326,16 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <label>Observações Técnicas</label>
                             <textarea className="titan-input" style={{ minHeight: '80px', resize: 'none' }} defaultValue={lead.obsTecnica || ''} onBlur={(e) => handleFieldUpdate('obsTecnica', e.target.value)} />
                         </div>
-                        <button className="btn-titan-primary" style={{ width: '100%', marginTop: '1.5rem' }} onClick={() => handleActionLog('SYS', 'CPO Validada')}>SALVAR E VALIDAR CPO</button>
+                        <button
+                            className="btn-titan-primary"
+                            style={{ width: '100%', marginTop: '1.5rem' }}
+                            onClick={() => {
+                                handleFieldUpdate('statusViabilidade', 'VIAVEL');
+                                handleActionLog('SYS', 'Viabilidade Validada (CPO OK)');
+                            }}
+                        >
+                            SALVAR E VALIDAR CPO
+                        </button>
                     </div>
                 </div>
                 <div className="map-container-titan">
