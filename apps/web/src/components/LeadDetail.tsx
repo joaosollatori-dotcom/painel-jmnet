@@ -127,50 +127,74 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         );
     };
 
-    const renderTimeline = () => (
-        <div className="timeline-view">
-            <div className="tab-nav-titan">
-                <button className={timelineFilter === 'ALL' ? 'active' : ''} onClick={() => setTimelineFilter('ALL')}>TUDO</button>
-                <button className={timelineFilter === 'CALL' ? 'active' : ''} onClick={() => setTimelineFilter('CALL')}>CHAMADAS</button>
-                <button className={timelineFilter === 'WA' ? 'active' : ''} onClick={() => setTimelineFilter('WA')}>WHATSAPP</button>
-                <button className={timelineFilter === 'SYS' ? 'active' : ''} onClick={() => setTimelineFilter('SYS')}>SISTEMA</button>
-            </div>
-            <div className="timeline-content ic-sidebar-scroll">
-                <table className="timeline-table">
-                    <thead>
-                        <tr>
-                            <th>Evento</th>
-                            <th>Descrição / Conteúdo</th>
-                            <th>Data/Hora</th>
-                            <th>Responsável</th>
-                        </tr>
-                    </thead>
-                    <tbody>
-                        {historyLogs.filter(h => timelineFilter === 'ALL' || h.type === timelineFilter).length === 0 ? (
-                            <tr><td colSpan={4} className="empty-titan">Sem registros para este filtro.</td></tr>
-                        ) : historyLogs.filter(h => timelineFilter === 'ALL' || h.type === timelineFilter).map(event => (
-                            <tr key={event.id} className="event-row">
-                                <td style={{ width: '60px' }}>
-                                    <div className={`type-icon ${(event.type as string).toLowerCase() === 'wa' ? 'wa' : (event.type as string).toLowerCase() === 'call' ? 'call' : 'sys'}`}>
-                                        {(event.type as string) === 'CALL' ? <PhoneCall size={18} /> : (event.type as string) === 'WA' ? <WhatsappLogo size={18} /> : <ArrowsClockwise size={18} />}
+    const renderTimeline = () => {
+        const matchesFilter = (type: string) => {
+            const t = type?.toUpperCase();
+            if (timelineFilter === 'ALL') return true;
+            if (timelineFilter === 'CALL') return t === 'CALL';
+            if (timelineFilter === 'WA') return t === 'WA' || t === 'WHATSAPP';
+            if (timelineFilter === 'SYS') return t === 'SYS' || t === 'SYSTEM' || t === 'STAGE_CHANGE' || t === 'TASK';
+            return false;
+        };
+
+        const filteredHistory = historyLogs.filter(h => matchesFilter(h.type));
+
+        return (
+            <div className="timeline-view">
+                <div className="tab-nav-titan timeline-filters">
+                    <button className={timelineFilter === 'ALL' ? 'active' : ''} onClick={() => setTimelineFilter('ALL')}>TUDO</button>
+                    <button className={timelineFilter === 'CALL' ? 'active' : ''} onClick={() => setTimelineFilter('CALL')}>
+                        <Phone size={14} /> CHAMADAS
+                    </button>
+                    <button className={timelineFilter === 'WA' ? 'active' : ''} onClick={() => setTimelineFilter('WA')}>
+                        <WhatsappLogo size={14} /> WHATSAPP
+                    </button>
+                    <button className={timelineFilter === 'SYS' ? 'active' : ''} onClick={() => setTimelineFilter('SYS')}>
+                        <ArrowsClockwise size={14} /> SISTEMA
+                    </button>
+                </div>
+
+                <div className="timeline-feed ic-sidebar-scroll">
+                    {filteredHistory.length === 0 ? (
+                        <div className="empty-titan">
+                            <Clock size={48} weight="duotone" />
+                            <h4>Sem registros nesta categoria</h4>
+                            <p>Ainda não há interações registradas para este filtro.</p>
+                        </div>
+                    ) : filteredHistory.map(event => (
+                        <div key={event.id} className={`timeline-card ${event.type.toLowerCase()}`}>
+                            <div className="card-icon-area">
+                                <div className={`type-icon ${(event.type as string).toLowerCase().replace('whatsapp', 'wa')}`}>
+                                    {['CALL'].includes(event.type) && <PhoneCall size={20} weight="fyll" />}
+                                    {['WA', 'WHATSAPP'].includes(event.type) && <WhatsappLogo size={20} weight="fill" />}
+                                    {['SYS', 'SYSTEM', 'STAGE_CHANGE', 'TASK'].includes(event.type) && <ArrowsClockwise size={20} weight="bold" />}
+                                </div>
+                                <div className="connector-line"></div>
+                            </div>
+                            <div className="card-content">
+                                <header className="card-header">
+                                    <span className="event-action">{event.metadata?.action || event.metadados?.action || 'Atividade de Sistema'}</span>
+                                    <span className="event-time">
+                                        {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleDateString('pt-BR', { day: '2-digit', month: 'short' })} • {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' })}
+                                    </span>
+                                </header>
+                                <div className="card-body">
+                                    <p>{event.content || 'Nenhuma descrição adicional.'}</p>
+                                </div>
+                                <footer className="card-footer">
+                                    <div className="history-responsible">
+                                        <div className="resp-avatar">JS</div>
+                                        <span>João Solla</span>
                                     </div>
-                                </td>
-                                <td>
-                                    <strong>{event.metadata?.action || event.metadados?.action || 'Atividade Geral'}</strong>
-                                    <p style={{ margin: '4px 0 0 0', opacity: 0.8, fontSize: '0.8rem' }}>{event.content || 'Nenhuma descrição detalhada.'}</p>
-                                </td>
-                                <td style={{ fontSize: '0.75rem', opacity: 0.7 }}>
-                                    {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleDateString()} <br />
-                                    {new Date(event.dataEvento || event.data_evento || Date.now()).toLocaleTimeString().slice(0, 5)}
-                                </td>
-                                <td style={{ fontSize: '0.75rem' }}>João Solla</td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                    {event.duration && <span className="call-duration"><Timer size={14} /> {Math.floor(event.duration / 60)}m {event.duration % 60}s</span>}
+                                </footer>
+                            </div>
+                        </div>
+                    ))}
+                </div>
             </div>
-        </div>
-    );
+        );
+    };
 
     const renderDadosTab = () => (
         <div className="tab-pane-dados">
@@ -468,138 +492,115 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                 )}
 
                 <style>{`
-                    /* Global Titan Matte Styles */
                     .lead-detail-titan { 
                         flex: 1; 
                         display: flex; 
                         flex-direction: column; 
                         height: 100vh; 
-                        background: #0f172a; 
+                        background: var(--bg-deep); 
                         width: 100%; 
                         position: relative; 
                         overflow: hidden; 
-                        font-family: 'Inter', sans-serif;
-                        color: #f8fafc;
+                        color: var(--text-primary);
                     }
 
-                    /* Scrollbar Matte Customization */
-                    .ic-sidebar-scroll::-webkit-scrollbar { width: 6px; }
-                    .ic-sidebar-scroll::-webkit-scrollbar-track { background: transparent; }
-                    .ic-sidebar-scroll::-webkit-scrollbar-thumb { background: #334155; border-radius: 10px; }
-                    .detail-tabs-area { scrollbar-width: thin; scrollbar-color: #334155 transparent; }
-
-                    /* Header - Titan Motor View */
                     .fixed-header { 
-                        background: #1e293b; 
-                        border-bottom: 2px solid #334155; 
-                        padding: 1rem 2.5rem; 
+                        background: var(--bg-surface); 
+                        border-bottom: 1px solid var(--border); 
+                        padding: 1rem 2rem; 
                         flex-shrink: 0; 
                         z-index: 10;
+                        backdrop-filter: var(--glass);
                     }
                     .header-top { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
-                    .btn-back { background: #334155; border: 1px solid #475569; color: #fff; font-weight: 700; display: flex; align-items: center; gap: 8px; cursor: pointer; padding: 6px 12px; border-radius: 6px; font-size: 0.8rem; }
+                    .btn-back { display: flex; align-items: center; gap: 8px; color: var(--text-secondary); font-weight: 700; cursor: pointer; font-size: 0.8rem; }
+                    .btn-back:hover { color: var(--text-primary); }
                     
-                    .status-stepper { display: flex; align-items: center; gap: 8px; background: #0f172a; padding: 4px 16px; border-radius: 20px; border: 1px solid #334155; }
-                    .step { display: flex; align-items: center; gap: 6px; color: #475569; }
-                    .step.active { color: #60a5fa; }
-                    .step-point { width: 18px; height: 18px; border-radius: 4px; background: #334155; font-size: 0.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; color: #94a3b8; }
-                    .step.active .step-point { background: #2563eb; color: #fff; }
-                    .step span { font-size: 0.7rem; font-weight: 800; text-transform: uppercase; }
+                    .status-stepper { display: flex; align-items: center; gap: 6px; background: var(--bg-surface-light); padding: 4px 12px; border-radius: 99px; border: 1px solid var(--border-light); }
+                    .step { display: flex; align-items: center; gap: 6px; color: var(--text-secondary); opacity: 0.6; }
+                    .step.active { color: var(--accent); opacity: 1; }
+                    .step-point { width: 14px; height: 14px; border-radius: 50%; border: 2px solid var(--border); font-size: 0.6rem; font-weight: 900; display: flex; align-items: center; justify-content: center; }
+                    .step.active .step-point { background: var(--accent); border-color: var(--accent); color: #fff; }
+                    .step span { font-size: 0.65rem; font-weight: 800; text-transform: uppercase; }
                     
                     .header-actions { display: flex; gap: 10px; }
-                    .btn-titan-sm { background: #334155; color: #fff; border: 1px solid #475569; padding: 8px 14px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-                    .btn-titan-sm:hover { background: #475569; }
-                    .btn-titan-primary { background: #2563eb; color: #fff; border: none; padding: 8px 16px; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; gap: 6px; text-transform: uppercase; letter-spacing: 0.5px; }
-                    .btn-titan-primary:hover { background: #1d4ed8; transform: translateY(-1px); }
+                    .btn-titan-sm { background: var(--bg-surface-light); color: var(--text-primary); border: 1px solid var(--border-light); padding: 8px 14px; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 700; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
+                    .btn-titan-primary { background: var(--accent); color: #fff; padding: 8px 16px; border-radius: var(--radius-md); font-size: 0.8rem; font-weight: 800; display: flex; align-items: center; gap: 6px; text-transform: uppercase; box-shadow: 0 4px 15px var(--accent-soft); }
 
-                    .lead-info-row { display: flex; align-items: center; gap: 20px; }
-                    .avatar-titan { width: 50px; height: 50px; border-radius: 8px; background: #334155; color: #60a5fa; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 900; border: 2px solid #475569; }
-                    .lead-meta h1 { font-size: 1.5rem; margin: 0; color: #fff; font-weight: 800; line-height: 1.2; }
-                    .lead-badges-row { display: flex; gap: 10px; margin-top: 4px; }
-                    .badge-titan { background: #0f172a; border: 1px solid #334155; color: #94a3b8; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; }
+                    .lead-info-row { display: flex; align-items: center; gap: 16px; }
+                    .avatar-titan { width: 48px; height: 48px; border-radius: 50%; background: var(--accent-soft); color: var(--accent); display: flex; align-items: center; justify-content: center; font-size: 1.2rem; font-weight: 800; border: 2px solid var(--accent); }
+                    .lead-meta h1 { font-size: 1.6rem; margin: 0; color: var(--text-primary); font-weight: 700; }
+                    .lead-badges-row { display: flex; gap: 8px; margin-top: 4px; }
+                    .badge-titan { background: var(--bg-surface-light); border: 1px solid var(--border-light); color: var(--text-secondary); padding: 2px 8px; border-radius: 4px; font-size: 0.65rem; font-weight: 700; text-transform: uppercase; display: flex; align-items: center; gap: 4px; }
 
-                    /* Layout Body */
-                    .detail-layout { display: grid; grid-template-columns: 1fr 320px; flex: 1; overflow: hidden; background: #0f172a; }
-                    .detail-tabs-area { overflow-y: auto; padding: 1.5rem 2rem; }
+                    .detail-layout { display: grid; grid-template-columns: 1fr 340px; flex: 1; overflow: hidden; }
+                    .detail-tabs-area { overflow-y: auto; display: flex; flex-direction: column; height: 100%; border-right: 1px solid var(--border); }
 
-                    /* Tab Menu - Matte Blue */
-                    .tab-nav-titan { display: flex; gap: 1.5rem; border-bottom: 2px solid #1e293b; margin-bottom: 1.5rem; position: sticky; top: -1.5rem; background: #0f172a; z-index: 5; padding-top: 0.5rem; }
-                    .tab-btn { background: none; border: none; color: #64748b; padding: 0.75rem 0; font-weight: 800; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 3px solid transparent; display: flex; align-items: center; gap: 6px; transition: all 0.2s; }
-                    .tab-btn.active { color: #60a5fa; border-bottom-color: #60a5fa; }
+                    .tab-nav-titan { display: flex; gap: 1.5rem; padding: 0.5rem 2rem; border-bottom: 1px solid var(--border); background: var(--bg-surface); position: sticky; top: 0; z-index: 5; }
+                    .tab-btn { background: none; border: none; color: var(--text-secondary); padding: 1rem 0; font-weight: 700; font-size: 0.8rem; cursor: pointer; text-transform: uppercase; border-bottom: 2px solid transparent; display: flex; align-items: center; gap: 8px; }
+                    .tab-btn.active { color: var(--accent); border-bottom-color: var(--accent); }
 
-                    /* Forms & Inputs - Titan Matte */
-                    .titan-form-section { background: #1e293b; border: 1px solid #334155; border-radius: 8px; padding: 1.5rem; margin-bottom: 2rem; }
-                    .titan-form-section h3 { font-size: 0.9rem; color: #60a5fa; text-transform: uppercase; margin-top: 0; margin-bottom: 1.5rem; font-weight: 900; letter-spacing: 1px; display: flex; align-items: center; gap: 8px; }
-                    .titan-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; }
-                    .titan-field { display: flex; flex-direction: column; gap: 6px; }
-                    .titan-field label { font-size: 0.65rem; color: #94a3b8; text-transform: uppercase; font-weight: 900; letter-spacing: 0.5px; }
-                    .titan-input, .titan-select { background: #0f172a; border: 1px solid #334155; color: #fff; padding: 10px 14px; border-radius: 6px; font-size: 0.85rem; outline: none; transition: border-color 0.2s; }
-                    .titan-input:focus, .titan-select:focus { border-color: #60a5fa; }
-                    .titan-input:read-only { opacity: 0.7; cursor: not-allowed; }
+                    .tab-viewport { flex: 1; padding: 2rem; }
 
-                    /* Event Table (Timeline) */
-                    .timeline-table { width: 100%; border-collapse: collapse; }
-                    .timeline-table th { text-align: left; padding: 12px; font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; font-weight: 900; border-bottom: 2px solid #334155; background: #1e293b; position: sticky; top: 0; }
-                    .timeline-table td { padding: 14px 12px; font-size: 0.85rem; border-bottom: 1px solid #1e293b; color: #cbd5e1; }
-                    .event-row:hover { background: #1e293b50; }
-                    .type-icon { width: 32px; height: 32px; border-radius: 6px; display: flex; align-items: center; justify-content: center; background: #334155; color: #fff; }
-                    .type-icon.wa { color: #22c55e; background: #22c55e15; }
-                    .type-icon.call { color: #f59e0b; background: #f59e0b15; }
-                    .type-icon.sys { color: #60a5fa; background: #60a5fa15; }
+                    /* Timeline Modern Feed */
+                    .timeline-filters { margin-bottom: 2rem; justify-content: flex-start; background: var(--bg-surface-light); border: 1px solid var(--border); border-radius: var(--radius-md); padding: 4px; gap: 4px; position: relative; top: 0; }
+                    .timeline-filters button { flex: 1; padding: 8px 12px; border-radius: var(--radius-sm); border: none; font-size: 0.75rem; font-weight: 700; color: var(--text-secondary); cursor: pointer; transition: all 0.2s; display: flex; align-items: center; justify-content: center; gap: 6px; }
+                    .timeline-filters button.active { background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow); }
 
-                    /* Sidebar - Action Center */
-                    .sidebar-titan { background: #1e293b; border-left: 2px solid #334155; padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem; overflow-y: auto; }
-                    .action-card { background: #0f172a; border: 1px solid #334155; padding: 1.25rem; border-radius: 8px; }
-                    .action-card h4 { font-size: 0.7rem; text-transform: uppercase; color: #64748b; margin: 0 0 1rem 0; letter-spacing: 1px; font-weight: 900; }
+                    .timeline-feed { display: flex; flex-direction: column; gap: 0; }
+                    .timeline-card { display: flex; gap: 20px; }
+                    .card-icon-area { display: flex; flex-direction: column; align-items: center; width: 40px; }
+                    .type-icon { width: 40px; height: 40px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: var(--bg-surface-light); border: 1px solid var(--border); color: var(--text-secondary); z-index: 2; }
+                    .type-icon.wa { color: #22c55e; border-color: #22c55e44; background: #22c55e11; }
+                    .type-icon.call { color: #f59e0b; border-color: #f59e0b44; background: #f59e0b11; }
+                    .type-icon.sys { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+                    .connector-line { width: 2px; flex: 1; background: var(--border); opacity: 0.5; margin: 4px 0; }
+                    .timeline-card:last-child .connector-line { display: none; }
+
+                    .card-content { flex: 1; padding-bottom: 2.5rem; }
+                    .card-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+                    .event-action { font-weight: 700; color: var(--text-primary); font-size: 0.95rem; }
+                    .event-time { font-size: 0.75rem; color: var(--text-secondary); font-weight: 500; }
+                    .card-body p { margin: 0; font-size: 0.9rem; color: var(--text-secondary); line-height: 1.6; }
+                    .card-footer { display: flex; justify-content: space-between; align-items: center; margin-top: 12px; }
+                    .history-responsible { display: flex; align-items: center; gap: 8px; font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+                    .resp-avatar { width: 20px; height: 20px; border-radius: 50%; background: var(--border); font-size: 8px; display: flex; align-items: center; justify-content: center; font-weight: 900; }
+                    .call-duration { font-size: 0.75rem; color: var(--accent); font-weight: 700; display: flex; align-items: center; gap: 4px; }
+
+                    /* Sidebar Center */
+                    .sidebar-titan { background: var(--bg-surface); padding: 1.5rem; display: flex; flex-direction: column; gap: 2rem; }
+                    .sidebar-section h3 { font-size: 0.75rem; text-transform: uppercase; color: var(--text-secondary); margin-bottom: 1rem; letter-spacing: 1px; }
                     
+                    .action-card { background: var(--bg-surface-light); border: 1px solid var(--border-light); padding: 1rem; border-radius: var(--radius-lg); }
                     .quick-buttons { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
-                    .btn-log { background: #334155; border: 1px solid #475569; color: #cbd5e1; padding: 8px; border-radius: 6px; font-size: 0.7rem; font-weight: 800; cursor: pointer; text-transform: uppercase; transition: all 0.2s; }
-                    .btn-log:hover { background: #475569; color: #fff; }
+                    .btn-log { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-secondary); padding: 10px; border-radius: var(--radius-md); font-size: 0.7rem; font-weight: 800; cursor: pointer; text-transform: uppercase; }
+                    .btn-log:hover { border-color: var(--accent); color: var(--accent); }
 
-                    .note-area { margin-top: 1rem; position: relative; }
-                    .note-area textarea { width: 100%; height: 100px; background: #0f172a; border: 1px solid #334155; border-radius: 6px; padding: 10px; color: #fff; font-size: 0.8rem; resize: none; outline: none; transition: border-color 0.2s; }
-                    .note-area textarea:focus { border-color: #60a5fa; }
-                    .btn-save-note { margin-top: 8px; width: 100%; border: none; background: #2563eb; color: #fff; font-weight: 800; padding: 10px; border-radius: 6px; cursor: pointer; text-transform: uppercase; font-size: 0.75rem; letter-spacing: 0.5px; }
+                    .note-area textarea { width: 100%; height: 120px; background: var(--bg-surface-light); border: 1px solid var(--border-light); border-radius: var(--radius-md); padding: 1rem; color: var(--text-primary); font-size: 0.9rem; resize: none; margin-top: 1rem; }
+                    .btn-save-note { width: 100%; margin-top: 8px; background: var(--accent); color: white; padding: 12px; border-radius: var(--radius-md); font-weight: 700; font-size: 0.8rem; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 4px 12px var(--accent-soft); }
 
-                    .contact-grid { display: flex; justify-content: space-between; gap: 10px; margin-top: auto; padding-top: 1.5rem; border-top: 1px solid #334155; }
-                    .c-btn { width: 50px; height: 50px; border-radius: 10px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; color: #fff; font-size: 1.5rem; transition: transform 0.2s; filter: saturate(0.8); }
-                    .c-btn:hover { transform: scale(1.05); filter: saturate(1); }
-                    .c-btn.tel { background: #059669; }
-                    .c-btn.wa { background: #16a34a; }
-                    .c-btn.appt { background: #2563eb; }
+                    .contact-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; padding-top: 1.5rem; border-top: 1px solid var(--border); }
+                    .c-btn { height: 56px; border-radius: var(--radius-md); display: flex; align-items: center; justify-content: center; color: white; font-size: 1.5rem; }
+                    .c-btn.tel { background: #16a34a; }
+                    .c-btn.wa { background: #25d366; }
+                    .c-btn.appt { background: var(--accent); }
 
-                    /* Modal - Matte Command overlay */
-                    .titan-modal-overlay { position: fixed; inset: 0; background: rgba(15, 23, 42, 0.95); z-index: 9999; display: flex; align-items: center; justify-content: center; backdrop-filter: blur(2px); }
-                    .titan-modal { background: #1e293b; border: 2px solid #475569; width: 90%; max-width: 450px; border-radius: 8px; overflow: hidden; box-shadow: 20px 20px 0px rgba(0,0,0,0.2); }
-                    .modal-title { background: #334155; padding: 1.25rem 1.5rem; border-bottom: 2px solid #475569; display: flex; justify-content: space-between; align-items: center; }
-                    .modal-title h2 { margin: 0; font-size: 1rem; color: #fff; text-transform: uppercase; font-weight: 900; letter-spacing: 1px; }
-                    .modal-body { padding: 2rem; display: flex; flex-direction: column; gap: 1.5rem; }
-                    .modal-actions { background: #0f172a; padding: 1.25rem 1.5rem; display: flex; justify-content: flex-end; gap: 12px; }
+                    /* Generic Form Styles */
+                    .titan-form-section { background: var(--bg-surface-light); border-radius: var(--radius-lg); padding: 1.5rem; margin-bottom: 2rem; border: 1px solid var(--border-light); }
+                    .titan-form-section h3 { font-size: 1rem; color: var(--text-primary); margin-bottom: 1.5rem; display: flex; align-items: center; gap: 8px; }
+                    .titan-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1.5rem; }
+                    .titan-field { display: flex; flex-direction: column; gap: 8px; }
+                    .titan-field label { font-size: 0.75rem; color: var(--text-secondary); font-weight: 600; }
+                    .titan-input, .titan-select { background: var(--bg-surface); border: 1px solid var(--border); color: var(--text-primary); padding: 12px; border-radius: var(--radius-md); font-size: 0.9rem; }
+                    .titan-input:focus { border-color: var(--accent); }
 
-                    /* Map Widget */
-                    .map-container-titan { background: #1e293b; border: 4px solid #334155; border-radius: 8px; height: 400px; position: relative; overflow: hidden; }
+                    /* Transitions */
+                    .tab-viewport { animation: fadeIn 0.3s ease; }
+                    @keyframes fadeIn { from { opacity: 0; transform: translateY(5px); } to { opacity: 1; transform: translateY(0); } }
 
-                    /* Empty States */
-                    .empty-titan { text-align: center; padding: 4rem 1rem; opacity: 0.5; display: flex; flex-direction: column; align-items: center; gap: 1rem; }
-                    .empty-titan h4 { margin: 0; font-size: 1rem; color: #94a3b8; text-transform: uppercase; font-weight: 900; }
-
-                    /* Scheduling Form Styles */
-                    .scheduling-form-titan { padding: 2rem; background: #0f172a; border-radius: 12px; border: 1px solid #334155; }
-                    .scheduling-form-titan .section-header { display: flex; align-items: center; gap: 12px; margin-bottom: 2rem; border-bottom: 1px solid #334155; padding-bottom: 1rem; color: #60a5fa; }
-                    .scheduling-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 1.5rem; margin-bottom: 2rem; }
-                    .scheduling-actions { display: flex; justify-content: flex-end; }
-
-                    @media (max-width: 768px) {
-                        .lead-detail-titan { overflow-y: auto; height: auto; min-height: 100vh; }
-                        .detail-layout { flex-direction: column; }
-                        .sidebar-titan { width: 100%; border-left: none; border-top: 2px solid #334155; }
-                        .tab-nav-titan { overflow-x: auto; white-space: nowrap; padding: 0.5rem; }
-                        .tab-btn { flex-shrink: 0; }
-                        .fixed-header { padding: 1rem; }
-                        .header-main { flex-direction: column; align-items: flex-start; gap: 0.5rem; }
-                        .header-actions { width: 100%; justify-content: space-between; }
-                        .timeline-table { display: block; overflow-x: auto; }
-                        .scheduling-grid { grid-template-columns: 1fr; }
+                    @media (max-width: 1024px) {
+                        .detail-layout { grid-template-columns: 1fr; }
+                        .sidebar-titan { border-top: 1px solid var(--border); }
                     }
                 `}</style>
             </motion.div>
