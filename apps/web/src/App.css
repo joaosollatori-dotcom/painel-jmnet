@@ -113,3 +113,144 @@
     display: flex;
   }
 }
+
+/* Extracted from App.tsx */
+
+/* Agents Page Styles */
+.agents-page,
+.settings-page {
+  padding: var(--space-lg);
+  flex: 1;
+  overflow-y: auto;
+}
+
+.agents-page h1,
+.settings-page h1 {
+  margin-bottom: 0.5rem;
+}
+
+.agents-page-subtitle,
+.settings-page-subtitle {
+  color: var(--text-secondary);
+  margin-bottom: 2rem;
+}
+
+.agents-list,
+.settings-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  max-width: 700px;
+}
+
+.settings-list {
+  gap: 12px;
+  max-width: 600px;
+}
+
+.agent-card,
+.settings-card {
+  background: var(--bg-surface);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-lg);
+  padding: 1.5rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.settings-card {
+  padding: 1rem 1.25rem;
+}
+
+.agent-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 6px;
+}
+
+.agent-status-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+}
+
+.agent-name {
+  font-size: 1.1rem;
+}
+
+.agent-description,
+.settings-desc {
+  color: var(--text-secondary);
+  font-size: 0.9rem;
+  margin: 0;
+}
+
+.settings-desc {
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.agent-button {
+  padding: 8px 20px;
+  border-radius: var(--radius-md);
+  background: transparent;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s;
+  white-space: nowrap;
+}
+
+/* Settings Toggle */
+.settings-toggle-btn {
+  width: 48px;
+  height: 26px;
+  border-radius: 999px;
+  border: none;
+  position: relative;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.settings-toggle-dot {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: #fff;
+  position: absolute;
+  top: 3px;
+  transition: left 0.2s;
+}
+
+/* Logout Section */
+.logout-section {
+  margin-top: 2rem;
+  padding: 1.5rem;
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.2);
+  border-radius: var(--radius-lg);
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.logout-title {
+  color: #ef4444;
+}
+
+.logout-desc {
+  color: var(--text-secondary);
+  font-size: 0.85rem;
+  margin: 4px 0 0;
+}
+
+.logout-button {
+  padding: 10px 24px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 0.9rem;
+  cursor: pointer;
+}

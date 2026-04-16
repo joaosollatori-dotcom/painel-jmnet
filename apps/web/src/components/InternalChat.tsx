@@ -51,7 +51,9 @@ const InternalChat: React.FC = () => {
                 return [...prev, newMsg];
             });
         });
-        return () => sub.unsubscribe();
+        return () => {
+            sub.unsubscribe();
+        };
     }, [activeChannel]);
 
     useEffect(() => {
@@ -137,7 +139,9 @@ const InternalChat: React.FC = () => {
         const reportText = await (async () => {
             try {
                 if (mode === 'mention') {
-                    return `Cliente: ${client.contact_name}\nTelefone: ${client.contact_phone || 'N/A'}\nE-mail: ${client.contact_email || 'N/A'}\nPlataforma: ${client.platform}\nStatus: ${client.is_closed ? 'Encerrado' : 'Ativo'}`;
+                    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                    const c = client as any;
+                    return `Cliente: ${c.contact_name}\nTelefone: ${c.contact_phone || 'N/A'}\nE-mail: ${c.contact_email || 'N/A'}\nPlataforma: ${c.platform}\nStatus: ${c.is_closed ? 'Encerrado' : 'Ativo'}`;
                 } else if (mode === 'summary') {
                     return await getClientSummary(client.id);
                 } else if (mode === 'equip') {
@@ -263,10 +267,11 @@ const InternalChat: React.FC = () => {
                     <div className="ic-category">
                         <div className="ic-category-header">
                             <span>CANAIS DE TEXTO</span>
-                            <Plus size={14} className="add-btn" onClick={() => setShowNewChannelInput(!showNewChannelInput)} style={{ cursor: 'pointer' }} />
+                            <Plus size={14} className="add-btn cursor-pointer" onClick={() => setShowNewChannelInput(!showNewChannelInput)} />
                         </div>
                         {showNewChannelInput && (
-                            <div style={{ display: 'flex', gap: '4px', padding: '4px 8px', marginBottom: '4px' }}>
+                            <div className="new-channel-form-row">
+                                <span className="text-secondary">#</span>
                                 <input
                                     type="text"
                                     value={newChannelName}
@@ -274,7 +279,7 @@ const InternalChat: React.FC = () => {
                                     onKeyDown={e => e.key === 'Enter' && handleCreateChannel()}
                                     placeholder="nome-do-canal"
                                     autoFocus
-                                    style={{ flex: 1, padding: '6px 8px', borderRadius: '4px', background: 'var(--bg-deep)', border: '1px solid var(--border)', color: 'var(--text-primary)', fontSize: '0.85rem', outline: 'none' }}
+                                    className="new-channel-input"
                                 />
                             </div>
                         )}
@@ -290,11 +295,11 @@ const InternalChat: React.FC = () => {
                             <span>MENSAGENS DIRETAS</span>
                         </div>
                         <div className="ic-user" onClick={() => handleDMClick('Roberto Técnico')}>
-                            <div className="ic-avatar-small" style={{ background: '#046bed' }}><div className="status-dot dnd" />R</div>
+                            <div className="ic-avatar-small bg-blue"><div className="status-dot dnd" />R</div>
                             <span className="name">Roberto Técnico</span>
                         </div>
                         <div className="ic-user" onClick={() => handleDMClick('Mariana Comercial')}>
-                            <div className="ic-avatar-small" style={{ background: '#eab308' }}><div className="status-dot online" />M</div>
+                            <div className="ic-avatar-small bg-yellow"><div className="status-dot online" />M</div>
                             <span className="name">Mariana Comercial</span>
                         </div>
 
@@ -303,7 +308,7 @@ const InternalChat: React.FC = () => {
                             const name = dmId.replace('dm-', '').replace(/-/g, ' ');
                             return (
                                 <div key={dmId} className={`ic-user ${activeChannel === dmId ? 'active' : ''}`} onClick={() => setActiveChannel(dmId)}>
-                                    <div className="ic-avatar-small" style={{ background: '#6366f1' }}>{name.charAt(0).toUpperCase()}</div>
+                                    <div className="ic-avatar-small bg-indigo">{name.charAt(0).toUpperCase()}</div>
                                     <span className="name">{name}</span>
                                 </div>
                             );
@@ -313,7 +318,7 @@ const InternalChat: React.FC = () => {
 
                 <div className="ic-user-controls">
                     <div className="user-profile">
-                        <div className="ic-avatar-small" style={{ background: '#ef4444' }}><div className="status-dot online" />J</div>
+                        <div className="ic-avatar-small bg-red"><div className="status-dot online" />J</div>
                         <div className="user-info">
                             <strong>João S.</strong>
                             <span>#0001</span>
@@ -332,9 +337,15 @@ const InternalChat: React.FC = () => {
                         <span className="topic">{CHANNEL_TOPICS[activeChannel] || `Canal ${activeChannel}`}</span>
                     </div>
                     <div className="header-right">
-                        <PushPin size={22} weight="bold" className="action-icon" onClick={handlePinMessage} style={{ cursor: 'pointer' }} title={`Fixar última mensagem (${pinnedMessages.length} fixadas)`} />
-                        <Bell size={22} weight="bold" className="action-icon" onClick={() => showToastMsg('Notificações do canal ativadas ✓')} style={{ cursor: 'pointer' }} title="Ativar notificações" />
-                        <Users size={22} weight="fill" className={`action-icon ${showMembersSidebar ? 'active' : ''}`} onClick={() => setShowMembersSidebar(!showMembersSidebar)} style={{ cursor: 'pointer' }} title="Membros" />
+                        <button type="button" className="action-icon cursor-pointer unstyled-btn" onClick={handlePinMessage} title={`Fixar última mensagem (${pinnedMessages.length} fixadas)`}>
+                            <PushPin size={22} weight="bold" />
+                        </button>
+                        <button type="button" className="action-icon cursor-pointer unstyled-btn" onClick={() => showToastMsg('Notificações do canal ativadas ✓')} title="Ativar notificações">
+                            <Bell size={22} weight="bold" />
+                        </button>
+                        <button type="button" className={`action-icon cursor-pointer unstyled-btn ${showMembersSidebar ? 'active' : ''}`} onClick={() => setShowMembersSidebar(!showMembersSidebar)} title="Membros">
+                            <Users size={22} weight="fill" />
+                        </button>
                         <div className="search-box">
                             <input type="text" placeholder="Buscar" value={searchTerm} onChange={e => setSearchTerm(e.target.value)} />
                             <MagnifyingGlass size={16} />
@@ -363,10 +374,10 @@ const InternalChat: React.FC = () => {
                                     <div className="ic-msg-header">
                                         <span className="ic-msg-user" style={{ color: msg.color }}>{msg.user}</span>
                                         {msg.isBot && <span className="bot-tag">BOT</span>}
-                                        {pinnedMessages.includes(msg.id) && <span className="bot-tag" style={{ background: '#f59e0b' }}>📌</span>}
+                                        {pinnedMessages.includes(msg.id) && <span className="bot-tag bg-yellow">📌</span>}
                                         <span className="ic-msg-time">{new Date(msg.created_at || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
                                     </div>
-                                    <div className="ic-msg-text" style={{ whiteSpace: 'pre-wrap' }}>
+                                    <div className="ic-msg-text pre-wrap">
                                         {msg.text}
                                     </div>
                                 </div>
@@ -435,10 +446,10 @@ const InternalChat: React.FC = () => {
                             <div className="ic-input-actions">
                                 <button type="button" className="ic-action-btn" onClick={() => showToastMsg('🎁 Função de presentes em breve!')} title="Presente"><Gift size={22} /></button>
                                 <button type="button" className="ic-action-btn" onClick={() => { setMessage(prev => prev + '😀'); }} title="Sticker rápido"><Sticker size={22} /></button>
-                                <div className="relative-container" style={{ position: 'relative' }}>
+                                <div className="relative-container pos-relative">
                                     <button type="button" className={`ic-action-btn ${showEmojiPicker ? 'active' : ''}`} onClick={() => setShowEmojiPicker(!showEmojiPicker)} title="Emoji"><Smiley size={22} /></button>
                                     {showEmojiPicker && (
-                                        <div style={{ position: 'absolute', bottom: '40px', right: 0, zIndex: 200 }}>
+                                        <div className="emoji-picker-container">
                                             <EmojiPicker onEmojiClick={handleInputEmoji} emojiStyle={EmojiStyle.GOOGLE} theme={Theme.DARK} lazyLoadEmojis height={350} width={300} skinTonesDisabled />
                                         </div>
                                     )}
@@ -449,7 +460,7 @@ const InternalChat: React.FC = () => {
                 </div>
             </main>
 
-            <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileUpload} />
+            <input ref={fileInputRef} type="file" className="hidden-element" onChange={handleFileUpload} />
 
             {/* Members Sidebar */}
             {showMembersSidebar && (
@@ -457,35 +468,35 @@ const InternalChat: React.FC = () => {
                     <div className="ic-members-category">ONLINE — 2</div>
 
                     <div className="ic-member">
-                        <div className="ic-avatar-small" style={{ background: '#ef4444' }}>
+                        <div className="ic-avatar-small bg-red">
                             <div className="status-dot online" />J
                         </div>
                         <div className="name-box">
-                            <span className="name" style={{ color: '#ef4444' }}>João Sollatori</span>
+                            <span className="name text-red">João Sollatori</span>
                             <span className="sub">Liderança</span>
                         </div>
                     </div>
 
                     <div className="ic-member">
-                        <div className="ic-avatar-small" style={{ background: '#10b981' }}>
+                        <div className="ic-avatar-small bg-green">
                             <div className="status-dot online" />T
                         </div>
                         <div className="name-box">
-                            <span className="name" style={{ color: '#10b981' }}>Titã AI</span>
+                            <span className="name text-green">Titã AI</span>
                             <span className="bot-tag">BOT</span>
                         </div>
                     </div>
 
-                    <div className="ic-members-category" style={{ marginTop: '20px' }}>OFFLINE — 2</div>
+                    <div className="ic-members-category mt-20">OFFLINE — 2</div>
 
                     <div className="ic-member offline">
-                        <div className="ic-avatar-small" style={{ background: '#046bed' }}>R</div>
+                        <div className="ic-avatar-small bg-blue">R</div>
                         <div className="name-box">
                             <span className="name">Roberto Técnico</span>
                         </div>
                     </div>
                     <div className="ic-member offline">
-                        <div className="ic-avatar-small" style={{ background: '#eab308' }}>M</div>
+                        <div className="ic-avatar-small bg-yellow">M</div>
                         <div className="name-box">
                             <span className="name">Mariana Comercial</span>
                         </div>

@@ -918,3 +918,88 @@
         border-radius: var(--radius-md);
     }
 }
+
+/* Utilities extracted from inline styles */
+.cursor-pointer {
+    cursor: pointer;
+}
+
+.unstyled-btn {
+    background: transparent;
+    border: none;
+    padding: 0;
+    color: inherit;
+    font: inherit;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.new-channel-form-row {
+    display: flex;
+    gap: 4px;
+    padding: 4px 8px;
+    margin-bottom: 4px;
+}
+
+.new-channel-input {
+    flex: 1;
+    padding: 6px 8px;
+    border-radius: 4px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    color: var(--text-primary);
+    font-size: 0.85rem;
+    outline: none;
+}
+
+.bg-blue {
+    background: #046bed !important;
+}
+
+.bg-yellow {
+    background: #eab308 !important;
+}
+
+.bg-indigo {
+    background: #6366f1 !important;
+}
+
+.bg-red {
+    background: #ef4444 !important;
+}
+
+.bg-green {
+    background: #10b981 !important;
+}
+
+.text-red {
+    color: #ef4444 !important;
+}
+
+.text-green {
+    color: #10b981 !important;
+}
+
+.pre-wrap {
+    white-space: pre-wrap;
+}
+
+.pos-relative {
+    position: relative;
+}
+
+.dropdown-absolute-bottom {
+    position: absolute;
+    bottom: 40px;
+    right: 0;
+    z-index: 200;
+}
+
+.hidden-element {
+    display: none !important;
+}
+
+.mt-20 {
+    margin-top: 20px !important;
+}

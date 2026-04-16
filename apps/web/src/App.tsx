@@ -30,21 +30,22 @@ const AgentsPage: React.FC = () => {
   ];
   const [states, setStates] = useState(agents.map(a => a.active));
   return (
-    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
-      <h1 style={{ marginBottom: '0.5rem' }}>Agentes IA</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Gerencie os bots e automações da JMnet Telecom.</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', maxWidth: '700px' }}>
+    <div className="agents-page">
+      <h1>Agentes IA</h1>
+      <p className="agents-page-subtitle">Gerencie os bots e automações da JMnet Telecom.</p>
+      <div className="agents-list">
         {agents.map((a, i) => (
-          <div key={i} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div key={i} className="agent-card">
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px', marginBottom: '6px' }}>
-                <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: states[i] ? '#10b981' : '#6b7280' }} />
-                <strong style={{ fontSize: '1.1rem' }}>{a.name}</strong>
+              <div className="agent-header">
+                <div className="agent-status-dot" style={{ background: states[i] ? '#10b981' : '#6b7280' }} />
+                <strong className="agent-name">{a.name}</strong>
               </div>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem', margin: 0 }}>{a.description}</p>
+              <p className="agent-description">{a.description}</p>
             </div>
             <button onClick={() => setStates(prev => { const n = [...prev]; n[i] = !n[i]; return n; })}
-              style={{ padding: '8px 20px', borderRadius: 'var(--radius-md)', border: `1px solid ${states[i] ? '#ef4444' : '#10b981'}`, background: 'transparent', color: states[i] ? '#ef4444' : '#10b981', fontWeight: 600, cursor: 'pointer', transition: 'all 0.2s', whiteSpace: 'nowrap' }}>
+              className="agent-button"
+              style={{ border: `1px solid ${states[i] ? '#ef4444' : '#10b981'}`, color: states[i] ? '#ef4444' : '#10b981' }}>
               {states[i] ? 'Desativar' : 'Ativar'}
             </button>
           </div>
@@ -110,14 +111,6 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggle
   const [notif, setNotif] = useState(true);
   const [sound, setSound] = useState(true);
   const [autoAI, setAutoAI] = useState(true);
-  const toggleStyle = (active: boolean) => ({
-    width: '48px', height: '26px', borderRadius: '999px', border: 'none',
-    background: active ? 'var(--accent)' : '#555', position: 'relative' as const, cursor: 'pointer', transition: 'background 0.2s',
-  });
-  const dotStyle = (active: boolean) => ({
-    width: '20px', height: '20px', borderRadius: '50%', background: '#fff', position: 'absolute' as const, top: '3px',
-    left: active ? '25px' : '3px', transition: 'left 0.2s',
-  });
   const items = [
     { label: 'Notificações Desktop', desc: 'Receber alertas de novas mensagens', value: notif, toggle: () => setNotif(!notif) },
     { label: 'Sons', desc: 'Reproduzir som ao receber mensagem', value: sound, toggle: () => setSound(!sound) },
@@ -125,47 +118,31 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggle
     { label: theme === 'dark' ? 'Modo Escuro' : theme === 'soft' ? 'Modo Soft' : 'Modo Claro', desc: 'Alternar aparência da plataforma (Dark, Light, Soft)', value: theme !== 'light', toggle: onToggleTheme },
   ];
   return (
-    <div style={{ padding: 'var(--space-lg)', flex: 1, overflowY: 'auto' }}>
-      <h1 style={{ marginBottom: '0.5rem' }}>Ajustes</h1>
-      <p style={{ color: 'var(--text-secondary)', marginBottom: '2rem' }}>Preferências de notificação, aparência e automação.</p>
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', maxWidth: '600px' }}>
+    <div className="settings-page">
+      <h1>Ajustes</h1>
+      <p className="settings-page-subtitle">Preferências de notificação, aparência e automação.</p>
+      <div className="settings-list">
         {items.map((it, i) => (
-          <div key={i} style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', padding: '1rem 1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <div key={i} className="settings-card">
             <div>
               <strong>{it.label}</strong>
-              <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0' }}>{it.desc}</p>
+              <p className="settings-desc">{it.desc}</p>
             </div>
-            <button onClick={it.toggle} style={toggleStyle(it.value)}>
-              <div style={dotStyle(it.value)} />
+            <button onClick={it.toggle} className="settings-toggle-btn" style={{ background: it.value ? 'var(--accent)' : '#555' }}>
+              <div className="settings-toggle-dot" style={{ left: it.value ? '25px' : '3px' }} />
             </button>
           </div>
         ))}
 
         {/* Logout Section */}
-        <div style={{
-          marginTop: '2rem',
-          padding: '1.5rem',
-          background: 'rgba(239, 68, 68, 0.05)',
-          border: '1px solid rgba(239, 68, 68, 0.2)',
-          borderRadius: 'var(--radius-lg)',
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center'
-        }}>
+        <div className="logout-section">
           <div>
-            <strong style={{ color: '#ef4444' }}>Deseja sair da conta?</strong>
-            <p style={{ color: 'var(--text-secondary)', fontSize: '0.85rem', margin: '4px 0 0' }}>Sua sessão será encerrada com segurança.</p>
+            <strong className="logout-title">Deseja sair da conta?</strong>
+            <p className="logout-desc">Sua sessão será encerrada com segurança.</p>
           </div>
           <button
             onClick={() => { if (window.confirm('Deseja realmente sair?')) window.location.reload(); }}
-            style={{
-              padding: '10px 24px',
-              background: '#ef4444',
-              color: '#fff',
-              borderRadius: 'var(--radius-md)',
-              fontWeight: 700,
-              fontSize: '0.9rem'
-            }}
+            className="logout-button"
           >
             Encerrar Sessão
           </button>
@@ -245,7 +222,7 @@ const App: React.FC = () => {
       <button className="mobile-menu-trigger" onClick={toggleSidebar}>
         <div className="hamburger" />
       </button>
-      <main className="main-layout" onClick={() => { if (window.innerWidth <= 768 && !isRetracted) setIsRetracted(true); }}>
+      <main className="main-layout" onClick={() => { if (!isRetracted) setIsRetracted(true); }}>
         <Routes>
           <Route path="/" element={<Navigate to="/atendimento" replace />} />
 

@@ -357,7 +357,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     if (loading) {
         return (
-            <div className="chat-area" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div className="chat-area loading-state">
                 <LoadingScreen fullScreen={false} message="Sincronizando Transmissão TITÃ..." />
             </div>
         );
@@ -365,7 +365,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     return (
         <div className="chat-area">
-            <input ref={fileInputRef} type="file" style={{ display: 'none' }} onChange={handleFileChange} />
+            <input ref={fileInputRef} type="file" className="hidden-input" onChange={handleFileChange} />
 
             <header className="chat-header">
                 <div className="chat-user-info">
@@ -479,7 +479,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                                     <span className="message-time">{formatTime(msg.created_at)}</span>
                                                     {(msg.is_user || msg.is_bot) && (
                                                         (msg as any).pending ?
-                                                            <Clock size={14} className="status-icon" weight="regular" style={{ opacity: 0.6 }} /> :
+                                                            <Clock size={14} className="status-icon pending" weight="regular" /> :
                                                             <Checks size={14} className="status-icon" weight="bold" />
                                                     )}
                                                 </div>
@@ -585,27 +585,27 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     <aside className="chat-info-sidebar">
                         <div className="sidebar-header-info"><h4>Detalhes do Cliente</h4></div>
 
-                        <div className="contact-quick-edit" style={{ padding: '1rem', borderBottom: '1px solid var(--border-color, #333)' }}>
+                        <div className="contact-quick-edit">
                             {isEditingContact ? (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <input type="text" value={editContactData.name} onChange={e => setEditContactData({ ...editContactData, name: e.target.value })} placeholder="Nome" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
-                                    <input type="text" value={editContactData.phone} onChange={e => setEditContactData({ ...editContactData, phone: e.target.value })} placeholder="Telefone" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
-                                    <input type="email" value={editContactData.email} onChange={e => setEditContactData({ ...editContactData, email: e.target.value })} placeholder="E-mail" style={{ padding: '8px', borderRadius: '4px', background: 'var(--bg-tertiary, #222)', border: '1px solid #444', color: '#fff' }} />
-                                    <div style={{ display: 'flex', gap: '0.5rem', marginTop: '0.5rem' }}>
-                                        <button onClick={() => setIsEditingContact(false)} style={{ flex: 1, padding: '6px', background: 'transparent', color: '#ccc', border: '1px solid #444', borderRadius: '4px' }}>Cancelar</button>
-                                        <button onClick={handleSaveContact} style={{ flex: 1, padding: '6px', background: 'var(--primary-color, #007bff)', color: '#fff', border: 'none', borderRadius: '4px' }}>Salvar</button>
+                                <div className="edit-form-col">
+                                    <input type="text" value={editContactData.name} onChange={e => setEditContactData({ ...editContactData, name: e.target.value })} placeholder="Nome" className="edit-input" />
+                                    <input type="text" value={editContactData.phone} onChange={e => setEditContactData({ ...editContactData, phone: e.target.value })} placeholder="Telefone" className="edit-input" />
+                                    <input type="email" value={editContactData.email} onChange={e => setEditContactData({ ...editContactData, email: e.target.value })} placeholder="E-mail" className="edit-input" />
+                                    <div className="edit-actions-row">
+                                        <button onClick={() => setIsEditingContact(false)} className="edit-btn-cancel">Cancelar</button>
+                                        <button onClick={handleSaveContact} className="edit-btn-save">Salvar</button>
                                     </div>
                                 </div>
                             ) : (
-                                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                        <strong style={{ fontSize: '1.05rem' }}>{conversation?.contact_name}</strong>
-                                        <button onClick={handleEditClick} style={{ background: 'transparent', border: 'none', color: 'var(--primary-color, #007bff)' }} title="Editar Contato"><PencilSimple size={18} /></button>
+                                <div className="edit-form-col">
+                                    <div className="flex-between-center">
+                                        <strong className="contact-name-large">{conversation?.contact_name}</strong>
+                                        <button onClick={handleEditClick} className="btn-edit-contact" title="Editar Contato"><PencilSimple size={18} /></button>
                                     </div>
                                     {conversation?.contact_phone && (
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', color: '#aaa', fontSize: '0.9rem' }}>
+                                        <div className="contact-phone-row">
                                             <span>{conversation.contact_phone}</span>
-                                            <button onClick={() => handleCopyPhone(conversation.contact_phone!)} style={{ background: 'transparent', border: 'none', color: '#aaa' }} title="Copiar Telefone"><Copy size={16} /></button>
+                                            <button onClick={() => handleCopyPhone(conversation.contact_phone!)} className="btn-copy-phone" title="Copiar Telefone"><Copy size={16} /></button>
                                         </div>
                                     )}
                                 </div>
@@ -618,9 +618,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                 { id: 'financeiro', icon: <CurrencyDollar size={18} weight="duotone" />, label: 'Financeiro', content: <p>Sem pendências.</p> },
                                 {
                                     id: 'conexao', icon: <WifiHigh size={18} weight="duotone" />, label: 'Status ISP', content: (
-                                        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', fontSize: '0.85rem' }}>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>PPPoE</span><span style={{ color: '#4caf50' }}>Conectado</span></div>
-                                            <div style={{ display: 'flex', justifyContent: 'space-between' }}><span>Sinal</span><span style={{ color: '#4caf50' }}>-19.2 dBm</span></div>
+                                        <div className="isp-status-col">
+                                            <div className="isp-status-row"><span>PPPoE</span><span className="status-green">Conectado</span></div>
+                                            <div className="isp-status-row"><span>Sinal</span><span className="status-green">-19.2 dBm</span></div>
                                         </div>
                                     )
                                 },
@@ -651,9 +651,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                 value={endReason}
                                 onChange={(e) => setEndReason(e.target.value)}
                                 rows={3}
-                                style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', marginTop: '12px' }}
+                                className="modal-textarea-mt"
                             ></textarea>
-                            <div className="ca-modal-actions" style={{ marginTop: '16px' }}>
+                            <div className="ca-modal-actions mt-16">
                                 <button className="ca-cancel" onClick={() => setShowEndModal(false)}>Cancelar</button>
                                 <button className="ca-confirm danger" onClick={handleEndChat}>Encerrar</button>
                             </div>
@@ -666,14 +666,14 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowTransferModal(false)}><X size={18} /></button>
                             <h3>Transferir Atendimento</h3>
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', textAlign: 'left', marginTop: '12px' }}>
-                                <select style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                            <div className="modal-form-col">
+                                <select className="modal-select">
                                     <option>Suporte Técnico</option>
                                     <option>Comercial</option>
                                     <option>Financeiro</option>
                                 </select>
                             </div>
-                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                            <div className="ca-modal-actions mt-20">
                                 <button className="ca-cancel" onClick={() => setShowTransferModal(false)}>Cancelar</button>
                                 <button className="ca-confirm" onClick={() => setShowTransferModal(false)}>Transferir</button>
                             </div>
@@ -686,7 +686,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowParticipantsModal(false)}><X size={18} /></button>
                             <h3>Participantes Internos</h3>
-                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                            <div className="ca-modal-actions mt-20">
                                 <button className="ca-confirm" onClick={() => setShowParticipantsModal(false)}>Fechar</button>
                             </div>
                         </motion.div>
@@ -695,23 +695,23 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                 {showOSModal && (
                     <div className="modal-overlay" onClick={() => { setShowOSModal(false); setOsWizardStep('OS_FIELDS'); }}>
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '480px' }}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal w-480" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => { setShowOSModal(false); setOsWizardStep('OS_FIELDS'); }}><X size={18} /></button>
 
                             <AnimatePresence mode="wait">
                                 {osWizardStep === 'OS_FIELDS' && (
                                     <motion.div key="step1" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                                        <div className="ca-modal-icon" style={{ background: 'rgba(59, 130, 246, 0.1)', color: 'var(--primary-color)' }}><Wrench size={32} weight="duotone" /></div>
+                                        <div className="ca-modal-icon primary"><Wrench size={32} weight="duotone" /></div>
                                         <h3>Abertura de OS</h3>
-                                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                                            <select value={osFormData.order_type} onChange={e => setOsFormData({ ...osFormData, order_type: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                        <div className="modal-form-col-mt16">
+                                            <select value={osFormData.order_type} onChange={e => setOsFormData({ ...osFormData, order_type: e.target.value })} className="modal-select">
                                                 <option>Instalação</option>
                                                 <option>Reparo</option>
                                                 <option>Troca Equipamento</option>
                                             </select>
-                                            <textarea placeholder="Descrição..." value={osFormData.description} onChange={e => setOsFormData({ ...osFormData, description: e.target.value })} rows={3} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff', resize: 'none' }} />
+                                            <textarea placeholder="Descrição..." value={osFormData.description} onChange={e => setOsFormData({ ...osFormData, description: e.target.value })} rows={3} className="modal-textarea" />
                                         </div>
-                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                        <div className="ca-modal-actions mt-24">
                                             <button className="ca-cancel" onClick={() => setShowOSModal(false)}>Cancelar</button>
                                             <button className="ca-confirm" onClick={() => setOsWizardStep('OCO_FIELDS')}>Próximo</button>
                                         </div>
@@ -720,18 +720,18 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                                 {osWizardStep === 'OCO_FIELDS' && (
                                     <motion.div key="step2" initial={{ x: 20, opacity: 0 }} animate={{ x: 0, opacity: 1 }} exit={{ x: -20, opacity: 0 }}>
-                                        <div className="ca-modal-icon" style={{ background: 'rgba(239, 68, 68, 0.1)', color: '#ef4444' }}><Warning size={32} weight="duotone" /></div>
+                                        <div className="ca-modal-icon danger"><Warning size={32} weight="duotone" /></div>
                                         <h3>Vincular Ocorrência</h3>
-                                        <div style={{ textAlign: 'left', display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
-                                            <input type="text" placeholder="Assunto..." value={ocoFormData.subject} onChange={e => setOcoFormData({ ...ocoFormData, subject: e.target.value })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }} />
-                                            <select value={ocoFormData.priority} onChange={e => setOcoFormData({ ...ocoFormData, priority: e.target.value as any })} style={{ width: '100%', padding: '10px', borderRadius: '6px', background: 'var(--bg-deep)', border: '1px solid #444', color: '#fff' }}>
+                                        <div className="modal-form-col-mt16">
+                                            <input type="text" placeholder="Assunto..." value={ocoFormData.subject} onChange={e => setOcoFormData({ ...ocoFormData, subject: e.target.value })} className="modal-input" />
+                                            <select value={ocoFormData.priority} onChange={e => setOcoFormData({ ...ocoFormData, priority: e.target.value as any })} className="modal-select">
                                                 <option value="BAIXA">BAIXA</option>
                                                 <option value="MEDIA">MEDIA</option>
                                                 <option value="ALTA">ALTA</option>
                                                 <option value="CRITICA">CRÍTICA (PIN)</option>
                                             </select>
                                         </div>
-                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                        <div className="ca-modal-actions mt-24">
                                             <button className="ca-cancel" onClick={() => setOsWizardStep('OS_FIELDS')}>Voltar</button>
                                             <button className="ca-confirm" onClick={async () => {
                                                 try {
@@ -746,10 +746,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                                 {osWizardStep === 'CONFIRMATION' && (
                                     <motion.div key="step3" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }}>
-                                        <div className="ca-modal-icon" style={{ background: 'rgba(16, 185, 129, 0.1)', color: '#10b981' }}>✅</div>
+                                        <div className="ca-modal-icon success">✅</div>
                                         <h3>Quase lá!</h3>
                                         <p>Ocorrência gerada. Clique abaixo para finalizar a OS.</p>
-                                        <div className="ca-modal-actions" style={{ marginTop: '24px' }}>
+                                        <div className="ca-modal-actions mt-24">
                                             <button className="ca-confirm" onClick={async () => {
                                                 if (!generatedOcoId) return;
                                                 try {
@@ -769,10 +769,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                 {showOcorrenciaModal && (
                     <div className="modal-overlay" onClick={() => setShowOcorrenciaModal(false)}>
-                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '450px' }}>
+                        <motion.div initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.9 }} className="ca-modal w-450" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowOcorrenciaModal(false)}><X size={18} /></button>
                             <h3>Nova Ocorrência</h3>
-                            <div className="ca-modal-actions" style={{ marginTop: '2rem' }}>
+                            <div className="ca-modal-actions mt-2rem">
                                 <button className="ca-cancel" onClick={() => setShowOcorrenciaModal(false)}>Cancelar</button>
                                 <button className="ca-confirm warn" onClick={() => setShowOcorrenciaModal(false)}>Abrir Chamado</button>
                             </div>
@@ -782,10 +782,10 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                 {showCadastroModal && (
                     <div className="modal-overlay" onClick={() => setShowCadastroModal(false)}>
-                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal" onClick={e => e.stopPropagation()} style={{ width: '500px' }}>
+                        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: 20 }} className="ca-modal w-500" onClick={e => e.stopPropagation()}>
                             <button className="ca-modal-close" onClick={() => setShowCadastroModal(false)}><X size={18} /></button>
                             <h3>Gerenciar Cadastro</h3>
-                            <div className="ca-modal-actions" style={{ marginTop: '20px' }}>
+                            <div className="ca-modal-actions mt-20">
                                 <button className="ca-cancel" onClick={() => setShowCadastroModal(false)}>Fechar</button>
                                 <button className="ca-confirm" onClick={() => setShowCadastroModal(false)}>Salvar</button>
                             </div>

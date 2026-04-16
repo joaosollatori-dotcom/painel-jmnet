@@ -18,6 +18,7 @@ import { Appointment, getAppointments, updateAppointment, createAppointment } fr
 import { logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
 import LoadingScreen from './LoadingScreen';
+import './AppointmentManager.css';
 
 type ViewMode = 'list' | 'day' | 'week' | 'month';
 
@@ -125,12 +126,12 @@ const AppointmentManager: React.FC = () => {
                                 <div className="section-title small">Equipe Field</div>
                                 <div className="resp-card">
                                     <div className="resp-item">
-                                        <div className="ic-avatar-small" style={{ background: '#3b82f6' }}>T</div>
+                                        <div className="ic-avatar-small bg-blue-500-force">T</div>
                                         <div><strong>Técnico Responsável</strong><span>ID: {appt?.tecnicoId?.slice(0, 8) || 'N/A'}</span></div>
                                     </div>
                                     <div className="resp-divider" />
                                     <div className="resp-item">
-                                        <div className="ic-avatar-small" style={{ background: '#10b981' }}>V</div>
+                                        <div className="ic-avatar-small bg-green-500-force">V</div>
                                         <div><strong>Vendedor Original</strong><span>ID: {appt?.vendedorId?.slice(0, 8) || 'S/R'}</span></div>
                                     </div>
                                 </div>
@@ -284,9 +285,9 @@ const AppointmentManager: React.FC = () => {
                         <span className="count-badge">{filteredAppointments.length} agendamentos ativos</span>
                     </div>
                     <div className="date-nav-controls">
-                        <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() - 1)))} className="nav-btn"><CaretDown style={{ transform: 'rotate(90deg)' }} /></button>
+                        <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() - 1)))} className="nav-btn"><CaretDown className="rotate-90" /></button>
                         <h2 className="current-date-label">{currentDate.toLocaleDateString('pt-BR', { day: '2-digit', month: 'long' })}</h2>
-                        <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() + 1)))} className="nav-btn"><CaretDown style={{ transform: 'rotate(-90deg)' }} /></button>
+                        <button onClick={() => setCurrentDate(new Date(currentDate.setDate(currentDate.getDate() + 1)))} className="nav-btn"><CaretDown className="rotate-minus-90" /></button>
                     </div>
                 </div>
                 <div className="view-selector">
@@ -518,140 +519,6 @@ const AppointmentManager: React.FC = () => {
 
             <AnimatePresence>{selectedApptId && <AppointmentDetailModal apptId={selectedApptId} onClose={() => setSelectedApptId(null)} />}</AnimatePresence>
 
-            <style>{`
-                .appt-dashboard { 
-                    padding: 2rem; 
-                    background: var(--bg-deep); 
-                    height: 100vh; 
-                    display: flex; 
-                    flex-direction: column; 
-                    gap: 1.5rem; 
-                    overflow: hidden; 
-                    font-family: var(--font-body);
-                }
-
-                .appt-header { display: flex; justify-content: space-between; align-items: center; }
-                .title-group h1 { font-size: 1.8rem; margin: 0; color: var(--text-primary); font-weight: 800; }
-                .count-badge { font-size: 0.75rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 700; letter-spacing: 0.5px; }
-
-                .date-nav-controls { 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 1rem; 
-                    background: var(--bg-surface-light); 
-                    padding: 4px 16px; 
-                    border-radius: 99px; 
-                    border: 1px solid var(--border-light); 
-                    backdrop-filter: var(--glass);
-                }
-                .nav-btn { color: var(--text-secondary); padding: 8px; }
-                .nav-btn:hover { color: var(--accent); }
-                .current-date-label { font-size: 0.9rem; font-weight: 800; color: var(--text-primary); text-transform: uppercase; letter-spacing: 0.5px; }
-
-                .view-selector { background: var(--bg-surface-light); padding: 4px; border-radius: 12px; display: flex; border: 1px solid var(--border-light); }
-                .view-selector button { color: var(--text-secondary); padding: 8px 16px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; display: flex; align-items: center; gap: 6px; }
-                .view-selector button.active { background: var(--bg-surface); color: var(--accent); box-shadow: var(--shadow); }
-
-                .attention-panel { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1rem; }
-                .stat-card { 
-                    background: var(--bg-surface); 
-                    border: 1px solid var(--border-light); 
-                    padding: 1.25rem; 
-                    border-radius: var(--radius-lg); 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 1.25rem; 
-                    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-                    position: relative;
-                    overflow: hidden;
-                }
-                .stat-card.active { border-color: var(--accent); background: var(--accent-soft); }
-                .stat-card.clickable:hover { transform: translateY(-4px); border-color: var(--accent); box-shadow: 0 12px 24px rgba(0,0,0,0.3); }
-
-                .stat-icon { width: 44px; height: 44px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; }
-                .stat-icon.blue { background: rgba(59, 130, 246, 0.15); color: #3b82f6; }
-                .stat-icon.yellow { background: rgba(245, 158, 11, 0.15); color: #f59e0b; }
-                .stat-icon.red { background: rgba(239, 68, 68, 0.15); color: #ef4444; }
-                .stat-icon.purple { background: rgba(139, 92, 246, 0.15); color: #8b5cf6; }
-
-                .stat-info h3 { font-size: 0.7rem; color: var(--text-secondary); text-transform: uppercase; margin: 0; font-weight: 800; letter-spacing: 0.5px; }
-                .stat-info p { font-size: 1.1rem; color: var(--text-primary); margin: 0; font-weight: 700; }
-
-                .appt-content { flex: 1; overflow-y: auto; padding-right: 4px; }
-
-                /* List View - Titan Table */
-                .appt-table { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border); overflow: hidden; }
-                .table-header { display: grid; grid-template-columns: 2fr 1.5fr 1fr 1.2fr 80px; padding: 1rem 1.5rem; background: var(--bg-surface-light); border-bottom: 2px solid var(--border); color: var(--text-secondary); font-size: 0.7rem; font-weight: 900; text-transform: uppercase; letter-spacing: 1px; }
-                .table-row { 
-                    display: grid; 
-                    grid-template-columns: 2fr 1.5fr 1fr 1.2fr 80px; 
-                    padding: 1.25rem 1.5rem; 
-                    align-items: center; 
-                    border-bottom: 1px solid var(--border-light); 
-                    transition: all 0.2s;
-                    cursor: pointer;
-                }
-                .table-row:hover { background: var(--accent-soft); }
-                
-                .ident-cell { display: flex; align-items: center; gap: 12px; }
-                .op-icon { width: 36px; height: 36px; border-radius: 10px; background: var(--bg-deep); color: var(--accent); display: flex; align-items: center; justify-content: center; border: 1px solid var(--border); }
-                .ident-cell strong { font-size: 0.95rem; color: var(--text-primary); display: block; }
-                .sub-label { font-size: 0.65rem; color: var(--text-secondary); text-transform: uppercase; font-weight: 800; }
-
-                .temporal-cell { display: flex; align-items: center; gap: 8px; font-size: 0.85rem; color: var(--text-primary); font-weight: 600; }
-
-                /* Status Selector Titan */
-                .status-selector-wrapper { 
-                    display: flex; 
-                    align-items: center; 
-                    gap: 8px; 
-                    padding: 6px 14px; 
-                    border-radius: 99px; 
-                    min-width: 130px; 
-                    justify-content: center;
-                    position: relative;
-                    transition: transform 0.2s;
-                }
-                .status-selector-wrapper:hover { transform: scale(1.05); }
-                .status-select-titan { 
-                    background: none; 
-                    border: none; 
-                    font-size: 0.75rem; 
-                    font-weight: 900; 
-                    outline: none; 
-                    cursor: pointer; 
-                    -webkit-appearance: none;
-                    text-transform: uppercase;
-                }
-                .status-select-titan option { background: var(--bg-surface); color: var(--text-primary); }
-
-                .resp-cell { display: flex; align-items: center; gap: 10px; }
-                .resp-mini-avatar { width: 24px; height: 24px; border-radius: 50%; background: var(--border); color: var(--text-primary); display: flex; align-items: center; justify-content: center; font-size: 0.6rem; font-weight: 900; }
-                .resp-cell span { font-size: 0.8rem; font-weight: 700; color: var(--text-secondary); }
-
-                .btn-action-view { color: var(--text-secondary); padding: 8px; transition: all 0.2s; }
-                .btn-action-view:hover { color: var(--accent); transform: translate(2px, -2px); }
-
-                /* Day View Styles */
-                .calendar-view-pane { background: var(--bg-surface); border-radius: var(--radius-lg); border: 1px solid var(--border); display: flex; flex-direction: column; overflow: hidden; }
-                .lane-header { background: var(--bg-surface-light); border-bottom: 2px solid var(--border); }
-                .lane-col { border-right: 1px solid var(--border); padding: 1rem; display: flex; flex-direction: column; align-items: center; gap: 4px; }
-                .lane-col img { width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--accent); }
-                .lane-col span { font-size: 0.75rem; font-weight: 800; color: var(--text-primary); }
-
-                .grid-content { background-image: linear-gradient(var(--border) 1px, transparent 1px); background-size: 100% 80px; }
-                .appt-block { box-shadow: var(--shadow); border: 1px solid rgba(255,255,255,0.05); }
-                .block-header-title strong { line-height: 1.2; }
-
-                .empty-titan { text-align: center; padding: 5rem 0; opacity: 0.4; }
-                .empty-titan h4 { margin: 1rem 0 0.5rem; font-size: 1.1rem; }
-
-                @media (max-width: 1024px) {
-                    .attention-panel { grid-template-columns: repeat(2, 1fr); }
-                    .table-header, .table-row { grid-template-columns: 1.5fr 1fr 100px 100px 50px; padding: 1rem; }
-                    .resp-cell span { display: none; }
-                }
-            `}</style>
         </div >
     );
 };

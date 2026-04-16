@@ -1084,3 +1084,209 @@
         font-size: 0.9rem;
     }
 }
+
+/* Quick Edit Utilities & Modals */
+.loading-state {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.hidden-input {
+    display: none;
+}
+
+.status-icon.pending {
+    opacity: 0.6;
+}
+
+.contact-quick-edit {
+    padding: 1rem;
+    border-bottom: 1px solid var(--border-color, #333);
+}
+
+.edit-form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 0.5rem;
+}
+
+.edit-input {
+    padding: 8px;
+    border-radius: 4px;
+    background: var(--bg-tertiary, #222);
+    border: 1px solid #444;
+    color: #fff;
+}
+
+.edit-actions-row {
+    display: flex;
+    gap: 0.5rem;
+    margin-top: 0.5rem;
+}
+
+.edit-btn-cancel {
+    flex: 1;
+    padding: 6px;
+    background: transparent;
+    color: #ccc;
+    border: 1px solid #444;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.edit-btn-save {
+    flex: 1;
+    padding: 6px;
+    background: var(--primary-color, #007bff);
+    color: #fff;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+}
+
+.flex-between-center {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.contact-name-large {
+    font-size: 1.05rem;
+}
+
+.btn-edit-contact {
+    background: transparent;
+    border: none;
+    color: var(--primary-color, #007bff);
+    cursor: pointer;
+}
+
+.contact-phone-row {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: #aaa;
+    font-size: 0.9rem;
+}
+
+.btn-copy-phone {
+    background: transparent;
+    border: none;
+    color: #aaa;
+    cursor: pointer;
+}
+
+.isp-status-col {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    font-size: 0.85rem;
+}
+
+.isp-status-row {
+    display: flex;
+    justify-content: space-between;
+}
+
+.status-green {
+    color: #4caf50;
+}
+
+.modal-textarea-mt {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--bg-deep);
+    border: 1px solid #444;
+    color: #fff;
+    margin-top: 12px;
+}
+
+.modal-form-col {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    text-align: left;
+    margin-top: 12px;
+}
+
+.modal-form-col-mt16 {
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 16px;
+    text-align: left;
+    display: flex;
+}
+
+.modal-select {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--bg-deep);
+    border: 1px solid #444;
+    color: #fff;
+}
+
+.modal-input {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--bg-deep);
+    border: 1px solid #444;
+    color: #fff;
+}
+
+.modal-textarea {
+    width: 100%;
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--bg-deep);
+    border: 1px solid #444;
+    color: #fff;
+    resize: none;
+}
+
+/* Already exists: .ca-modal-icon.warning, so I add the others */
+.ca-modal-icon.primary {
+    background: rgba(59, 130, 246, 0.1);
+    color: var(--primary-color);
+}
+
+.ca-modal-icon.danger {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.ca-modal-icon.success {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.w-450 {
+    width: 450px !important;
+}
+
+.w-480 {
+    width: 480px !important;
+}
+
+.w-500 {
+    width: 500px !important;
+}
+
+.mt-16 {
+    margin-top: 16px !important;
+}
+
+.mt-20 {
+    margin-top: 20px !important;
+}
+
+.mt-24 {
+    margin-top: 24px !important;
+}
+
+.mt-2rem {
+    margin-top: 2rem !important;
+}
