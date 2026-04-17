@@ -132,7 +132,6 @@ const OcorrenciasManager: React.FC = () => {
     const filteredOco = genericFilter(ocorrencias, searchTerm);
 
     return (
-    return (
         <div className="manager-container om-container">
             <header className="om-header">
                 <div className="om-header-left">
