@@ -8,7 +8,7 @@ import {
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSalesStages, getPipelineStats, moveLead, SalesStage } from '../services/pipelineService';
 import { getLeads, Lead } from '../services/leadService';
-import './InternalChat.css'; // Usar estilos compartilhados
+import './SalesPipeline.css';
 
 const SalesPipeline: React.FC = () => {
     const [stages, setStages] = useState<SalesStage[]>([]);
@@ -70,85 +70,73 @@ const SalesPipeline: React.FC = () => {
         }
     };
 
-    if (loading) return <div style={{ padding: '2rem' }}>Carregando Pipeline...</div>;
+    if (loading) return <div className="p-32">Carregando Pipeline...</div>;
 
     return (
-        <div style={{ padding: 'var(--space-lg)', height: '100%', display: 'flex', flexDirection: 'column', boxSizing: 'border-box', overflow: 'hidden' }}>
+        <div className="sp-container">
             {/* Header com Stats */}
-            <header style={{ marginBottom: '2rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <header className="sp-header">
+                <div className="sp-header-row">
                     <div>
-                        <h1 style={{ margin: 0, fontSize: '1.8rem', fontWeight: 700 }}>Módulo Comercial / Pipeline</h1>
-                        <p style={{ color: '#aaa', margin: '4px 0 0 0' }}>Acompanhamento do funil de vendas em tempo real</p>
+                        <h1 className="sp-title">Módulo Comercial / Pipeline</h1>
+                        <p className="sp-subtitle">Acompanhamento do funil de vendas em tempo real</p>
                     </div>
-                    <div style={{ display: 'flex', gap: '1rem' }}>
-                        <div style={{ background: 'var(--bg-surface)', padding: '10px 20px', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', color: '#888' }}>Taxa de Conversão</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#10b981' }}>{stats?.conversionRate}%</div>
+                    <div className="sp-stats-row">
+                        <div className="sp-stat-item">
+                            <div className="sp-stat-label">Taxa de Conversão</div>
+                            <div className="sp-stat-value sp-stat-value-success">{stats?.conversionRate}%</div>
                         </div>
-                        <div style={{ background: 'var(--bg-surface)', padding: '10px 20px', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', color: '#888' }}>Tempo de Resposta</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#3b82f6' }}>{stats?.avgResponseTime}</div>
+                        <div className="sp-stat-item">
+                            <div className="sp-stat-label">Tempo de Resposta</div>
+                            <div className="sp-stat-value sp-stat-value-primary">{stats?.avgResponseTime}</div>
                         </div>
-                        <div style={{ background: 'var(--bg-surface)', padding: '10px 20px', borderRadius: '12px', border: '1px solid var(--border)', textAlign: 'center' }}>
-                            <div style={{ fontSize: '0.75rem', color: '#888' }}>SLA Funil</div>
-                            <div style={{ fontSize: '1.1rem', fontWeight: 700, color: '#f59e0b' }}>{stats?.slaCompliance}%</div>
+                        <div className="sp-stat-item">
+                            <div className="sp-stat-label">SLA Funil</div>
+                            <div className="sp-stat-value sp-stat-value-warning">{stats?.slaCompliance}%</div>
                         </div>
                     </div>
                 </div>
             </header>
 
             {/* Kanban Board */}
-            <div style={{
-                flex: 1, display: 'flex', gap: '1.5rem', overflowX: 'auto', paddingBottom: '1rem',
-                scrollbarWidth: 'thin', scrollbarColor: '#444 transparent'
-            }}>
+            <div className="sp-kanban-board">
                 {stages.map(stage => {
                     const stageLeads = leads.filter(l => l.stageId === stage.id || (!l.stageId && stage.ordem === 0));
                     return (
-                        <div key={stage.id} style={{
-                            flex: 1, minWidth: '320px', display: 'flex', flexDirection: 'column',
-                            background: 'rgba(255,255,255,0.01)', borderRadius: '12px'
-                        }}>
+                        <div key={stage.id} className="sp-stage-col">
                             {/* Stage Header */}
-                            <div style={{
-                                padding: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                                borderBottom: `2px solid ${stage.cor}`, marginBottom: '12px'
-                            }}>
-                                <span style={{ fontWeight: 700, color: stage.cor, fontSize: '0.9rem', textTransform: 'uppercase', letterSpacing: '0.5px' }}>
+                            <div className="sp-stage-header" style={{ borderBottom: `2px solid ${stage.cor}` }}>
+                                <span className="sp-stage-name" style={{ color: stage.cor }}>
                                     {stage.nome}
                                 </span>
-                                <span style={{ background: 'var(--bg-surface)', padding: '2px 8px', borderRadius: '12px', fontSize: '0.75rem', fontWeight: 700 }}>
+                                <span className="sp-stage-count">
                                     {stageLeads.length}
                                 </span>
                             </div>
 
                             {/* Cards Area */}
-                            <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', overflowY: 'auto' }}>
+                            <div className="sp-cards-area">
                                 {stageLeads.map(lead => (
                                     <motion.div
                                         layoutId={lead.id}
                                         key={lead.id}
-                                        style={{
-                                            background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: '12px',
-                                            padding: '12px', cursor: 'pointer', position: 'relative'
-                                        }}
+                                        className="sp-lead-card"
                                         whileHover={{ y: -2, borderColor: stage.cor }}
                                     >
-                                        <div style={{ fontWeight: 600, fontSize: '0.9rem', marginBottom: '4px' }}>{lead.nomeCompleto}</div>
-                                        <div style={{ fontSize: '0.8rem', color: '#888', marginBottom: '8px' }}>{lead.interessePlano || 'Sem plano'}</div>
+                                        <div className="sp-lead-name">{lead.nomeCompleto}</div>
+                                        <div className="sp-lead-plan">{lead.interessePlano || 'Sem plano'}</div>
 
-                                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                                            <div style={{ fontSize: '0.7rem', color: '#666', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                                        <div className="sp-lead-footer">
+                                            <div className="sp-lead-date">
                                                 <Clock size={12} /> {new Date(lead.createdAt).toLocaleDateString()}
                                             </div>
-                                            <div style={{ display: 'flex', gap: '4px' }}>
+                                            <div className="sp-lead-actions">
                                                 <button
                                                     onClick={() => {
                                                         const next = stages.find(s => s.ordem === stage.ordem + 1);
                                                         if (next) handleMove(lead.id, next.id);
                                                     }}
-                                                    style={{ background: 'transparent', border: 'none', color: '#aaa', cursor: 'pointer', padding: '4px' }}
+                                                    className="sp-lead-action-btn"
                                                 >
                                                     <ArrowRight size={18} />
                                                 </button>
@@ -157,14 +145,14 @@ const SalesPipeline: React.FC = () => {
 
                                         {/* SLA Warning */}
                                         {stage.slaDias > 0 && Math.random() > 0.8 && (
-                                            <div style={{ position: 'absolute', top: '-6px', right: '-6px', color: '#ef4444' }}>
+                                            <div className="sp-sla-warning">
                                                 <Warning size={16} weight="fill" />
                                             </div>
                                         )}
                                     </motion.div>
                                 ))}
                                 {stageLeads.length === 0 && (
-                                    <div style={{ padding: '20px', textAlign: 'center', color: '#444', border: '1px dashed #444', borderRadius: '12px', fontSize: '0.8rem' }}>
+                                    <div className="sp-empty-stage">
                                         Vazio
                                     </div>
                                 )}
@@ -177,24 +165,24 @@ const SalesPipeline: React.FC = () => {
             {/* Modal de Perda */}
             <AnimatePresence>
                 {showLostModal && (
-                    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 1001, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <div className="sp-modal-overlay">
                         <motion.div
                             initial={{ scale: 0.95, opacity: 0 }}
                             animate={{ scale: 1, opacity: 1 }}
-                            style={{ background: 'var(--bg-surface)', padding: '2rem', borderRadius: '16px', width: '400px', border: '1px solid var(--border)' }}
+                            className="sp-modal"
                         >
                             <h3>⚠️ Motivo da Perda</h3>
-                            <p style={{ color: '#aaa', fontSize: '0.9rem' }}>Explique por que este lead não avançou no funil.</p>
+                            <p className="sp-modal-desc">Explique por que este lead não avançou no funil.</p>
                             <textarea
                                 autoFocus
                                 value={lostReason}
                                 onChange={e => setLostReason(e.target.value)}
-                                style={{ width: '100%', height: '100px', padding: '12px', borderRadius: '8px', background: '#000', border: '1px solid #444', color: '#fff', resize: 'none' }}
+                                className="sp-modal-textarea"
                                 placeholder="Ex: Cliente preferiu concorrente direto (preço)."
                             />
-                            <div style={{ display: 'flex', gap: '1rem', marginTop: '1.5rem', justifyContent: 'flex-end' }}>
-                                <button onClick={() => setShowLostModal(null)} style={{ padding: '8px 16px', background: 'transparent', border: 'none', color: '#888' }}>Cancelar</button>
-                                <button onClick={confirmLost} style={{ padding: '8px 24px', background: '#ef4444', color: '#fff', border: 'none', borderRadius: '8px', fontWeight: 600 }}>Confirmar Perda</button>
+                            <div className="sp-modal-actions">
+                                <button onClick={() => setShowLostModal(null)} className="sp-btn-cancel">Cancelar</button>
+                                <button onClick={confirmLost} className="sp-btn-danger">Confirmar Perda</button>
                             </div>
                         </motion.div>
                     </div>

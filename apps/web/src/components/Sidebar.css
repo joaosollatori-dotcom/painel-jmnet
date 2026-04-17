@@ -280,3 +280,7 @@
 [data-theme='light'] .sidebar.expanded {
     box-shadow: 10px 0 40px rgba(0, 0, 0, 0.03);
 }
+
+.overflow-hidden {
+    overflow: hidden;
+}

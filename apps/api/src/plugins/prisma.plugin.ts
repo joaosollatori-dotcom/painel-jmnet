@@ -9,9 +9,18 @@ declare module 'fastify' {
 }
 
 const prismaPluginCallback: FastifyPluginAsync = async (fastify) => {
-    const prisma = new PrismaClient();
+    const prisma = new PrismaClient({
+        log: ['error', 'warn'],
+    });
 
-    await prisma.$connect();
+    // Tenta conectar mas não trava a inicialização do Fastify se falhar (importante para o Webhook da Meta carregar mesmo sem DB)
+    prisma.$connect()
+        .then(() => {
+            fastify.log.info('Prisma connected successfully');
+        })
+        .catch((err) => {
+            fastify.log.error(`Prisma connection failed: ${err.message}`);
+        });
 
     fastify.decorate('prisma', prisma);
 

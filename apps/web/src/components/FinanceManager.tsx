@@ -100,7 +100,7 @@ const FinanceManager: React.FC = () => {
                 </div>
 
                 <div className="finance-panel">
-                    <h3 className="panel-title" style={{ marginBottom: '1.5rem' }}>Ferramentas Rápidas</h3>
+                    <h3 className="panel-title mb-24">Ferramentas Rápidas</h3>
                     <div className="quick-tools">
                         <button className="tool-btn">
                             <CreditCard size={20} color="var(--accent)" />

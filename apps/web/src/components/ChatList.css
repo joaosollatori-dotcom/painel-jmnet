@@ -526,6 +526,147 @@
 }
 
 /* ChatList remains static as requested */
+.cl-filter-icon {
+    cursor: pointer;
+}
+
+.cl-filter-icon.active {
+    color: var(--accent);
+}
+
+.cl-trigger-row {
+    display: flex;
+    gap: 8px;
+    padding: 0 1rem 1rem 1rem;
+}
+
+.cl-archived-trigger {
+    flex: 1;
+    margin: 0 !important;
+}
+
+.cl-trigger-ended {
+    flex: 1;
+    margin: 0 !important;
+    background-color: #2a1a1a !important;
+    border: 1px solid #ff4d4f40 !important;
+}
+
+.cl-trigger-left {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.cl-trigger-left.ended {
+    color: #ff4d4f;
+}
+
+.cl-trigger-text {
+    font-size: 0.9rem;
+}
+
+.cl-ended-badge {
+    background-color: #ff4d4f33 !important;
+    color: #ff4d4f !important;
+}
+
+.cl-loading-wrapper {
+    padding: 80px 0;
+}
+
+.cl-context-menu {
+    position: absolute;
+    z-index: 1000;
+}
+
+.cl-modal-mini {
+    min-width: 350px !important;
+}
+
+.cl-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 1.5rem;
+}
+
+.cl-modal-title {
+    margin: 0 !important;
+}
+
+.cl-modal-close {
+    background: transparent !important;
+    border: none !important;
+    color: #aaa !important;
+    cursor: pointer !important;
+}
+
+.cl-form {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+}
+
+.cl-form-group {
+    display: flex;
+    flex-direction: column;
+    gap: 0.3rem;
+    text-align: left;
+}
+
+.cl-label {
+    font-size: 0.9rem;
+    color: #ccc;
+}
+
+.cl-input {
+    padding: 10px;
+    border-radius: 6px;
+    background: var(--bg-tertiary, #222);
+    border: 1px solid #444;
+    color: #fff;
+    outline: none;
+}
+
+.cl-checkbox-group {
+    text-align: left;
+    margin-top: 10px;
+    background: var(--bg-tertiary, #222);
+    padding: 12px;
+    border-radius: 8px;
+    border: 1px solid #444;
+}
+
+.cl-checkbox-label {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    margin: 0;
+}
+
+.cl-checkbox {
+    width: 18px;
+    height: 18px;
+    accent-color: var(--primary-color, #007bff);
+}
+
+.cl-checkbox-text {
+    font-size: 0.95rem;
+    font-weight: 500;
+}
+
+.cl-modal-actions-offset {
+    margin-top: 1.5rem;
+}
+
+.cl-btn-primary {
+    background: var(--primary-color, #007bff) !important;
+    color: #fff !important;
+    border: none !important;
+}
+
 @media (max-width: 768px) {
     .chat-list-container {
         width: 100%;

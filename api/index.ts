@@ -7,17 +7,21 @@ export default async (req: any, res: any) => {
     const diagnostics = {
         cwd: process.cwd(),
         root_files: readdirSync('.'),
-        apps_exists: existsSync('../apps'),
-        apps_api_exists: existsSync('../apps/api'),
-        env_keys: Object.keys(process.env).filter(k => k.includes('WHATSAPP') || k.includes('DATABASE')),
+        apps_exists: existsSync('./apps'),
+        apps_api_exists: existsSync('./apps/api'),
+        env_keys: Object.keys(process.env),
     };
 
     try {
         console.log('DIAGNOSTICS:', diagnostics);
 
-        // Tentativa de importação dinâmica para não quebrar no load
+        // Tenta encontrar o caminho correto do servidor (local ou Vercel)
+        const serverPath = existsSync('./apps/api/src/server.js')
+            ? './apps/api/src/server.js'
+            : '../apps/api/src/server.js';
+
         // @ts-ignore
-        const { server, setupServer } = await import('../apps/api/src/server.js');
+        const { server, setupServer } = await import(serverPath);
 
         await setupServer();
         await server.ready();

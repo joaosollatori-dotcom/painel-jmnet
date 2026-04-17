@@ -125,8 +125,8 @@ const OSManager: React.FC = () => {
             </header>
 
             <div className="search-filter-row">
-                <div style={{ flex: 1, position: 'relative' }}>
-                    <MagnifyingGlass size={20} style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <div className="os-search-wrapper">
+                    <MagnifyingGlass size={20} className="os-search-icon" />
                     <input
                         type="text"
                         placeholder="Buscar por ID, tipo, descrição, assinante ou endereço..."
@@ -149,7 +149,7 @@ const OSManager: React.FC = () => {
                     <div key={os.id} className="os-card">
                         <div className="os-id">#{os.id.slice(0, 8)} • {os.order_type}</div>
                         <div className="os-customer">{os.customer_name}</div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                        <div className="os-card-actions">
                             <span className={`os-priority-badge ${os.priority === 'URGENTE' ? 'urgente' : 'normal'}`}>
                                 {os.priority}
                             </span>

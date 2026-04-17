@@ -443,7 +443,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <button className={`tab-btn ${activeTab === 'agendamento' ? 'active' : ''}`} onClick={() => setActiveTab('agendamento')}><Calendar size={16} /> Agendamento</button>
                         </nav>
 
-                        <div className="tab-viewport ic-sidebar-scroll" style={{ flex: 1, overflowY: 'auto' }}>
+                        <div className="tab-viewport ic-sidebar-scroll">
                             {activeTab === 'timeline' && renderTimeline()}
                             {activeTab === 'dados' && renderDadosTab()}
                             {activeTab === 'qualificacao' && renderQualificacaoTab()}

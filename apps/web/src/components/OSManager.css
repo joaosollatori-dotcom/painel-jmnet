@@ -315,3 +315,22 @@
     border: none;
     cursor: pointer;
 }
+
+.os-search-wrapper {
+    flex: 1;
+    position: relative;
+}
+
+.os-search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #666;
+}
+
+.os-card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}

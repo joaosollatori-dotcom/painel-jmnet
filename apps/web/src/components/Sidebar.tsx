@@ -196,12 +196,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                 <AnimatePresence initial={false}>
                     {hasSubItems && isExpanded && !isRetracted && (
                         <motion.div
-                            className="sub-items-container"
+                            className="sub-items-container overflow-hidden"
                             initial="closed"
                             animate="open"
                             exit="closed"
                             variants={accordionVariants}
-                            style={{ overflow: 'hidden' }}
                         >
                             {item.subItems.map((sub: any) => renderMenuItem(sub, depth + 1))}
                         </motion.div>
@@ -265,7 +264,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                                         animate="open"
                                         exit="closed"
                                         variants={accordionVariants}
-                                        style={{ overflow: 'hidden' }}
+                                        className="overflow-hidden"
                                     >
                                         {group.items.map(item => renderMenuItem(item))}
                                     </motion.div>

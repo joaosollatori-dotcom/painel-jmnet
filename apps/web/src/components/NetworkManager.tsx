@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Globe, HardDrives, Cpu, WifiHigh, WarningCircle, GitBranch, Desktop, CheckCircle, MagnifyingGlass } from '@phosphor-icons/react';
 import { genericFilter } from '../utils/filterUtils';
+import './NetworkManager.css';
 
 const NetworkManager: React.FC = () => {
     const [selectedOlt, setSelectedOlt] = useState<string | null>('OLT-01');
@@ -15,89 +16,82 @@ const NetworkManager: React.FC = () => {
     const filteredOlts = genericFilter(olts, searchTerm);
 
     return (
-        <div style={{ padding: '2rem', flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-            <header>
-                <h1 style={{ fontSize: '1.8rem', marginBottom: '0.5rem' }}>Infraestrutura de Rede</h1>
-                <p style={{ color: 'var(--text-secondary)' }}>Monitoramento de OLTs, provisionamento GPON e diagnóstico de sinal.</p>
+        <div className="nm-container">
+            <header className="nm-header">
+                <h1>Infraestrutura de Rede</h1>
+                <p>Monitoramento de OLTs, provisionamento GPON e diagnóstico de sinal.</p>
             </header>
 
-            <div style={{ display: 'grid', gridTemplateColumns: '300px 1fr', gap: '24px', flex: 1 }}>
+            <div className="nm-layout">
                 {/* Sidebar com OLTs */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    <div style={{ position: 'relative', marginBottom: '8px' }}>
-                        <MagnifyingGlass size={18} style={{ position: 'absolute', left: '10px', top: '50%', transform: 'translateY(-50%)', color: '#666' }} />
+                <div className="nm-sidebar">
+                    <div className="nm-search-wrapper">
+                        <MagnifyingGlass size={18} className="nm-search-icon" />
                         <input
                             type="text"
                             placeholder="Buscar OLT..."
                             value={searchTerm}
                             onChange={(e) => setSearchTerm(e.target.value)}
-                            style={{
-                                width: '100%', padding: '10px 10px 10px 36px', borderRadius: 'var(--radius-md)',
-                                background: 'var(--bg-surface)', border: '1px solid var(--border)', color: '#fff', fontSize: '0.85rem'
-                            }}
+                            className="nm-search-input"
                         />
                     </div>
-                    <h3 style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', fontWeight: 600, letterSpacing: '0.05em' }}>OLTs CONFIGURADAS</h3>
+                    <h3 className="nm-sidebar-title">OLTs CONFIGURADAS</h3>
                     {filteredOlts.map(olt => (
                         <div
                             key={olt.id}
                             onClick={() => setSelectedOlt(olt.id)}
+                            className={`nm-olt-card ${selectedOlt === olt.id ? 'active' : ''}`}
                             style={{
-                                padding: '1.25rem',
-                                background: selectedOlt === olt.id ? 'var(--accent-soft)' : 'var(--bg-surface)',
-                                border: `1px solid ${selectedOlt === olt.id ? 'var(--accent)' : 'var(--border)'}`,
-                                borderRadius: 'var(--radius-lg)',
-                                cursor: 'pointer',
-                                transition: 'all 0.2s'
+                                border: `1px solid ${selectedOlt === olt.id ? 'var(--accent)' : 'var(--border)'}`
                             }}
                         >
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'start', marginBottom: '10px' }}>
+                            <div className="nm-olt-card-header">
                                 <HardDrives size={24} color={selectedOlt === olt.id ? 'var(--accent)' : 'var(--text-secondary)'} />
                                 <span style={{ fontSize: '0.7rem', color: olt.status === 'ONLINE' ? '#10b981' : '#f59e0b', fontWeight: 800 }}>{olt.status}</span>
                             </div>
-                            <strong style={{ display: 'block', fontSize: '1rem', marginBottom: '4px' }}>{olt.nome}</strong>
-                            <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{olt.ip} • {olt.onus} ONUs</span>
+                            <strong className="nm-olt-name">{olt.nome}</strong>
+                            <span className="nm-olt-info">{olt.ip} • {olt.onus} ONUs</span>
                         </div>
                     ))}
-                    <button style={{ marginTop: '12px', padding: '12px', border: '2px dashed var(--border)', borderRadius: 'var(--radius-lg)', background: 'transparent', color: 'var(--text-secondary)', fontWeight: 600, cursor: 'pointer' }}>
+                    <button className="nm-btn-add">
                         + Adicionar OLT
                     </button>
                 </div>
 
                 {/* Painel de Detalhes da OLT */}
-                <div style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)', borderRadius: 'var(--radius-xl)', padding: '2rem', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <div className="nm-details-panel">
+                    <div className="nm-panel-header">
                         <div>
-                            <h2 style={{ fontSize: '1.4rem' }}>{selectedOlt} — Detalhes da Operação</h2>
-                            <p style={{ color: 'var(--text-secondary)', fontSize: '0.9rem' }}>Visualização de portas PON e estatísticas de tráfego.</p>
+                            <h2 className="nm-panel-title">{selectedOlt} — Detalhes da Operação</h2>
+                            <p className="nm-panel-subtitle">Visualização de portas PON e estatísticas de tráfego.</p>
                         </div>
-                        <div style={{ display: 'flex', gap: '12px' }}>
-                            <button style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border)', background: 'var(--bg-muted)', color: 'var(--text-primary)', cursor: 'pointer' }}>Sincronizar</button>
-                            <button style={{ padding: '8px 16px', borderRadius: 'var(--radius-md)', border: 'none', background: 'var(--accent)', color: '#fff', fontWeight: 600, cursor: 'pointer' }}>Provisionar ONU</button>
+                        <div className="nm-panel-actions">
+                            <button className="nm-btn-sync">Sincronizar</button>
+                            <button className="nm-btn-provision">Provisionar ONU</button>
                         </div>
                     </div>
 
-                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+                    <div className="nm-stats-grid">
                         {[1, 2, 3, 4, 5, 6, 7, 8].map(p => (
-                            <div key={p} style={{ padding: '1rem', border: '1px solid var(--border)', borderRadius: 'var(--radius-md)', background: 'rgba(255,255,255,0.02)' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                    <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)' }}>PON {p}</span>
+                            <div key={p} className="nm-stat-card">
+                                <div className="nm-stat-header">
+                                    <span className="nm-stat-label">PON {p}</span>
                                     <WifiHigh size={16} color="#10b981" />
                                 </div>
-                                <div style={{ fontSize: '1.2rem', fontWeight: 700 }}>{Math.floor(Math.random() * 30) + 10} ONUs</div>
-                                <div style={{ fontSize: '0.7rem', color: '#10b981', marginTop: '4px' }}>OCUPAÇÃO: 45%</div>
+                                <div className="nm-stat-value">{Math.floor(Math.random() * 30) + 10} ONUs</div>
+                                <div className="nm-stat-footer">OCUPAÇÃO: 45%</div>
                             </div>
                         ))}
                     </div>
 
-                    <div style={{ flex: 1, border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)', overflow: 'hidden' }}>
-                        <div style={{ background: 'var(--bg-muted)', padding: '12px 20px', fontSize: '0.85rem', fontWeight: 600, borderBottom: '1px solid var(--border)' }}>
+                    <div className="nm-logs-panel">
+                        <div className="nm-logs-header">
                             LOGS DE EVENTOS REAL-TIME
                         </div>
-                        <div style={{ padding: '1rem', fontFamily: 'monospace', fontSize: '0.8rem', color: '#10b981', display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                        <div className="nm-logs-content">
                             <div>[20:56:12] ONU 48575443B8F9A5D2 — ONLINE — PON 01/2 — Sinal: -18.5dBm</div>
                             <div>[20:55:04] OLT-01 — Backup de configuração realizado com sucesso.</div>
-                            <div style={{ color: '#f59e0b' }}>[20:54:30] Link Trunk-01 — Alta latência detectada (45ms).</div>
+                            <div className="nm-log-warn">[20:54:30] Link Trunk-01 — Alta latência detectada (45ms).</div>
                             <div>[20:52:10] ONU 48575443C122D0A1 — PROVISIONADA — PON 03/12</div>
                         </div>
                     </div>

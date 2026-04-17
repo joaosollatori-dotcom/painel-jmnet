@@ -189,7 +189,7 @@ const CameraCaptureModal: React.FC<CameraCaptureModalProps> = ({ onClose, onCapt
                                 </>
                             )}
                             {/* Hidden canvas to extract the image */}
-                            <canvas ref={canvasRef} style={{ display: 'none' }}></canvas>
+                            <canvas ref={canvasRef} className="hidden-element"></canvas>
                         </div>
                     )}
                 </div>
