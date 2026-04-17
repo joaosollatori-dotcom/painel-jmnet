@@ -18,7 +18,7 @@ const server = Fastify({
 	logger: true,
 });
 
-async function main() {
+export async function setupServer() {
 	// Register Plugins
 	await server.register(cors);
 	await server.register(jwt, {
@@ -53,22 +53,30 @@ async function main() {
 	await server.register(bullmqPlugin);
 
 	// Start Background Workers
-	setupWorkers();
+	if (!process.env.VERCEL) {
+		setupWorkers();
+	}
 
 	// Health Check
 	server.get("/health", async () => {
 		return { status: "ok", timestamp: new Date().toISOString() };
 	});
 
-	// Start Server
-	try {
-		const port = Number(process.env.PORT) || 3000;
-		await server.listen({ port, host: "0.0.0.0" });
-		console.log(`🚀 Server ready at http://localhost:${port}`);
-	} catch (err) {
-		server.log.error(err);
-		process.exit(1);
-	}
+	return server;
 }
 
-main();
+// Start Server locally
+if (!process.env.VERCEL) {
+	setupServer().then(async (server) => {
+		try {
+			const port = Number(process.env.PORT) || 3000;
+			await server.listen({ port, host: "0.0.0.0" });
+			console.log(`🚀 Server ready at http://localhost:${port}`);
+		} catch (err) {
+			server.log.error(err);
+			process.exit(1);
+		}
+	});
+}
+
+export default server;

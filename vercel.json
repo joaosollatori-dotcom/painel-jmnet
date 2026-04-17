@@ -2,7 +2,11 @@
     "outputDirectory": "apps/web/dist",
     "rewrites": [
         {
-            "source": "/(.*)",
+            "source": "/v1/:path*",
+            "destination": "/api"
+        },
+        {
+            "source": "/((?!v1|api).*)",
             "destination": "/index.html"
         }
     ]

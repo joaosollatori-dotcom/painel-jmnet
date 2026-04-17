@@ -7,7 +7,7 @@ export class WhatsappService {
 
 	constructor(private prisma: PrismaClient) {
 		this.accessToken = process.env.WHATSAPP_ACCESS_TOKEN || "";
-		this.phoneNumberId = process.env.WHATSAPP_PHONE_NUMBER_ID || "";
+		this.phoneNumberId = process.env.WHATSAPP_PHONE_ID || "";
 		this.apiVersion = process.env.WHATSAPP_API_VERSION || "v25.0";
 	}
 
