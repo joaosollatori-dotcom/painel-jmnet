@@ -25,6 +25,7 @@ const CookieConsent: React.FC = () => {
         localStorage.setItem('cookie-consent', 'declined');
         // Clear potential persistent non-essential data
         localStorage.removeItem('tita-theme');
+        localStorage.removeItem('tita-finish');
         setIsVisible(false);
         // Reload to switch to session-only storage
         window.location.reload();

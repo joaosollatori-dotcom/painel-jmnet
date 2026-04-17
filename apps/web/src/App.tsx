@@ -109,7 +109,12 @@ const LeadView: React.FC = () => {
   );
 };
 
-const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggleTheme: () => void }> = ({ theme, onToggleTheme }) => {
+const SettingsPageWrapper: React.FC<{
+  theme: 'light' | 'dark' | 'soft';
+  finish: 'matte' | 'glossy';
+  onToggleTheme: () => void;
+  onToggleFinish: () => void;
+}> = ({ theme, finish, onToggleTheme, onToggleFinish }) => {
   const [notif, setNotif] = useState(true);
   const [sound, setSound] = useState(true);
   const [autoAI, setAutoAI] = useState(true);
@@ -118,6 +123,7 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggle
     { label: 'Sons', desc: 'Reproduzir som ao receber mensagem', value: sound, toggle: () => setSound(!sound) },
     { label: 'IA Automática', desc: 'Ativar Titã AI em novos atendimentos por padrão', value: autoAI, toggle: () => setAutoAI(!autoAI) },
     { label: theme === 'dark' ? 'Modo Escuro' : theme === 'soft' ? 'Modo Soft' : 'Modo Claro', desc: 'Alternar aparência da plataforma (Dark, Light, Soft)', value: theme !== 'light', toggle: onToggleTheme },
+    { label: finish === 'matte' ? 'Modo Fosco' : 'Modo Brilho', desc: 'Remover transparências e efeitos de desfoque', value: finish === 'matte', toggle: onToggleFinish },
   ];
   return (
     <div className="settings-page">
@@ -158,6 +164,9 @@ const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>(() => {
     return (localStorage.getItem('tita-theme') as 'dark' | 'light' | 'soft') || 'dark';
   });
+  const [finish, setFinish] = useState<'matte' | 'glossy'>(() => {
+    return (localStorage.getItem('tita-finish') as 'matte' | 'glossy') || 'glossy';
+  });
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
@@ -169,12 +178,22 @@ const App: React.FC = () => {
     }
   }, [theme]);
 
+  React.useEffect(() => {
+    document.documentElement.setAttribute('data-finish', finish);
+    if (localStorage.getItem('cookie-consent') === 'accepted') {
+      localStorage.setItem('tita-finish', finish);
+    }
+  }, [finish]);
+
   const toggleTheme = () => {
     setTheme(prev => prev === 'dark' ? 'light' : 'dark');
   };
 
   const toggleSoftTheme = () => {
     setTheme(prev => prev === 'soft' ? 'dark' : 'soft');
+  };
+  const toggleFinish = () => {
+    setFinish(prev => prev === 'glossy' ? 'matte' : 'glossy');
   };
   const toggleSidebar = () => setIsRetracted(prev => !prev);
   const retractSidebar = () => {
@@ -217,14 +236,9 @@ const App: React.FC = () => {
         isRetracted={isRetracted}
         onToggleRetraction={toggleSidebar}
         theme={theme}
-        onToggleTheme={() => {
-          // Na sidebar, podemos ciclar entre os 3 ou manter a lógica do usuário
-          setTheme(prev => {
-            if (prev === 'dark') return 'light';
-            if (prev === 'light') return 'soft';
-            return 'dark';
-          });
-        }}
+        finish={finish}
+        onToggleTheme={toggleTheme}
+        onToggleFinish={toggleFinish}
       />
       <button className="mobile-menu-trigger" onClick={toggleSidebar}>
         <div className="hamburger" />
@@ -252,7 +266,12 @@ const App: React.FC = () => {
           <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/rede" element={<NetworkManager />} />
-          <Route path="/ajustes" element={<SettingsPageWrapper theme={theme} onToggleTheme={toggleTheme} />} />
+          <Route path="/ajustes" element={<SettingsPageWrapper
+            theme={theme}
+            finish={finish}
+            onToggleTheme={toggleTheme}
+            onToggleFinish={toggleFinish}
+          />} />
           <Route path="/privacy" element={<PrivacyPolicy />} />
 
           <Route path="*" element={

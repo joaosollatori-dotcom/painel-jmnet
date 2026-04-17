@@ -30,15 +30,17 @@ interface SidebarProps {
     isRetracted: boolean;
     onToggleRetraction: () => void;
     theme: 'light' | 'dark' | 'soft';
+    finish: 'matte' | 'glossy';
     onToggleTheme: () => void;
+    onToggleFinish: () => void;
 }
 
 const accordionVariants = {
-    open: { height: 'auto', opacity: 1, transition: { duration: 0.22, ease: [0.4, 0, 0.2, 1] } },
-    closed: { height: 0, opacity: 0, transition: { duration: 0.18, ease: [0.4, 0, 0.2, 1] } }
+    open: { height: 'auto', opacity: 1, transition: { duration: 0.22, ease: "easeInOut" } },
+    closed: { height: 0, opacity: 0, transition: { duration: 0.18, ease: "easeInOut" } }
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, theme, onToggleTheme }) => {
+const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, theme, finish, onToggleTheme, onToggleFinish }) => {
     const location = useLocation();
     const navigate = useNavigate();
 
@@ -148,7 +150,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                                 <motion.div
                                     className="expand-icon-wrapper"
                                     animate={{ rotate: isExpanded ? 90 : 0 }}
-                                    transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                                    transition={{ duration: 0.2, ease: "easeInOut" }}
                                     onClick={e => { e.stopPropagation(); toggleExpand(item.id); }}
                                 >
                                     <CaretRight size={13} />
@@ -216,7 +218,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
                                     <motion.div
                                         className="group-expand-icon"
                                         animate={{ rotate: isGroupExpanded ? 90 : 0 }}
-                                        transition={{ duration: 0.2, ease: [0.4, 0, 0.2, 1] }}
+                                        transition={{ duration: 0.2, ease: "easeInOut" }}
                                     >
                                         <CaretRight size={13} />
                                     </motion.div>
@@ -243,6 +245,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
 
             <div className="sidebar-footer">
                 <div className="footer-toolbar">
+                    {!isRetracted && (
+                        <button className={`footer-item ${finish === 'matte' ? 'active' : ''}`} onClick={onToggleFinish}
+                            title={finish === 'matte' ? 'Ativar Brilho' : 'Ativar Fosco'}>
+                            <Lightning size={22} weight={finish === 'matte' ? 'fill' : 'duotone'} />
+                        </button>
+                    )}
+
                     {!isRetracted && (
                         <button className="footer-item" onClick={onToggleTheme}
                             title={theme === 'dark' ? 'Modo Claro' : theme === 'light' ? 'Modo Soft' : 'Modo Escuro'}>

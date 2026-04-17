@@ -36,7 +36,7 @@ const PrivacyPolicy: React.FC = () => {
                     </p>
                     <ul>
                         <li><strong>Cookies Essenciais:</strong> Necessários para a autenticação e sessões de segurança via Supabase.</li>
-                        <li><strong>Cookies de Preferência:</strong> Armazenamos sua escolha de tema (Dark, Light ou Soft) para manter a consistência visual.</li>
+                        <li><strong>Cookies de Preferência:</strong> Armazenamos sua escolha de tema (Dark, Light ou Soft) e acabamento visual (Fosco ou Brilho) para manter a consistência da sua experiência.</li>
                         <li><strong>Tags de Performance:</strong> Coletamos dados técnicos anonimizados para monitorar a estabilidade da nossa rede.</li>
                     </ul>
                 </section>

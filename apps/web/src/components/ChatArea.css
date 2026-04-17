@@ -13,10 +13,11 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-bottom: 1px solid var(--border);
-    background-color: var(--bg-surface-light);
-    backdrop-filter: var(--glass);
+    background: color-mix(in srgb, var(--bg-surface-light), transparent calc(100% - (var(--glass-opacity) * 100%)));
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     z-index: 10;
+    border-bottom: var(--glass-border);
 }
 
 .chat-user-info {
@@ -184,8 +185,9 @@
 
 .message-wrapper.system .message-bubble {
     background: linear-gradient(135deg, rgba(79, 70, 229, 0.15), rgba(79, 70, 229, 0.05));
-    backdrop-filter: blur(8px);
-    border: 1px solid rgba(79, 70, 229, 0.2);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border: var(--glass-border);
     color: var(--text-secondary);
     font-size: 0.85rem;
     font-weight: 500;
@@ -350,8 +352,10 @@
     display: flex;
     align-items: flex-end;
     gap: var(--space-md);
-    border-top: 1px solid var(--border);
-    background-color: var(--bg-deep);
+    background: color-mix(in srgb, var(--bg-deep), transparent calc(100% - (var(--glass-opacity) * 100%)));
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-top: var(--glass-border);
     position: relative;
     z-index: 200;
 }
@@ -646,10 +650,10 @@
     font-size: 0.8rem;
     font-weight: 600;
     color: var(--text-secondary);
-    background-color: var(--bg-surface-light);
-    padding: 6px 14px;
-    border-radius: var(--radius-md);
-    border: 1px solid var(--border);
+    background: color-mix(in srgb, var(--bg-surface-light), transparent calc(100% - (var(--glass-opacity) * 100%)));
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
+    border-bottom: var(--glass-border);
 }
 
 /* AI Active menu item */
@@ -667,7 +671,8 @@
     position: fixed;
     inset: 0;
     background: rgba(0, 0, 0, 0.65);
-    backdrop-filter: blur(4px);
+    backdrop-filter: var(--glass-blur);
+    -webkit-backdrop-filter: var(--glass-blur);
     display: flex;
     align-items: center;
     justify-content: center;

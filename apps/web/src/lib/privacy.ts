@@ -17,6 +17,7 @@ export const setCookieConsent = (status: 'accepted' | 'declined') => {
     // If declining, we should clean up non-essential storage immediately
     if (status === 'declined') {
         localStorage.removeItem('tita-theme');
+        localStorage.removeItem('tita-finish');
         // Note: We don't remove 'cookie-consent' itself as it's needed to remember the choice
     }
 };

@@ -31,8 +31,20 @@
   --radius-sm: 6px;
   --radius-md: 10px;
   --radius-lg: 16px;
-  --glass: blur(12px);
-  --shadow: 0 8px 32px rgba(0, 0, 0, 0.5);
+  /* Finish Presets - Defaults to Glossy */
+  --glass-blur: blur(12px);
+  --glass-opacity: 0.7;
+  --glass-border: 1px solid var(--border);
+  --shadow-intensity: rgba(0, 0, 0, 0.5);
+  --shadow: 0 8px 32px var(--shadow-intensity);
+}
+
+[data-finish='matte'] {
+  --glass-blur: none !important;
+  --glass-opacity: 1 !important;
+  --glass-border: 1px solid var(--border-light);
+  --shadow-intensity: rgba(0, 0, 0, 0.05);
+  --shadow: none;
 }
 
 [data-theme='light'] {
@@ -161,9 +173,10 @@ textarea:focus {
 
 /* Helper Classes */
 .glass {
-  background: color-mix(in srgb, var(--bg-surface), transparent 30%);
-  backdrop-filter: var(--glass);
-  border: 1px solid var(--border);
+  background: color-mix(in srgb, var(--bg-surface), transparent calc(100% - (var(--glass-opacity) * 100%)));
+  backdrop-filter: var(--glass-blur);
+  -webkit-backdrop-filter: var(--glass-blur);
+  border: var(--glass-border);
 }
 
 .flex-center {
