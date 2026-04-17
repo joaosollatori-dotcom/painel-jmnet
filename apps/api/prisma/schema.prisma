@@ -277,3 +277,43 @@ model LeadHistory {
   motivoPerda     String?
   metadata        Json?    // Detalhes extras (ex: preview msg)
 }
+
+model Conversation {
+  id              String    @id @default(uuid())
+  contact_name    String
+  contact_phone   String?
+  platform        String    @default("whatsapp")
+  status          String    @default("new")
+  assigned_to     String?
+  is_pinned       Boolean   @default(false)
+  is_archived     Boolean   @default(false)
+  is_muted        Boolean   @default(false)
+  is_blocked      Boolean   @default(false)
+  unread_count    Int       @default(0)
+  last_message    String?
+  last_message_at DateTime?
+  ai_active       Boolean   @default(false)
+  is_closed       Boolean   @default(false)
+  created_at      DateTime  @default(now())
+  updated_at      DateTime  @updatedAt
+
+  messages        Message[]
+
+  @@map("conversations")
+}
+
+model Message {
+  id               String       @id @default(uuid())
+  conversation_id  String
+  conversation     Conversation @relation(fields: [conversation_id], references: [id])
+  sender           String
+  text             String
+  is_user          Boolean      @default(false)
+  is_bot           Boolean      @default(false)
+  reactions        String[]     @default([])
+  file_url         String?
+  file_name        String?
+  created_at       DateTime     @default(now())
+
+  @@map("messages")
+}
