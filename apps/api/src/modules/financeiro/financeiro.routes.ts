@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { FinanceiroService } from './financeiro.service';
-import { faturaSchema, pagamentoSchema } from './financeiro.schema';
+import { FinanceiroService } from './financeiro.service.js';
+import { faturaSchema, pagamentoSchema } from './financeiro.schema.js';
 
 export async function financeiroRoutes(server: FastifyInstance) {
     const service = new FinanceiroService(server.prisma);

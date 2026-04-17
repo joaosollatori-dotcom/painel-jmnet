@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { TelefoniaService } from './telefonia.service';
-import { ramalSchema, linhaMVNOSchema } from './telefonia.schema';
+import { TelefoniaService } from './telefonia.service.js';
+import { ramalSchema, linhaMVNOSchema } from './telefonia.schema.js';
 
 export async function telefoniaRoutes(server: FastifyInstance) {
     const service = new TelefoniaService(server.prisma);

@@ -3,16 +3,16 @@ import jwt from "@fastify/jwt";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
-import { setupWorkers } from "./jobs";
-import { assinantesRoutes } from "./modules/assinantes/assinantes.routes";
-import { financeiroRoutes } from "./modules/financeiro/financeiro.routes";
-import { osRoutes } from "./modules/os/os.routes";
-import { redeRoutes } from "./modules/rede/rede.routes";
-import { telefoniaRoutes } from "./modules/telefonia/telefonia.routes";
-import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes";
-import { bullmqPlugin } from "./plugins/bullmq.plugin";
-import { prismaPlugin } from "./plugins/prisma.plugin";
-import { redisPlugin } from "./plugins/redis.plugin";
+import { setupWorkers } from "./jobs/index.js";
+import { assinantesRoutes } from "./modules/assinantes/assinantes.routes.js";
+import { financeiroRoutes } from "./modules/financeiro/financeiro.routes.js";
+import { osRoutes } from "./modules/os/os.routes.js";
+import { redeRoutes } from "./modules/rede/rede.routes.js";
+import { telefoniaRoutes } from "./modules/telefonia/telefonia.routes.js";
+import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes.js";
+import { bullmqPlugin } from "./plugins/bullmq.plugin.js";
+import { prismaPlugin } from "./plugins/prisma.plugin.js";
+import { redisPlugin } from "./plugins/redis.plugin.js";
 
 export const server = Fastify({
 	logger: true,

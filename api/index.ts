@@ -1,4 +1,4 @@
-import { server, setupServer } from '../apps/api/src/server';
+import { server, setupServer } from '../apps/api/src/server.js';
 
 let initialized = false;
 

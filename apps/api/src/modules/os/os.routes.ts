@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { OSService } from './os.service';
-import { osSchema } from './os.schema';
+import { OSService } from './os.service.js';
+import { osSchema } from './os.schema.js';
 
 export async function osRoutes(server: FastifyInstance) {
     const service = new OSService(server.prisma);

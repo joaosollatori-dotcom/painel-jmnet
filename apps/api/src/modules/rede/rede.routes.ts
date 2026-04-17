@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest, FastifyReply } from 'fastify';
-import { RedeService } from './rede.service';
-import { oltSchema, onuSchema } from './rede.schema';
+import { RedeService } from './rede.service.js';
+import { oltSchema, onuSchema } from './rede.schema.js';
 
 export async function redeRoutes(server: FastifyInstance) {
     const service = new RedeService(server.prisma);

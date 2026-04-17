@@ -1,5 +1,5 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { WhatsappService } from "./whatsapp.service";
+import { WhatsappService } from "./whatsapp.service.js";
 
 export async function whatsappRoutes(server: FastifyInstance) {
 	const service = new WhatsappService(server.prisma);

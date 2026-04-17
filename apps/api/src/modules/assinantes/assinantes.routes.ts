@@ -1,6 +1,6 @@
 import { FastifyInstance, FastifyRequest } from 'fastify';
-import { AssinantesService } from './assinantes.service';
-import { assinanteSchema } from './assinantes.schema';
+import { AssinantesService } from './assinantes.service.js';
+import { assinanteSchema } from './assinantes.schema.js';
 
 export async function assinantesRoutes(server: FastifyInstance) {
     const service = new AssinantesService(server.prisma);
