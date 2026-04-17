@@ -31,7 +31,8 @@ const PrivacyPolicy: React.FC = () => {
                 <section>
                     <h2>3. Práticas de Cookies</h2>
                     <p>
-                        Utilizamos cookies e tecnologias similares para melhorar sua experiência na plataforma:
+                        Utilizamos cookies e tecnologias similares para melhorar sua experiência na plataforma. Caso opte por <strong>Recusar</strong>,
+                        utilizaremos apenas o <code>sessionStorage</code> para manter sua sessão ativa enquanto a aba estiver aberta, removendo qualquer persistência de longo prazo.
                     </p>
                     <ul>
                         <li><strong>Cookies Essenciais:</strong> Necessários para a autenticação e sessões de segurança via Supabase.</li>

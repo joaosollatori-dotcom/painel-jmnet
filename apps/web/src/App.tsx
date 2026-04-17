@@ -155,13 +155,18 @@ const SettingsPageWrapper: React.FC<{ theme: 'light' | 'dark' | 'soft'; onToggle
 };
 
 const App: React.FC = () => {
-  const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>('dark');
+  const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>(() => {
+    return (localStorage.getItem('tita-theme') as 'dark' | 'light' | 'soft') || 'dark';
+  });
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
+    if (localStorage.getItem('cookie-consent') === 'accepted') {
+      localStorage.setItem('tita-theme', theme);
+    }
   }, [theme]);
 
   const toggleTheme = () => {

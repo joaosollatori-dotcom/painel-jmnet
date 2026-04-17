@@ -17,11 +17,17 @@ const CookieConsent: React.FC = () => {
     const handleAccept = () => {
         localStorage.setItem('cookie-consent', 'accepted');
         setIsVisible(false);
+        // Reload to re-initialize Supabase and other engines with persistent storage
+        window.location.reload();
     };
 
     const handleDecline = () => {
         localStorage.setItem('cookie-consent', 'declined');
+        // Clear potential persistent non-essential data
+        localStorage.removeItem('tita-theme');
         setIsVisible(false);
+        // Reload to switch to session-only storage
+        window.location.reload();
     };
 
     if (!isVisible) return null;
