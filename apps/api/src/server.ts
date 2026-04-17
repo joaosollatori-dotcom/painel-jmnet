@@ -14,7 +14,7 @@ import { bullmqPlugin } from "./plugins/bullmq.plugin";
 import { prismaPlugin } from "./plugins/prisma.plugin";
 import { redisPlugin } from "./plugins/redis.plugin";
 
-const server = Fastify({
+export const server = Fastify({
 	logger: true,
 });
 
