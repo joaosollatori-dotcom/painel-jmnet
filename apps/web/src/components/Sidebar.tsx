@@ -1,6 +1,7 @@
-import React from 'react';
+import React, { useMemo } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
+import { getFrequentlyAccessedModules } from '../services/usageService';
 import {
     SquaresFour,
     Gear,
@@ -35,9 +36,9 @@ interface SidebarProps {
     onToggleFinish: () => void;
 }
 
-const accordionVariants = {
-    open: { height: 'auto', opacity: 1, transition: { duration: 0.22, ease: "easeInOut" } },
-    closed: { height: 0, opacity: 0, transition: { duration: 0.18, ease: "easeInOut" } }
+const accordionVariants: any = {
+    open: { height: 'auto', opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
+    closed: { height: 0, opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }
 };
 
 const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, theme, finish, onToggleTheme, onToggleFinish }) => {
@@ -46,9 +47,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
 
     const [statusStartTime] = React.useState<number>(Date.now());
     const [, setTimer] = React.useState('00:00:00');
-    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
-        new Set(['ATENDIMENTO', 'COMERCIAL & VENDAS', 'OPERAÇÕES', 'INFRAESTRUTURA', 'SUPORTE & LEGAL'])
-    );
+    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set());
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -59,62 +58,96 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
         });
     };
 
-    const menuGroups = [
-        {
-            label: 'ATENDIMENTO',
-            items: [
-                { id: '/atendimento', icon: Headset, label: 'Atendimento Central' },
-                { id: '/interno', icon: Hash, label: 'Comunicação Interna' },
-                { id: '/agentes', icon: Lightning, label: 'Agentes Inteligentes' },
-            ]
-        },
-        {
-            label: 'COMERCIAL & VENDAS',
-            items: [
-                {
-                    id: 'crm_module', icon: TrendUp, label: 'CRM de Leads',
-                    subItems: [
-                        { id: '/crm', label: 'Gestão de Leads' },
-                        { id: '/crm_tasks', label: 'Agendamentos' },
-                        { id: '/crm_contratos', label: 'Contratos' },
-                    ]
-                },
-                {
-                    id: 'clientes', icon: Users, label: 'Base de Clientes',
-                    subItems: [{ id: '/client_search', label: 'Consultar Cliente' }]
-                },
-                { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
-                { id: '/automacoes', icon: Lightning, label: 'Automações' },
-                { id: '/relatorios', icon: ChartLine, label: 'Relatórios' },
-            ]
-        },
-        {
-            label: 'OPERAÇÕES',
-            items: [
-                {
-                    id: 'financeiro_group', icon: CurrencyDollar, label: 'Financeiro',
-                    subItems: [{ id: '/financeiro', label: 'Gestão Financeira' }]
-                },
-                { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
-                { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
-                { id: '/estoque', icon: Package, label: 'Estoque de Rede' },
-            ]
-        },
-        {
-            label: 'INFRAESTRUTURA',
-            items: [
-                { id: '/dashboard', icon: TrendUp, label: 'Dashboard Resumo' },
-                { id: '/rede', icon: Globe, label: 'Topologia de Rede' },
-            ]
-        },
-        {
-            label: 'SUPORTE & LEGAL',
-            items: [
-                { id: '/ajustes', icon: Gear, label: 'Ajustes de Conta' },
-                { id: '/privacy', icon: WarningCircle, label: 'Privacidade' },
-            ]
+    const menuGroups = useMemo(() => {
+        const frequent = getFrequentlyAccessedModules();
+
+        const baseGroups = [
+            {
+                label: 'ATENDIMENTO',
+                items: [
+                    { id: '/atendimento', icon: Headset, label: 'Atendimento Central' },
+                    { id: '/interno', icon: Hash, label: 'Comunicação Interna' },
+                    { id: '/agentes', icon: Lightning, label: 'Agentes Inteligentes' },
+                ]
+            },
+            {
+                label: 'COMERCIAL & VENDAS',
+                items: [
+                    {
+                        id: 'crm_module', icon: TrendUp, label: 'CRM de Leads',
+                        subItems: [
+                            { id: '/crm', label: 'Gestão de Leads' },
+                            { id: '/crm_tasks', label: 'Agendamentos' },
+                            { id: '/crm_contratos', label: 'Contratos' },
+                        ]
+                    },
+                    {
+                        id: 'clientes', icon: Users, label: 'Base de Clientes',
+                        subItems: [{ id: '/client_search', label: 'Consultar Cliente' }]
+                    },
+                    { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
+                    { id: '/automacoes', icon: Lightning, label: 'Automações' },
+                    { id: '/relatorios', icon: ChartLine, label: 'Relatórios' },
+                ]
+            },
+            {
+                label: 'OPERAÇÕES',
+                items: [
+                    {
+                        id: 'financeiro_group', icon: CurrencyDollar, label: 'Financeiro',
+                        subItems: [{ id: '/financeiro', label: 'Gestão Financeira' }]
+                    },
+                    { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
+                    { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
+                    { id: '/estoque', icon: Package, label: 'Estoque de Rede' },
+                ]
+            },
+            {
+                label: 'INFRAESTRUTURA',
+                items: [
+                    { id: '/dashboard', icon: TrendUp, label: 'Dashboard Resumo' },
+                    { id: '/rede', icon: Globe, label: 'Topologia de Rede' },
+                ]
+            },
+            {
+                label: 'SUPORTE & LEGAL',
+                items: [
+                    { id: '/ajustes', icon: Gear, label: 'Ajustes de Conta' },
+                    { id: '/privacy', icon: WarningCircle, label: 'Privacidade' },
+                ]
+            }
+        ];
+
+        // Módulos com mais de 15 acessos vão para o topo
+        if (frequent.length > 0) {
+            const frequentItems: any[] = [];
+            baseGroups.forEach(group => {
+                group.items.forEach(item => {
+                    if (frequent.includes(item.id)) {
+                        frequentItems.push(item);
+                    }
+                });
+            });
+
+            if (frequentItems.length > 0) {
+                const frequentIds = frequentItems.map(i => i.id);
+                const filteredBaseGroups = baseGroups.map(group => ({
+                    ...group,
+                    items: group.items.filter(item => !frequentIds.includes(item.id))
+                })).filter(group => group.items.length > 0);
+
+                return [
+                    {
+                        label: 'MAIS ACESSADOS',
+                        items: frequentItems.sort((a, b) => frequent.indexOf(a.id) - frequent.indexOf(b.id))
+                    },
+                    ...filteredBaseGroups
+                ];
+            }
         }
-    ];
+
+        return baseGroups;
+    }, []);
 
     const isItemActive = (item: any): boolean => {
         if (item.id?.startsWith('/') && location.pathname.startsWith(item.id)) return true;

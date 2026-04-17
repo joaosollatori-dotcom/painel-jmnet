@@ -94,6 +94,10 @@
     margin-bottom: 1.5rem;
 }
 
+.retracted .nav-group {
+    margin-bottom: 0.5rem;
+}
+
 .nav-group-header {
     padding: 0 0.75rem;
     margin-bottom: 0.5rem;

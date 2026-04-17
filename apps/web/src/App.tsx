@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Routes, Route, Navigate, useParams, useNavigate, useLocation } from 'react-router-dom';
+import { trackModuleAccess } from './services/usageService';
 import Sidebar from './components/Sidebar';
 import ChatList from './components/ChatList';
 import ChatArea from './components/ChatArea';
@@ -170,6 +171,10 @@ const App: React.FC = () => {
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+
+  React.useEffect(() => {
+    trackModuleAccess(location.pathname);
+  }, [location.pathname]);
 
   React.useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
