@@ -10,12 +10,12 @@ export class AssinantesService {
                 nome: data.nome,
                 cpfCnpj: data.cpfCnpj,
                 status: data.status,
-                contatos: {
-                    create: data.contatos,
-                },
-                enderecos: {
-                    create: data.enderecos,
-                },
+                contatos: data.contatos ? {
+                    create: data.contatos as any,
+                } : undefined,
+                enderecos: data.enderecos ? {
+                    create: data.enderecos as any,
+                } : undefined,
             },
             include: {
                 contatos: true,

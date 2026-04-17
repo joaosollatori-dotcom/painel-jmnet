@@ -6,7 +6,7 @@ export class RedeService {
 
     async createOLT(data: OLTSchema) {
         return this.prisma.oLT.create({
-            data,
+            data: data as any,
         });
     }
 
@@ -22,7 +22,7 @@ export class RedeService {
             data: {
                 ...data,
                 status: 'ONLINE', // Mock de provisionamento bem sucedido
-            },
+            } as any,
         });
     }
 
