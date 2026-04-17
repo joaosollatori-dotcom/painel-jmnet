@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Search, Plus, Filter } from 'lucide-react';
+import { Plus, Filter } from 'lucide-react';
 import {
     PushPin, Archive, BellSlash,
     Trash, Prohibit,
@@ -199,7 +199,6 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                 </div>
 
                 <div className="search-bar">
-                    <Search size={18} className="search-icon" />
                     <input
                         type="text"
                         placeholder="Buscar conversas..."
