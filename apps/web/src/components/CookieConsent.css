@@ -1,0 +1,119 @@
+.cookie-consent-banner {
+    position: fixed;
+    bottom: 2rem;
+    left: 2rem;
+    right: 2rem;
+    z-index: 10000;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.5rem 2rem;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--border-light);
+    gap: 2rem;
+    animation: slideUp 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 20px 50px rgba(0, 0, 0, 0.3);
+}
+
+@keyframes slideUp {
+    from {
+        transform: translateY(100px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.cookie-content {
+    display: flex;
+    align-items: center;
+    gap: 1.5rem;
+    flex: 1;
+}
+
+.cookie-icon {
+    font-size: 2rem;
+    filter: drop-shadow(0 0 10px rgba(255, 255, 255, 0.2));
+}
+
+.cookie-text p {
+    color: var(--text-primary);
+    font-size: 0.95rem;
+    line-height: 1.5;
+    margin-bottom: 0.5rem;
+}
+
+.cookie-links a {
+    color: var(--accent);
+    text-decoration: none;
+    font-size: 0.85rem;
+    font-weight: 500;
+    border-bottom: 1px solid transparent;
+    transition: all 0.2s;
+}
+
+.cookie-links a:hover {
+    border-bottom-color: var(--accent);
+}
+
+.cookie-actions {
+    display: flex;
+    gap: 1rem;
+    flex-shrink: 0;
+}
+
+.btn-accept,
+.btn-decline {
+    padding: 0.75rem 1.5rem;
+    border-radius: var(--radius-md);
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+}
+
+.btn-accept {
+    background: var(--accent);
+    color: white;
+}
+
+.btn-accept:hover {
+    background: color-mix(in srgb, var(--accent), white 10%);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 15px var(--accent-soft);
+}
+
+.btn-decline {
+    background: var(--bg-surface-light);
+    color: var(--text-secondary);
+    border: 1px solid var(--border);
+}
+
+.btn-decline:hover {
+    background: var(--border);
+    color: var(--text-primary);
+}
+
+@media (max-width: 900px) {
+    .cookie-consent-banner {
+        flex-direction: column;
+        left: 1rem;
+        right: 1rem;
+        bottom: 1rem;
+        gap: 1.5rem;
+        padding: 1.5rem;
+        align-items: stretch;
+    }
+
+    .cookie-actions {
+        justify-content: flex-end;
+    }
+
+    .btn-accept,
+    .btn-decline {
+        flex: 1;
+        text-align: center;
+    }
+}

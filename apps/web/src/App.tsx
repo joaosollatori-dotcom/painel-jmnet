@@ -15,6 +15,8 @@ import LeadDetail from './components/LeadDetail';
 import AutomationsDashboard from './components/AutomationsDashboard';
 import LeadReports from './components/LeadReports';
 import AppointmentManager from './components/AppointmentManager';
+import PrivacyPolicy from './components/PrivacyPolicy';
+import CookieConsent from './components/CookieConsent';
 import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import { getLeads } from './services/leadService';
@@ -246,6 +248,7 @@ const App: React.FC = () => {
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ajustes" element={<SettingsPageWrapper theme={theme} onToggleTheme={toggleTheme} />} />
+          <Route path="/privacy" element={<PrivacyPolicy />} />
 
           <Route path="*" element={
             <div className="welcome-screen">
@@ -257,6 +260,7 @@ const App: React.FC = () => {
           } />
         </Routes>
       </main>
+      <CookieConsent />
     </div>
   );
 };

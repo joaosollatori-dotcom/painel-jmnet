@@ -45,7 +45,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
     const [statusStartTime] = React.useState<number>(Date.now());
     const [, setTimer] = React.useState('00:00:00');
     const [expandedItems, setExpandedItems] = React.useState<Set<string>>(
-        new Set(['ATENDIMENTO', 'COMERCIAL & VENDAS', 'OPERAÇÕES', 'INFRAESTRUTURA'])
+        new Set(['ATENDIMENTO', 'COMERCIAL & VENDAS', 'OPERAÇÕES', 'INFRAESTRUTURA', 'SUPORTE & LEGAL'])
     );
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
@@ -103,6 +103,13 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
             items: [
                 { id: '/dashboard', icon: TrendUp, label: 'Dashboard Resumo' },
                 { id: '/rede', icon: Globe, label: 'Topologia de Rede' },
+            ]
+        },
+        {
+            label: 'SUPORTE & LEGAL',
+            items: [
+                { id: '/ajustes', icon: Gear, label: 'Ajustes de Conta' },
+                { id: '/privacy', icon: WarningCircle, label: 'Privacidade' },
             ]
         }
     ];
