@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { AssinanteSchema } from './assinantes.schema';
+import { AssinanteSchema } from './assinantes.schema.js';
 
 export class AssinantesService {
     constructor(private prisma: PrismaClient) { }

@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { OSSchema } from './os.schema';
+import { OSSchema } from './os.schema.js';
 
 export class OSService {
     constructor(private prisma: PrismaClient) { }

@@ -1,6 +1,6 @@
 import { FastifyPluginAsync } from 'fastify';
 import fp from 'fastify-plugin';
-import Redis from 'ioredis';
+import { Redis } from 'ioredis';
 
 declare module 'fastify' {
     interface FastifyInstance {

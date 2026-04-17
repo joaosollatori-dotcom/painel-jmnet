@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { OLTSchema, ONUSchema } from './rede.schema';
+import { OLTSchema, ONUSchema } from './rede.schema.js';
 
 export class RedeService {
     constructor(private prisma: PrismaClient) { }

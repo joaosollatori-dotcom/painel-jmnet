@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { RamalSchema, LinhaMVNOSchema } from './telefonia.schema';
+import { RamalSchema, LinhaMVNOSchema } from './telefonia.schema.js';
 
 export class TelefoniaService {
     constructor(private prisma: PrismaClient) { }

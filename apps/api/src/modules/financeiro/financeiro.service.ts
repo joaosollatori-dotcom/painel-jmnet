@@ -1,5 +1,5 @@
 import { PrismaClient } from '@prisma/client';
-import { FaturaSchema, PagamentoSchema } from './financeiro.schema';
+import { FaturaSchema, PagamentoSchema } from './financeiro.schema.js';
 
 export class FinanceiroService {
     constructor(private prisma: PrismaClient) { }
