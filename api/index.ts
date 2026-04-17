@@ -1,5 +1,5 @@
 import { readdirSync, existsSync } from 'fs';
-import { join } from 'path';
+import { resolve } from 'path';
 
 export default async (req: any, res: any) => {
     res.setHeader('Content-Type', 'application/json');
@@ -15,13 +15,15 @@ export default async (req: any, res: any) => {
     try {
         console.log('DIAGNOSTICS:', diagnostics);
 
-        // Tenta encontrar o caminho correto do servidor (local ou Vercel)
-        const serverPath = existsSync('./apps/api/src/server.js')
-            ? './apps/api/src/server.js'
-            : '../apps/api/src/server.js';
+        // Resolve o caminho absoluto para evitar erros de importação relativa na Vercel
+        const serverPath = resolve(process.cwd(), 'apps/api/dist/server.js');
+
+        if (!existsSync(serverPath)) {
+            throw new Error(`Server file not found at: ${serverPath}`);
+        }
 
         // @ts-ignore
-        const { server, setupServer } = await import(serverPath);
+        const { server, setupServer } = await import(`file://${serverPath}`);
 
         await setupServer();
         await server.ready();
