@@ -37,7 +37,11 @@ export interface Message {
 //   Conversations
 // ──────────────────────────────
 
-export const getConversations = async (options?: { search?: string; status?: 'active' | 'archived' | 'closed' }): Promise<Conversation[]> => {
+export const getConversations = async (options?: {
+    search?: string;
+    status?: 'active' | 'archived' | 'closed';
+    unreadOnly?: boolean;
+}): Promise<Conversation[]> => {
     let query = supabase
         .from('conversations')
         .select('*');
@@ -52,6 +56,10 @@ export const getConversations = async (options?: { search?: string; status?: 'ac
         query = query.eq('is_archived', true).eq('is_closed', false);
     } else if (options?.status === 'closed') {
         query = query.eq('is_closed', true);
+    }
+
+    if (options?.unreadOnly) {
+        query = query.gt('unread_count', 0);
     }
 
     const { data, error } = await query

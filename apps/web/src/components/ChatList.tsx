@@ -27,6 +27,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
     const [toast, setToast] = useState<string | null>(null);
     const [chats, setChats] = useState<Conversation[]>([]);
     const [loading, setLoading] = useState(true);
+    const [showUnreadOnly, setShowUnreadOnly] = useState(false);
 
     const [showNewChatModal, setShowNewChatModal] = useState(false);
     const [newChatData, setNewChatData] = useState({ name: '', phone: '', platform: 'whatsapp', ai_active: false });
@@ -38,7 +39,7 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
         }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-    }, [searchTerm, view]);
+    }, [searchTerm, view, showUnreadOnly]);
 
     useEffect(() => {
         const subscription = subscribeToConversations(() => {
@@ -61,7 +62,8 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
 
             const data = await getConversations({
                 search: searchTerm.trim(),
-                status: statusMap[view]
+                status: statusMap[view],
+                unreadOnly: showUnreadOnly
             });
             setChats(data);
         } catch (err) {
@@ -204,7 +206,12 @@ const ChatList: React.FC<ChatListProps> = ({ selectedChatId, onSelectChat }) => 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                     />
-                    <Filter size={18} className="filter-icon" />
+                    <Filter
+                        size={18}
+                        className={`filter-icon ${showUnreadOnly ? 'active' : ''}`}
+                        onClick={() => setShowUnreadOnly(!showUnreadOnly)}
+                        style={{ cursor: 'pointer', color: showUnreadOnly ? 'var(--accent)' : 'inherit' }}
+                    />
                 </div>
 
                 <div style={{ display: 'flex', gap: '8px', padding: '0 1rem 1rem 1rem' }}>
