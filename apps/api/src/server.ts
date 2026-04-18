@@ -3,6 +3,7 @@ import jwt from "@fastify/jwt";
 import swagger from "@fastify/swagger";
 import swaggerUi from "@fastify/swagger-ui";
 import Fastify from "fastify";
+import { serializerCompiler, validatorCompiler, ZodTypeProvider } from "fastify-type-provider-zod";
 import { setupWorkers } from "./jobs/index.js";
 import { assinantesRoutes } from "./modules/assinantes/assinantes.routes.js";
 import { financeiroRoutes } from "./modules/financeiro/financeiro.routes.js";
@@ -16,7 +17,10 @@ import { redisPlugin } from "./plugins/redis.plugin.js";
 
 export const server = Fastify({
 	logger: true,
-});
+}).withTypeProvider<ZodTypeProvider>();
+
+server.setValidatorCompiler(validatorCompiler);
+server.setSerializerCompiler(serializerCompiler);
 
 export async function setupServer() {
 	// Register Plugins
