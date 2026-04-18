@@ -16,7 +16,7 @@ import { useToast } from '../contexts/ToastContext';
 import './LandingPage.css';
 
 const LandingPage: React.FC = () => {
-    const { addToast } = useToast();
+    const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
     const [sent, setSent] = useState(false);
     const [formData, setFormData] = useState({
@@ -34,7 +34,7 @@ const LandingPage: React.FC = () => {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         if (!formData.nome || !formData.email) {
-            addToast('Por favor, preencha nome e e-mail.', 'error');
+            showToast('Por favor, preencha nome e e-mail.', 'error');
             return;
         }
 
@@ -52,9 +52,9 @@ const LandingPage: React.FC = () => {
             if (error) throw error;
 
             setSent(true);
-            addToast('Dados enviados!', 'success');
+            showToast('Dados enviados!', 'success');
         } catch (error: any) {
-            addToast('Erro ao enviar dados.', 'error');
+            showToast('Erro ao enviar dados.', 'error');
         } finally {
             setLoading(false);
         }
