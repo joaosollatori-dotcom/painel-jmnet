@@ -111,7 +111,7 @@
 
 .msg-outbound {
     align-self: flex-end;
-    background: #991b1b;
+    background: var(--accent-chat, #991b1b);
     color: #ffffff;
     border-bottom-right-radius: 4px;
 }

@@ -114,19 +114,31 @@ const LeadView: React.FC = () => {
 const SettingsPageWrapper: React.FC<{
   theme: 'light' | 'dark' | 'soft';
   finish: 'matte' | 'glossy';
+  accentColor: string;
   onToggleTheme: () => void;
   onToggleFinish: () => void;
-}> = ({ theme, finish, onToggleTheme, onToggleFinish }) => {
+  onUpdateAccent: (color: string) => void;
+}> = ({ theme, finish, accentColor, onToggleTheme, onToggleFinish, onUpdateAccent }) => {
   const [notif, setNotif] = useState(true);
   const [sound, setSound] = useState(true);
   const [autoAI, setAutoAI] = useState(true);
+
+  const colors = [
+    { name: 'Titã Red', hex: '#991b1b' },
+    { name: 'Royal Blue', hex: '#1e40af' },
+    { name: 'Emerald', hex: '#065f46' },
+    { name: 'Midnight', hex: '#1e1b4b' },
+    { name: 'Sunset', hex: '#9a3412' }
+  ];
+
   const items = [
     { label: 'Notificações Desktop', desc: 'Receber alertas de novas mensagens', value: notif, toggle: () => setNotif(!notif) },
     { label: 'Sons', desc: 'Reproduzir som ao receber mensagem', value: sound, toggle: () => setSound(!sound) },
     { label: 'IA Automática', desc: 'Ativar Titã AI em novos atendimentos por padrão', value: autoAI, toggle: () => setAutoAI(!autoAI) },
-    { label: theme === 'dark' ? 'Modo Escuro' : theme === 'soft' ? 'Modo Soft' : 'Modo Claro', desc: 'Alternar aparência da plataforma (Dark, Light, Soft)', value: theme !== 'light', toggle: onToggleTheme },
-    { label: finish === 'matte' ? 'Modo Fosco' : 'Modo Brilho', desc: 'Remover transparências e efeitos de desfoque', value: finish === 'matte', toggle: onToggleFinish },
+    { label: theme === 'dark' ? 'Modo Escuro' : theme === 'soft' ? 'Modo Soft' : 'Modo Claro', desc: 'Alternar aparência da plataforma', value: theme !== 'light', toggle: onToggleTheme },
+    { label: finish === 'matte' ? 'Modo Fosco' : 'Modo Brilho', desc: 'Ajustar reflexos e transparência', value: finish === 'matte', toggle: onToggleFinish },
   ];
+
   return (
     <div className="settings-page">
       <h1>Ajustes</h1>
@@ -144,7 +156,25 @@ const SettingsPageWrapper: React.FC<{
           </div>
         ))}
 
-        {/* Logout Section */}
+        <div className="settings-card" style={{ display: 'block' }}>
+          <strong>Cor dos Balões de Chat</strong>
+          <p className="settings-desc">Personalize a cor das suas mensagens enviadas.</p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '1rem' }}>
+            {colors.map(c => (
+              <div
+                key={c.hex}
+                onClick={() => onUpdateAccent(c.hex)}
+                style={{
+                  width: '32px', height: '32px', borderRadius: '50%', background: c.hex,
+                  cursor: 'pointer', border: accentColor === c.hex ? '3px solid #fff' : 'none',
+                  boxShadow: '0 0 0 2px rgba(0,0,0,0.1)'
+                }}
+                title={c.name}
+              />
+            ))}
+          </div>
+        </div>
+
         <div className="logout-section">
           <div>
             <strong className="logout-title">Deseja sair da conta?</strong>
@@ -169,140 +199,60 @@ const App: React.FC = () => {
   const [finish, setFinish] = useState<'matte' | 'glossy'>(() => {
     return (localStorage.getItem('tita-finish') as 'matte' | 'glossy') || 'glossy';
   });
-  const [isRetracted, setIsRetracted] = useState(true);
+  const [accentColor, setAccentColor] = useState(() => {
+    return localStorage.getItem('tita-chat-accent') || '#991b1b';
+  });
+
   const location = useLocation();
   const navigate = useNavigate();
-  const isLanding = location.pathname === '/';
+  const isRetracted = location.pathname !== '/atendimento' && (localStorage.getItem('sidebar-retracted') === 'true');
 
-  React.useEffect(() => {
-    trackModuleAccess(location.pathname);
-  }, [location.pathname]);
-
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.setAttribute('data-theme', theme);
-    if (localStorage.getItem('cookie-consent') === 'accepted') {
-      localStorage.setItem('tita-theme', theme);
-    }
+    localStorage.setItem('tita-theme', theme);
   }, [theme]);
 
-  React.useEffect(() => {
+  useEffect(() => {
     document.documentElement.setAttribute('data-finish', finish);
-    if (localStorage.getItem('cookie-consent') === 'accepted') {
-      localStorage.setItem('tita-finish', finish);
-    }
+    localStorage.setItem('tita-finish', finish);
   }, [finish]);
 
-  const toggleTheme = () => {
-    setTheme(prev => prev === 'dark' ? 'light' : 'dark');
-  };
+  useEffect(() => {
+    document.documentElement.style.setProperty('--accent-chat', accentColor);
+    localStorage.setItem('tita-chat-accent', accentColor);
+  }, [accentColor]);
 
-  const toggleSoftTheme = () => {
-    setTheme(prev => prev === 'soft' ? 'dark' : 'soft');
-  };
-  const toggleFinish = () => {
-    setFinish(prev => prev === 'glossy' ? 'matte' : 'glossy');
-  };
-  const toggleSidebar = () => setIsRetracted(prev => !prev);
-  const retractSidebar = () => {
-    if (!isRetracted) setIsRetracted(true);
-  };
-
-  React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.ctrlKey && e.key === '.') {
-        e.preventDefault();
-        toggleSidebar();
-      }
-      if (e.ctrlKey && e.code === 'Space') {
-        e.preventDefault();
-        toggleTheme();
-      }
-      if (e.shiftKey && e.code === 'Space') {
-        e.preventDefault();
-        toggleSoftTheme();
-      }
-      if (e.ctrlKey && e.shiftKey) {
-        if (e.key === '<' || e.key === ',') {
-          e.preventDefault();
-          navigate(-1);
-        }
-        if (e.key === '>' || e.key === '.') {
-          e.preventDefault();
-          navigate(1);
-        }
-      }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRetracted, theme]);
-
-  if (isLanding) {
-    return (
-      <div className="app-container no-sidebar">
-        <Routes>
-          <Route path="/" element={<LandingPage />} />
-        </Routes>
-        <CookieConsent />
-      </div>
-    );
-  }
+  const toggleTheme = () => setTheme(prev => prev === 'dark' ? 'light' : 'dark');
+  const toggleFinish = () => setFinish(prev => prev === 'glossy' ? 'matte' : 'glossy');
 
   return (
-    <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
-      <div className="sidebar-placeholder" onClick={retractSidebar} />
+    <div className="app-container">
       <Sidebar
-        isRetracted={isRetracted}
-        onToggleRetraction={toggleSidebar}
+        isRetracted={false}
+        onToggleRetraction={() => { }}
         theme={theme}
         finish={finish}
         onToggleTheme={toggleTheme}
         onToggleFinish={toggleFinish}
       />
-      <button className="mobile-menu-trigger" onClick={toggleSidebar}>
-        <div className="hamburger" />
-      </button>
-      <main className="main-layout" onClick={() => { if (!isRetracted) setIsRetracted(true); }}>
+      <main className="main-layout" style={{ paddingLeft: '280px' }}>
         <Routes>
           <Route path="/" element={<Navigate to="/atendimento" replace />} />
-
           <Route path="/atendimento" element={<Atendimento />} />
           <Route path="/atendimento/:chatId" element={<Atendimento />} />
-
-          <Route path="/interno" element={<InternalChat />} />
-          <Route path="/agentes" element={<AgentsPage />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-
           <Route path="/crm" element={<LeadsManager />} />
           <Route path="/crm/lead/:id" element={<LeadView />} />
-          <Route path="/crm_tasks" element={<AppointmentManager />} />
-
           <Route path="/kanban" element={<SalesPipeline />} />
-          <Route path="/automacoes" element={<AutomationsDashboard />} />
-          <Route path="/relatorios" element={<LeadReports leads={[]} />} />
-          <Route path="/financeiro" element={<FinanceManager />} />
-          <Route path="/os" element={<OSManager />} />
-          <Route path="/os/:osId" element={<OSManager />} />
-          <Route path="/ocorrencias" element={<OcorrenciasManager />} />
-          <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ajustes" element={<SettingsPageWrapper
             theme={theme}
             finish={finish}
+            accentColor={accentColor}
             onToggleTheme={toggleTheme}
             onToggleFinish={toggleFinish}
+            onUpdateAccent={setAccentColor}
           />} />
-          <Route path="/privacy" element={<PrivacyPolicy />} />
-
-          <Route path="*" element={
-            <div className="welcome-screen">
-              <div className="welcome-content">
-                <h2>Página não encontrada</h2>
-                <p>O módulo solicitado não está disponível no momento.</p>
-              </div>
-            </div>
-          } />
         </Routes>
       </main>
-      <CookieConsent />
     </div>
   );
 };
