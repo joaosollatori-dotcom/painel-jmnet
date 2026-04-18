@@ -8,10 +8,12 @@ interface Toast {
     id: string;
     message: string;
     type: ToastType;
+    duration?: number;
 }
 
 interface ToastContextType {
-    showToast: (message: string, type?: ToastType) => void;
+    showToast: (message: string, type?: ToastType, duration?: number) => string;
+    removeToast: (id: string) => void;
 }
 
 const ToastContext = createContext<ToastContextType | undefined>(undefined);
@@ -25,16 +27,24 @@ export const useToast = () => {
 export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const [toasts, setToasts] = useState<Toast[]>([]);
 
-    const showToast = useCallback((message: string, type: ToastType = 'success') => {
-        const id = Math.random().toString(36).substr(2, 9);
-        setToasts(prev => [...prev, { id, message, type }]);
-        setTimeout(() => {
-            setToasts(prev => prev.filter(t => t.id !== id));
-        }, 3000);
+    const removeToast = useCallback((id: string) => {
+        setToasts(prev => prev.filter(t => t.id !== id));
     }, []);
 
+    const showToast = useCallback((message: string, type: ToastType = 'success', duration: number = 3000) => {
+        const id = Math.random().toString(36).substr(2, 9);
+        setToasts(prev => [...prev, { id, message, type, duration }]);
+
+        if (duration > 0) {
+            setTimeout(() => {
+                removeToast(id);
+            }, duration);
+        }
+        return id;
+    }, [removeToast]);
+
     return (
-        <ToastContext.Provider value={{ showToast }}>
+        <ToastContext.Provider value={{ showToast, removeToast }}>
             {children}
             <div style={{
                 position: 'fixed',
@@ -59,7 +69,7 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                 WebkitBackdropFilter: 'var(--glass-blur)',
                                 border: `1px solid ${toast.type === 'success' ? '#10b98144' :
                                     toast.type === 'error' ? '#ef444444' :
-                                        '#3b82f644'
+                                        toast.type === 'warning' ? '#f59e0b44' : '#3b82f644'
                                     }`,
                                 padding: '12px 20px',
                                 borderRadius: '14px',

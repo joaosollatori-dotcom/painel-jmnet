@@ -12,47 +12,46 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
 
     const results: SearchResult[] = [];
 
-    // 1. Buscar em Leads
-    const { data: leads } = await supabase
-        .from('leads')
-        .select('id, nome, provedor')
-        .ilike('nome', `%${query}%`)
-        .limit(3);
+    try {
+        // 1. Buscar em Leads (Usando nomeCompleto e created_at corretos)
+        const { data: leads, error: leadError } = await supabase
+            .from('leads')
+            .select('id, nomeCompleto, planoSelecionado')
+            .ilike('nomeCompleto', `%${query}%`)
+            .limit(3);
 
-    leads?.forEach(l => results.push({
-        id: l.id,
-        type: 'lead',
-        title: l.nome,
-        subtitle: `Lead: ${l.provedor || 'Sem provedor'}`
-    }));
+        if (!leadError && leads) {
+            leads.forEach(l => results.push({
+                id: l.id,
+                type: 'lead',
+                title: l.nomeCompleto,
+                subtitle: `Lead: ${l.planoSelecionado || 'Interessado'}`
+            }));
+        }
 
-    // 2. Buscar em Assinantes (Cientes)
-    const { data: assinantes } = await supabase
-        .from('assinantes')
-        .select('id, nome, documento')
-        .or(`nome.ilike.%${query}%,documento.ilike.%${query}%`)
-        .limit(3);
+        // 2. Buscar em Ordens de Serviço (Tabela correta: service_orders)
+        const { data: ordens, error: osError } = await supabase
+            .from('service_orders')
+            .select('id, customer_name, order_type')
+            .or(`customer_name.ilike.%${query}%,id.ilike.%${query}%`)
+            .limit(3);
 
-    assinantes?.forEach(a => results.push({
-        id: a.id,
-        type: 'assinante',
-        title: a.nome,
-        subtitle: `Cliente: ${a.documento}`
-    }));
+        if (!osError && ordens) {
+            ordens.forEach(o => results.push({
+                id: o.id,
+                type: 'os',
+                title: o.customer_name,
+                subtitle: `OS: ${o.order_type} (#${o.id.slice(0, 5)})`
+            }));
+        }
 
-    // 3. Buscar em OS (Ordens de Serviço)
-    const { data: ordens } = await supabase
-        .from('os')
-        .select('id, cliente_nome, tipo')
-        .or(`cliente_nome.ilike.%${query}%,id.ilike.%${query}%`)
-        .limit(3);
+        // 3. Buscar em Assinantes (Tentativa silenciosa via leads qualificados ou customer_occurrences)
+        // Como 'assinantes' deu 404, vamos evitar o erro direto.
+        // Futuramente, se a tabela 'assinantes' for criada, habilitamos aqui.
 
-    ordens?.forEach(o => results.push({
-        id: o.id,
-        type: 'os',
-        title: o.cliente_nome,
-        subtitle: `OS: ${o.tipo} (#${o.id.slice(0, 5)})`
-    }));
+    } catch (err) {
+        console.warn('Erro silencioso na busca global (algumas tabelas podem estar ausentes):', err);
+    }
 
     return results;
 };
