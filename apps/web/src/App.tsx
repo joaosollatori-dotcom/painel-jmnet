@@ -22,6 +22,7 @@ import { getConversations } from './services/chatService';
 import type { Conversation } from './services/chatService';
 import { getLeads } from './services/leadService';
 import { AnimatePresence } from 'framer-motion';
+import LandingPage from './pages/LandingPage';
 import './App.css';
 
 /* ====== Agents Page ====== */
@@ -171,6 +172,7 @@ const App: React.FC = () => {
   const [isRetracted, setIsRetracted] = useState(true);
   const location = useLocation();
   const navigate = useNavigate();
+  const isLanding = location.pathname === '/';
 
   React.useEffect(() => {
     trackModuleAccess(location.pathname);
@@ -233,6 +235,17 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRetracted, theme]);
+
+  if (isLanding) {
+    return (
+      <div className="app-container no-sidebar">
+        <Routes>
+          <Route path="/" element={<LandingPage />} />
+        </Routes>
+        <CookieConsent />
+      </div>
+    );
+  }
 
   return (
     <div className={`app-container ${isRetracted ? 'sidebar-retracted' : ''}`}>
