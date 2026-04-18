@@ -15,6 +15,14 @@
   min-width: 0;
   overflow: hidden;
   position: relative;
+  padding-left: 280px;
+  /* Largura da Sidebar cheia */
+  transition: padding-left 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.app-container.sidebar-retracted .main-layout {
+  padding-left: 80px;
+  /* Largura da Sidebar slim */
 }
 
 .atendimento-layout {

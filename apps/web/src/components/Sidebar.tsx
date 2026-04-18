@@ -1,7 +1,8 @@
-import React, { useMemo, useState } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFrequentlyAccessedModules } from '../services/usageService';
+import { globalSearch, SearchResult } from '../services/searchService';
 import {
     SquaresFour,
     Gear,
@@ -21,7 +22,6 @@ import {
     MagnifyingGlass,
     WarningCircle,
     ChartLine,
-    Palette
 } from '@phosphor-icons/react';
 import './Sidebar.css';
 
@@ -45,6 +45,33 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
     const navigate = useNavigate();
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState('');
+    const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
+    const [isSearching, setIsSearching] = useState(false);
+    const [hoveredItem, setHoveredItem] = useState<{ id: string, top: number } | null>(null);
+
+    // Motor de Busca com Debounce
+    useEffect(() => {
+        const timer = setTimeout(async () => {
+            if (searchQuery.length >= 2) {
+                setIsSearching(true);
+                const results = await globalSearch(searchQuery);
+                setSearchResults(results);
+                setIsSearching(false);
+            } else {
+                setSearchResults([]);
+            }
+        }, 400);
+
+        return () => clearTimeout(timer);
+    }, [searchQuery]);
+
+    const handleResultClick = (result: SearchResult) => {
+        setSearchQuery('');
+        setSearchResults([]);
+        if (result.type === 'lead') navigate(`/crm/lead/${result.id}`);
+        else if (result.type === 'os') navigate(`/os/${result.id}`);
+        else if (result.type === 'assinante') navigate(`/rede`); // Por enquanto leva para rede
+    };
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -72,7 +99,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 ]
             },
             {
-                label: 'ISPs OPERATIONS',
+                label: 'OPERAÇÕES',
                 items: [
                     {
                         id: 'crm_group', icon: TrendUp, label: 'CRM de Leads',
@@ -91,13 +118,12 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
             {
                 label: 'SISTEMA',
                 items: [
-                    { id: '/relatorios', icon: ChartLine, label: 'Insights & Analytics' },
+                    { id: '/relatorios', icon: ChartLine, label: 'Insights' },
                     { id: '/ajustes', icon: Gear, label: 'Configurações' },
                 ]
             }
         ];
 
-        // Se houver módulos frequentes, coloca no topo como "INSIGHTS"
         if (frequent.length > 0) {
             const frequentItems: any[] = [];
             baseGroups.forEach(g => g.items.forEach(i => { if (frequent.includes(i.id)) frequentItems.push(i) }));
@@ -114,14 +140,24 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         return false;
     };
 
-    const renderMenuItem = (item: any, depth = 0) => {
+    const renderMenuItem = (item: any) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const isExpanded = expandedItems.has(item.id);
         const isActive = isItemActive(item);
         const Icon = item.icon;
 
         return (
-            <div key={item.id} className={`sidebar-item ${isActive ? 'active' : ''}`}>
+            <div
+                key={item.id}
+                className={`sidebar-item ${isActive ? 'active' : ''}`}
+                onMouseEnter={(e) => {
+                    if (isRetracted && hasSubItems) {
+                        const rect = e.currentTarget.getBoundingClientRect();
+                        setHoveredItem({ id: item.id, top: rect.top });
+                    }
+                }}
+                onMouseLeave={() => setHoveredItem(null)}
+            >
                 <div
                     className="sidebar-link"
                     onClick={() => {
@@ -131,19 +167,19 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 >
                     {Icon && <Icon size={22} weight={isActive ? "fill" : "regular"} />}
                     {!isRetracted && <span>{item.label}</span>}
-
-                    {/* Floating Menu for retracted mode */}
-                    {isRetracted && hasSubItems && (
-                        <div className="floating-menu">
-                            <div className="sidebar-section-label" style={{ margin: '0 0 10px 0' }}>{item.label}</div>
-                            {item.subItems.map((sub: any) => (
-                                <div key={sub.id} className="sidebar-submenu-item" onClick={() => navigate(sub.id)}>
-                                    {sub.label}
-                                </div>
-                            ))}
-                        </div>
-                    )}
                 </div>
+
+                {/* Popovers flutuantes */}
+                {isRetracted && hasSubItems && hoveredItem?.id === item.id && (
+                    <div className="floating-menu" style={{ top: hoveredItem.top, left: '75px', display: 'block' }}>
+                        <div className="sidebar-section-label" style={{ margin: '0 0 10px 0' }}>{item.label}</div>
+                        {item.subItems.map((sub: any) => (
+                            <div key={sub.id} className="sidebar-submenu-item" onClick={() => navigate(sub.id)}>
+                                {sub.label}
+                            </div>
+                        ))}
+                    </div>
+                )}
 
                 <AnimatePresence>
                     {!isRetracted && hasSubItems && isExpanded && (
@@ -172,34 +208,58 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : ''}`}>
-            {/* Header / Search */}
+            {/* Campo de Busca Global */}
             <div className="sidebar-search-container">
-                <div className="sidebar-search" onClick={onToggleRetraction}>
+                <div
+                    className="sidebar-search"
+                    onClick={() => { if (isRetracted) onToggleRetraction(); }}
+                >
                     <MagnifyingGlass size={18} />
                     {!isRetracted && (
                         <>
                             <input
-                                placeholder="Buscar..."
+                                placeholder="Pessoas, OS ou Leads..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
+                                onClick={(e) => e.stopPropagation()}
                             />
                             <div className="search-shortcut">⌘ S</div>
                         </>
                     )}
                 </div>
+
+                {/* Dropdown de Resultados */}
+                {!isRetracted && (searchResults.length > 0 || isSearching) && (
+                    <div className="search-results-dropdown">
+                        {isSearching ? (
+                            <div className="search-loading">Buscando no TITÃ...</div>
+                        ) : (
+                            searchResults.map(result => (
+                                <div
+                                    key={result.id + result.type}
+                                    className="search-result-item"
+                                    onClick={() => handleResultClick(result)}
+                                >
+                                    <span className="result-title">{result.title}</span>
+                                    <span className="result-subtitle">{result.subtitle}</span>
+                                </div>
+                            ))
+                        )}
+                    </div>
+                )}
             </div>
 
-            {/* Navigation */}
+            {/* Navegação Principal */}
             <nav className="sidebar-nav">
                 {menuGroups.map((group, idx) => (
-                    <div key={idx}>
+                    <div key={idx} className="nav-group">
                         {!isRetracted && <div className="sidebar-section-label">{group.label}</div>}
                         {group.items.map(item => renderMenuItem(item))}
                     </div>
                 ))}
             </nav>
 
-            {/* Bottom Actions & Profile */}
+            {/* Ações Inferiores & Perfil */}
             <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 {!isRetracted && (
                     <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
