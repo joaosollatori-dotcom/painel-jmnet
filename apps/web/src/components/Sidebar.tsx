@@ -1,4 +1,4 @@
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, useRef } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFrequentlyAccessedModules } from '../services/usageService';
@@ -6,16 +6,15 @@ import { globalSearch, SearchResult } from '../services/searchService';
 import {
     SquaresFour,
     Gear,
-    Users,
     Lightning,
     CaretDoubleLeft,
     CaretDoubleRight,
     Sun,
     Moon,
+    Feather,
     Hash,
     CurrencyDollar,
     Wrench,
-    Package,
     Globe,
     Headset,
     TrendUp,
@@ -48,8 +47,9 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
     const [isSearching, setIsSearching] = useState(false);
     const [hoveredItem, setHoveredItem] = useState<{ id: string, top: number } | null>(null);
+    const leaveTimerRef = useRef<NodeJS.Timeout | null>(null);
 
-    // Motor de Busca com Debounce
+    // Motor de Busca
     useEffect(() => {
         const timer = setTimeout(async () => {
             if (searchQuery.length >= 2) {
@@ -61,7 +61,6 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 setSearchResults([]);
             }
         }, 400);
-
         return () => clearTimeout(timer);
     }, [searchQuery]);
 
@@ -70,7 +69,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         setSearchResults([]);
         if (result.type === 'lead') navigate(`/crm/lead/${result.id}`);
         else if (result.type === 'os') navigate(`/os/${result.id}`);
-        else if (result.type === 'assinante') navigate(`/rede`); // Por enquanto leva para rede
+        else if (result.type === 'assinante') navigate(`/rede`);
     };
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
@@ -118,8 +117,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
             {
                 label: 'SISTEMA',
                 items: [
-                    { id: '/relatorios', icon: ChartLine, label: 'Insights' },
-                    { id: '/ajustes', icon: Gear, label: 'Configurações' },
+                    { id: '/relatorios', icon: ChartLine, label: 'Analytics' },
+                    { id: '/ajustes', icon: Gear, label: 'Ajustes' },
                 ]
             }
         ];
@@ -140,6 +139,20 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         return false;
     };
 
+    const handleMouseEnter = (item: any, e: React.MouseEvent) => {
+        if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
+        if (isRetracted && item.subItems) {
+            const rect = e.currentTarget.getBoundingClientRect();
+            setHoveredItem({ id: item.id, top: rect.top });
+        }
+    };
+
+    const handleMouseLeave = () => {
+        leaveTimerRef.current = setTimeout(() => {
+            setHoveredItem(null);
+        }, 150);
+    };
+
     const renderMenuItem = (item: any) => {
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const isExpanded = expandedItems.has(item.id);
@@ -150,13 +163,8 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
             <div
                 key={item.id}
                 className={`sidebar-item ${isActive ? 'active' : ''}`}
-                onMouseEnter={(e) => {
-                    if (isRetracted && hasSubItems) {
-                        const rect = e.currentTarget.getBoundingClientRect();
-                        setHoveredItem({ id: item.id, top: rect.top });
-                    }
-                }}
-                onMouseLeave={() => setHoveredItem(null)}
+                onMouseEnter={(e) => handleMouseEnter(item, e)}
+                onMouseLeave={handleMouseLeave}
             >
                 <div
                     className="sidebar-link"
@@ -169,9 +177,13 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     {!isRetracted && <span>{item.label}</span>}
                 </div>
 
-                {/* Popovers flutuantes */}
                 {isRetracted && hasSubItems && hoveredItem?.id === item.id && (
-                    <div className="floating-menu" style={{ top: hoveredItem.top, left: '75px', display: 'block' }}>
+                    <div
+                        className="floating-menu"
+                        style={{ top: hoveredItem.top, left: '78px' }}
+                        onMouseEnter={() => { if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current); }}
+                        onMouseLeave={handleMouseLeave}
+                    >
                         <div className="sidebar-section-label" style={{ margin: '0 0 10px 0' }}>{item.label}</div>
                         {item.subItems.map((sub: any) => (
                             <div key={sub.id} className="sidebar-submenu-item" onClick={() => navigate(sub.id)}>
@@ -208,7 +220,29 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
 
     return (
         <aside className={`sidebar ${isRetracted ? 'retracted' : ''}`}>
-            {/* Campo de Busca Global */}
+            {/* Header: Toggle and Theme Toggle */}
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', padding: '0 0.5rem' }}>
+                <button
+                    onClick={onToggleRetraction}
+                    style={{ background: 'none', border: 'none', color: 'var(--sb-text)', cursor: 'pointer' }}
+                >
+                    {isRetracted ? <CaretDoubleRight size={24} /> : <CaretDoubleLeft size={24} />}
+                </button>
+
+                {!isRetracted && (
+                    <div style={{ display: 'flex', gap: '10px' }}>
+                        <button
+                            onClick={onToggleTheme}
+                            title="Trocar Tema"
+                            style={{ background: 'var(--sb-bg-item)', border: '1px solid var(--sb-border)', borderRadius: '10px', padding: '6px', color: 'var(--sb-text)', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+                        >
+                            {theme === 'dark' ? <Sun size={18} /> : theme === 'light' ? <Moon size={18} /> : <Feather size={18} />}
+                        </button>
+                    </div>
+                )}
+            </div>
+
+            {/* Global Search */}
             <div className="sidebar-search-container">
                 <div
                     className="sidebar-search"
@@ -218,28 +252,22 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     {!isRetracted && (
                         <>
                             <input
-                                placeholder="Pessoas, OS ou Leads..."
+                                placeholder="Busca global..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
                                 onClick={(e) => e.stopPropagation()}
                             />
-                            <div className="search-shortcut">⌘ S</div>
                         </>
                     )}
                 </div>
 
-                {/* Dropdown de Resultados */}
                 {!isRetracted && (searchResults.length > 0 || isSearching) && (
                     <div className="search-results-dropdown">
                         {isSearching ? (
-                            <div className="search-loading">Buscando no TITÃ...</div>
+                            <div className="search-loading">Buscando...</div>
                         ) : (
                             searchResults.map(result => (
-                                <div
-                                    key={result.id + result.type}
-                                    className="search-result-item"
-                                    onClick={() => handleResultClick(result)}
-                                >
+                                <div key={result.id + result.type} className="search-result-item" onClick={() => handleResultClick(result)}>
                                     <span className="result-title">{result.title}</span>
                                     <span className="result-subtitle">{result.subtitle}</span>
                                 </div>
@@ -249,7 +277,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 )}
             </div>
 
-            {/* Navegação Principal */}
+            {/* Navigation */}
             <nav className="sidebar-nav">
                 {menuGroups.map((group, idx) => (
                     <div key={idx} className="nav-group">
@@ -259,32 +287,19 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 ))}
             </nav>
 
-            {/* Ações Inferiores & Perfil */}
-            <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+            {/* Profile Footer */}
+            <div className="sidebar-profile" onClick={() => navigate('/ajustes')}>
+                <img
+                    src={`https://ui-avatars.com/api/?name=Joao+Sollatori&background=${theme === 'dark' ? '2563eb' : '0f172a'}&color=fff`}
+                    alt="Avatar"
+                    className="profile-avatar"
+                />
                 {!isRetracted && (
-                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
-                        <button className="sidebar-search" style={{ padding: '8px', flex: 1 }} onClick={onToggleTheme}>
-                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
-                        </button>
-                        <button className="sidebar-search" style={{ padding: '8px' }} onClick={onToggleRetraction}>
-                            {isRetracted ? <CaretDoubleRight size={18} /> : <CaretDoubleLeft size={18} />}
-                        </button>
+                    <div className="profile-info">
+                        <span className="profile-name">João Sollatori</span>
+                        <span className="profile-role">Administrador</span>
                     </div>
                 )}
-
-                <div className="sidebar-profile" onClick={() => navigate('/ajustes')}>
-                    <img
-                        src="https://ui-avatars.com/api/?name=Joao+Sollatori&background=2563eb&color=fff"
-                        alt="Avatar"
-                        className="profile-avatar"
-                    />
-                    {!isRetracted && (
-                        <div className="profile-info">
-                            <span className="profile-name">João Sollatori</span>
-                            <span className="profile-role">Administrador</span>
-                        </div>
-                    )}
-                </div>
             </div>
         </aside>
     );
