@@ -58,19 +58,57 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  background-color: var(--bg-deep);
+  background: var(--bg-deep);
+  position: relative;
+  overflow: hidden;
+}
+
+.welcome-screen::before {
+  content: '';
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  background: radial-gradient(circle, var(--accent) 0%, transparent 70%);
+  opacity: 0.05;
+  top: -200px;
+  right: -200px;
+}
+
+.welcome-content {
   text-align: center;
+  max-width: 500px;
+  animation: fadeInWelcome 0.8s ease-out;
+  z-index: 10;
 }
 
 .welcome-content h2 {
-  font-size: 2rem;
-  color: var(--accent);
+  font-size: 2.75rem;
+  font-weight: 850;
+  letter-spacing: -0.04em;
+  color: var(--text-primary);
   margin-bottom: 1rem;
+  background: linear-gradient(135deg, var(--text-primary) 0%, var(--accent) 150%);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
 }
 
 .welcome-content p {
+  font-size: 1.15rem;
   color: var(--text-secondary);
-  font-size: 1.1rem;
+  line-height: 1.6;
+  opacity: 0.8;
+}
+
+@keyframes fadeInWelcome {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 
 /* Mobile Controls */

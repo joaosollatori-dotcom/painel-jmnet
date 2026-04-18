@@ -1,12 +1,14 @@
-/* Chat List TITÃ - Contact List UI */
+/* Chat List TITÃ - Tema Dinâmico */
 
 .chat-list {
     width: 350px;
-    background: #111111;
+    background: var(--bg-surface);
+    /* Usa a variável do tema atual */
     height: 100%;
     display: flex;
     flex-direction: column;
-    border-right: 1px solid #262626;
+    border-right: 1px solid var(--border);
+    transition: all 0.3s ease;
 }
 
 .chat-list-header {
@@ -16,19 +18,19 @@
 .chat-list-title {
     font-size: 1.25rem;
     font-weight: 800;
-    color: #ffffff;
+    color: var(--text-primary);
     margin-bottom: 1rem;
 }
 
 .search-contacts {
-    background: #1a1a1a;
-    border: 1px solid #262626;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
     border-radius: 12px;
     padding: 10px 14px;
     display: flex;
     align-items: center;
     gap: 10px;
-    color: #666;
+    color: var(--text-secondary);
     margin-bottom: 1rem;
 }
 
@@ -37,7 +39,7 @@
     border: none;
     outline: none;
     font-size: 0.85rem;
-    color: #fff;
+    color: var(--text-primary);
     flex: 1;
 }
 
@@ -50,14 +52,16 @@
 }
 
 .filter-chip {
-    padding: 4px 12px;
-    background: #1a1a1a;
-    border: 1px solid #262626;
+    padding: 6px 14px;
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
     border-radius: 100px;
     font-size: 0.75rem;
-    color: #94a3b8;
+    font-weight: 600;
+    color: var(--text-secondary);
     cursor: pointer;
     white-space: nowrap;
+    transition: all 0.2s;
 }
 
 .filter-chip.active {
@@ -73,35 +77,36 @@
 }
 
 .conversation-item {
-    padding: 1rem 1.5rem;
+    padding: 1.25rem 1.5rem;
     display: flex;
-    gap: 12px;
+    gap: 14px;
     cursor: pointer;
     transition: all 0.2s;
-    border-bottom: 1px solid #1a1a1a;
+    border-bottom: 1px solid var(--border);
 }
 
 .conversation-item:hover {
-    background: #1a1a1a;
+    background: var(--bg-surface-light);
 }
 
 .conversation-item.active {
-    background: rgba(59, 130, 246, 0.1);
-    border-left: 3px solid var(--accent);
+    background: rgba(59, 130, 246, 0.08);
+    border-left: 4px solid var(--accent);
 }
 
 .conv-avatar {
-    width: 48px;
-    height: 48px;
-    background: #262626;
-    border-radius: 14px;
+    width: 52px;
+    height: 52px;
+    background: var(--bg-deep);
+    border-radius: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-weight: 700;
-    color: #fff;
-    font-size: 1rem;
+    font-weight: 800;
+    color: var(--text-primary);
+    font-size: 1.1rem;
     flex-shrink: 0;
+    border: 1px solid var(--border);
 }
 
 .conv-info {
@@ -113,12 +118,13 @@
     display: flex;
     justify-content: space-between;
     margin-bottom: 4px;
+    align-items: center;
 }
 
 .conv-name {
     font-weight: 700;
-    font-size: 0.95rem;
-    color: #ffffff;
+    font-size: 1rem;
+    color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
@@ -126,28 +132,32 @@
 
 .conv-time {
     font-size: 0.7rem;
-    color: #64748b;
+    color: var(--text-secondary);
 }
 
 .conv-last-msg {
     font-size: 0.85rem;
-    color: #94a3b8;
+    color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 6px;
+    margin-bottom: 8px;
+    opacity: 0.8;
 }
 
 .conv-tags {
     display: flex;
-    gap: 5px;
+    gap: 6px;
     flex-wrap: wrap;
 }
 
 .tag-item {
     font-size: 0.65rem;
-    background: #262626;
-    color: #94a3b8;
-    padding: 1px 6px;
-    border-radius: 4px;
+    font-weight: 700;
+    background: var(--bg-deep);
+    color: var(--text-secondary);
+    padding: 2px 8px;
+    border-radius: 6px;
+    border: 1px solid var(--border);
+    text-transform: uppercase;
 }
