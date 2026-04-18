@@ -2,7 +2,6 @@
 
 .chat-list {
     width: 380px;
-    /* Aumentado para mais respiro lateral */
     background: var(--bg-surface);
     height: 100%;
     display: flex;
@@ -12,34 +11,34 @@
 }
 
 .chat-list-header {
-    padding: 1.5rem 1.75rem;
-    /* Ajustado padding lateral */
+    padding: 1.25rem 1.75rem;
+    /* Leve redução no header */
 }
 
 .chat-list-title {
-    font-size: 1.25rem;
+    font-size: 1.15rem;
     font-weight: 800;
     color: var(--text-primary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.75rem;
 }
 
 .search-contacts {
     background: var(--bg-deep);
     border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 10px 14px;
+    border-radius: 10px;
+    padding: 8px 12px;
     display: flex;
     align-items: center;
     gap: 10px;
     color: var(--text-secondary);
-    margin-bottom: 1rem;
+    margin-bottom: 0.5rem;
 }
 
 .search-contacts input {
     background: transparent;
     border: none;
     outline: none;
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-primary);
     flex: 1;
 }
@@ -48,17 +47,16 @@
 .chat-filters {
     display: flex;
     gap: 8px;
-    padding: 0 1.75rem 1rem;
-    /* Alinhado com o cabeçalho */
+    padding: 0 1.75rem 0.75rem;
     overflow-x: auto;
 }
 
 .filter-chip {
-    padding: 6px 14px;
+    padding: 5px 12px;
     background: var(--bg-deep);
     border: 1px solid var(--border);
     border-radius: 100px;
-    font-size: 0.75rem;
+    font-size: 0.7rem;
     font-weight: 600;
     color: var(--text-secondary);
     cursor: pointer;
@@ -72,7 +70,6 @@
     border-color: var(--accent);
 }
 
-/* Ocultando opções de Leads e Arquivadas conforme solicitado anteriormente */
 .filter-chip:nth-child(3),
 .filter-chip:nth-child(4) {
     display: none;
@@ -83,24 +80,23 @@
     flex: 1;
     overflow-y: auto;
     scrollbar-width: none;
-    /* Firefox */
     -ms-overflow-style: none;
-    /* IE/Edge */
 }
 
 .conversations-scroll::-webkit-scrollbar {
     display: none;
-    /* Chrome, Safari, Opera */
 }
 
 .conversation-item {
-    padding: 1.25rem 1.75rem;
-    /* Aumentado o padding lateral significativamente */
+    padding: 0.75rem 1.75rem;
+    /* REDUÇÃO DE ALTURA (Era 1.25rem) */
     display: flex;
-    gap: 16px;
+    gap: 12px;
     cursor: pointer;
     transition: all 0.2s;
     border-bottom: 1px solid var(--border);
+    align-items: center;
+    /* Centraliza verticalmente itens menores */
 }
 
 .conversation-item:hover {
@@ -113,16 +109,17 @@
 }
 
 .conv-avatar {
-    width: 52px;
-    height: 52px;
+    width: 42px;
+    /* TAMANHO REDUZIDO (Era 52px) */
+    height: 42px;
     background: var(--bg-deep);
-    border-radius: 16px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     font-weight: 800;
     color: var(--text-primary);
-    font-size: 1.1rem;
+    font-size: 0.95rem;
     flex-shrink: 0;
     border: 1px solid var(--border);
 }
@@ -130,18 +127,21 @@
 .conv-info {
     flex: 1;
     min-width: 0;
+    display: flex;
+    flex-direction: column;
 }
 
 .conv-header {
     display: flex;
     justify-content: space-between;
-    margin-bottom: 4px;
+    margin-bottom: 2px;
     align-items: center;
 }
 
 .conv-name {
     font-weight: 700;
-    font-size: 1rem;
+    font-size: 0.9rem;
+    /* Leve redução para equilibrar */
     color: var(--text-primary);
     white-space: nowrap;
     overflow: hidden;
@@ -149,33 +149,23 @@
 }
 
 .conv-time {
-    font-size: 0.7rem;
+    font-size: 0.65rem;
     color: var(--text-secondary);
+    opacity: 0.7;
 }
 
 .conv-last-msg {
-    font-size: 0.85rem;
+    font-size: 0.8rem;
     color: var(--text-secondary);
     white-space: nowrap;
     overflow: hidden;
     text-overflow: ellipsis;
-    margin-bottom: 8px;
     opacity: 0.8;
+    margin-bottom: 0;
+    /* Removida margem extra */
 }
 
 .conv-tags {
-    display: flex;
-    gap: 6px;
-    flex-wrap: wrap;
-}
-
-.tag-item {
-    font-size: 0.65rem;
-    font-weight: 700;
-    background: var(--bg-deep);
-    color: var(--text-secondary);
-    padding: 2px 8px;
-    border-radius: 6px;
-    border: 1px solid var(--border);
-    text-transform: uppercase;
+    display: none;
+    /* Ocultadas na lista compacta para priorizar a última mensagem */
 }

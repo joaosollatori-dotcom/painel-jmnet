@@ -25,7 +25,12 @@ interface ChatAreaProps {
 const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const { showToast } = useToast();
     const [message, setMessage] = useState('');
-    const [isInfoRetracted, setIsInfoRetracted] = useState(false);
+
+    // Persistência da Sidebar Direita via localStorage
+    const [isInfoRetracted, setIsInfoRetracted] = useState(() => {
+        return localStorage.getItem('chat-info-retracted') === 'true';
+    });
+
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
     const [showAiSummary, setShowAiSummary] = useState(true);
     const [conversation, setConversation] = useState<Conversation | null>(null);
@@ -35,15 +40,17 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
+    // Efeito para persistir a escolha do usuário
+    useEffect(() => {
+        localStorage.setItem('chat-info-retracted', isInfoRetracted.toString());
+    }, [isInfoRetracted]);
+
     useEffect(() => {
         loadData();
         const subscription = subscribeToMessages(chatId, (newMsg: any) => {
             setMessages(prev => {
-                // Remove a versão otimista baseada no ID temporário ou no texto idêntico enquanto pendente
                 const updated = prev.filter(m => !(m.text === newMsg.text && m.status === 'pending'));
-                // Evita duplicatas se a mensagem já foi inserida pelo retorno do sendMessage
                 if (updated.find(m => m.id === newMsg.id)) {
-                    // Mas se o status mudou, atualiza a mensagem existente
                     return updated.map(m => m.id === newMsg.id ? newMsg : m);
                 }
                 return [...updated, newMsg];
@@ -81,8 +88,6 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         setMessage('');
         setShowEmojiPicker(false);
         const optimisticId = `temp-${Date.now()}`;
-
-        // Versão otimista LOCAL (Status PENDING - Relógio)
         const optimisticMsg: Message = {
             id: optimisticId,
             conversation_id: chatId,
@@ -98,9 +103,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         };
 
         setMessages(prev => [...prev, optimisticMsg]);
-
         try {
-            // Chamada Real ao Supabase
             const realMsg: any = await sendMessage(chatId, {
                 sender: 'Você',
                 text: textToSend || (fileData ? `Arquivo: ${fileData.name}` : ''),
@@ -109,11 +112,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                 file_url: fileData?.url,
                 file_name: fileData?.name
             });
-
-            // Substitui a mensagem otimista pela real retornada pelo banco (sem simulações de timer)
-            if (realMsg) {
-                setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
-            }
+            if (realMsg) setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
         } catch (err) {
             setMessages(prev => prev.filter(m => m.id !== optimisticId));
             showToast('Erro ao enviar mensagem', 'error');
@@ -137,13 +136,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     };
 
     const renderStatusIcon = (status?: string) => {
-        // Status REAIS vindos do banco de dados
         switch (status) {
             case 'pending': return <Clock size={12} weight="bold" />;
             case 'sent': return <Check size={12} weight="bold" />;
             case 'delivered': return <Checks size={14} weight="bold" />;
             case 'read': return <Checks size={14} weight="bold" style={{ color: '#34b7f1' }} />;
-            default: return <Check size={12} weight="bold" />; // Fallback para enviado se não houver status
+            default: return <Check size={12} weight="bold" />;
         }
     };
 
