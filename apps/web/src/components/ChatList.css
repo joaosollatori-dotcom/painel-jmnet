@@ -1,9 +1,9 @@
 /* Chat List TITÃ - Tema Dinâmico */
 
 .chat-list {
-    width: 350px;
+    width: 380px;
+    /* Aumentado para mais respiro lateral */
     background: var(--bg-surface);
-    /* Usa a variável do tema atual */
     height: 100%;
     display: flex;
     flex-direction: column;
@@ -12,7 +12,8 @@
 }
 
 .chat-list-header {
-    padding: 1.5rem;
+    padding: 1.5rem 1.75rem;
+    /* Ajustado padding lateral */
 }
 
 .chat-list-title {
@@ -47,7 +48,8 @@
 .chat-filters {
     display: flex;
     gap: 8px;
-    padding: 0 1.5rem 1rem;
+    padding: 0 1.75rem 1rem;
+    /* Alinhado com o cabeçalho */
     overflow-x: auto;
 }
 
@@ -70,16 +72,32 @@
     border-color: var(--accent);
 }
 
+/* Ocultando opções de Leads e Arquivadas conforme solicitado anteriormente */
+.filter-chip:nth-child(3),
+.filter-chip:nth-child(4) {
+    display: none;
+}
+
 /* Lista de Conversas */
 .conversations-scroll {
     flex: 1;
     overflow-y: auto;
+    scrollbar-width: none;
+    /* Firefox */
+    -ms-overflow-style: none;
+    /* IE/Edge */
+}
+
+.conversations-scroll::-webkit-scrollbar {
+    display: none;
+    /* Chrome, Safari, Opera */
 }
 
 .conversation-item {
-    padding: 1.25rem 1.5rem;
+    padding: 1.25rem 1.75rem;
+    /* Aumentado o padding lateral significativamente */
     display: flex;
-    gap: 14px;
+    gap: 16px;
     cursor: pointer;
     transition: all 0.2s;
     border-bottom: 1px solid var(--border);
