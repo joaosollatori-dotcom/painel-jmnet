@@ -1,4 +1,4 @@
-import React, { useMemo } from 'react';
+import React, { useMemo, useState } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getFrequentlyAccessedModules } from '../services/usageService';
@@ -6,7 +6,6 @@ import {
     SquaresFour,
     Gear,
     Users,
-    SignOut,
     Lightning,
     CaretDoubleLeft,
     CaretDoubleRight,
@@ -19,9 +18,8 @@ import {
     Globe,
     Headset,
     TrendUp,
-    CaretRight,
+    MagnifyingGlass,
     WarningCircle,
-    User,
     ChartLine,
     Palette
 } from '@phosphor-icons/react';
@@ -36,18 +34,17 @@ interface SidebarProps {
     onToggleFinish: () => void;
 }
 
-const accordionVariants: any = {
-    open: { height: 'auto', opacity: 1, transition: { duration: 0.2, ease: "easeOut" } },
-    closed: { height: 0, opacity: 0, transition: { duration: 0.15, ease: "easeIn" } }
+const accordionVariants = {
+    open: { height: 'auto', opacity: 1, transition: { duration: 0.25, ease: "easeOut" } },
+    closed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
 };
 
-const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, theme, finish, onToggleTheme, onToggleFinish }) => {
+const Sidebar: React.FC<SidebarProps> = (props) => {
+    const { isRetracted, onToggleRetraction, theme, onToggleTheme } = props;
     const location = useLocation();
     const navigate = useNavigate();
-
-    const [statusStartTime] = React.useState<number>(Date.now());
-    const [, setTimer] = React.useState('00:00:00');
-    const [expandedItems, setExpandedItems] = React.useState<Set<string>>(new Set());
+    const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
+    const [searchQuery, setSearchQuery] = useState('');
 
     const toggleExpand = (id: string, e?: React.MouseEvent) => {
         e?.stopPropagation();
@@ -60,97 +57,59 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
 
     const menuGroups = useMemo(() => {
         const frequent = getFrequentlyAccessedModules();
-
         const baseGroups = [
             {
-                label: 'ATENDIMENTO',
+                label: 'MAIN',
                 items: [
-                    { id: '/atendimento', icon: Headset, label: 'Atendimento Central' },
-                    { id: '/interno', icon: Hash, label: 'Comunicação Interna' },
-                    { id: '/agentes', icon: Lightning, label: 'Agentes Inteligentes' },
-                ]
-            },
-            {
-                label: 'COMERCIAL & VENDAS',
-                items: [
+                    { id: '/dashboard', icon: SquaresFour, label: 'Dashboard' },
                     {
-                        id: 'crm_module', icon: TrendUp, label: 'CRM de Leads',
+                        id: 'atendimento_module', icon: Headset, label: 'Atendimento',
                         subItems: [
-                            { id: '/crm', label: 'Gestão de Leads' },
-                            { id: '/crm_tasks', label: 'Agendamentos' },
-                            { id: '/crm_contratos', label: 'Contratos' },
+                            { id: '/atendimento', label: 'Central de Chat' },
+                            { id: '/agentes', label: 'Robôs Titã AI' },
                         ]
                     },
-                    {
-                        id: 'clientes', icon: Users, label: 'Base de Clientes',
-                        subItems: [{ id: '/client_search', label: 'Consultar Cliente' }]
-                    },
-                    { id: '/kanban', icon: SquaresFour, label: 'Funil Kanban' },
-                    { id: '/automacoes', icon: Lightning, label: 'Automações' },
-                    { id: '/relatorios', icon: ChartLine, label: 'Relatórios' },
                 ]
             },
             {
-                label: 'OPERAÇÕES',
+                label: 'ISPs OPERATIONS',
                 items: [
                     {
-                        id: 'financeiro_group', icon: CurrencyDollar, label: 'Financeiro',
-                        subItems: [{ id: '/financeiro', label: 'Gestão Financeira' }]
+                        id: 'crm_group', icon: TrendUp, label: 'CRM de Leads',
+                        subItems: [
+                            { id: '/crm', label: 'Gestão de Leads' },
+                            { id: '/kanban', label: 'Funil Kanban' },
+                            { id: '/crm_tasks', label: 'Agendas' },
+                        ]
                     },
+                    { id: '/financeiro', icon: CurrencyDollar, label: 'Financeiro' },
                     { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
+                    { id: '/rede', icon: Globe, label: 'Gestão de Rede' },
                     { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
-                    { id: '/estoque', icon: Package, label: 'Estoque de Rede' },
                 ]
             },
             {
-                label: 'INFRAESTRUTURA',
+                label: 'SISTEMA',
                 items: [
-                    { id: '/dashboard', icon: TrendUp, label: 'Dashboard Resumo' },
-                    { id: '/rede', icon: Globe, label: 'Topologia de Rede' },
-                ]
-            },
-            {
-                label: 'SUPORTE & LEGAL',
-                items: [
-                    { id: '/ajustes', icon: Gear, label: 'Ajustes de Conta' },
-                    { id: '/privacy', icon: WarningCircle, label: 'Privacidade' },
+                    { id: '/relatorios', icon: ChartLine, label: 'Insights & Analytics' },
+                    { id: '/ajustes', icon: Gear, label: 'Configurações' },
                 ]
             }
         ];
 
-        // Módulos com mais de 15 acessos vão para o topo
+        // Se houver módulos frequentes, coloca no topo como "INSIGHTS"
         if (frequent.length > 0) {
             const frequentItems: any[] = [];
-            baseGroups.forEach(group => {
-                group.items.forEach(item => {
-                    if (frequent.includes(item.id)) {
-                        frequentItems.push(item);
-                    }
-                });
-            });
-
+            baseGroups.forEach(g => g.items.forEach(i => { if (frequent.includes(i.id)) frequentItems.push(i) }));
             if (frequentItems.length > 0) {
-                const frequentIds = frequentItems.map(i => i.id);
-                const filteredBaseGroups = baseGroups.map(group => ({
-                    ...group,
-                    items: group.items.filter(item => !frequentIds.includes(item.id))
-                })).filter(group => group.items.length > 0);
-
-                return [
-                    {
-                        label: 'MAIS ACESSADOS',
-                        items: frequentItems.sort((a, b) => frequent.indexOf(a.id) - frequent.indexOf(b.id))
-                    },
-                    ...filteredBaseGroups
-                ];
+                return [{ label: 'FREQUENTES', items: frequentItems.slice(0, 3) }, ...baseGroups];
             }
         }
-
         return baseGroups;
     }, []);
 
     const isItemActive = (item: any): boolean => {
-        if (item.id?.startsWith('/') && location.pathname.startsWith(item.id)) return true;
+        if (item.id === location.pathname) return true;
         if (item.subItems) return item.subItems.some((s: any) => isItemActive(s));
         return false;
     };
@@ -159,50 +118,51 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
         const hasSubItems = item.subItems && item.subItems.length > 0;
         const isExpanded = expandedItems.has(item.id);
         const isActive = isItemActive(item);
+        const Icon = item.icon;
 
         return (
-            <div key={item.id} className="nav-item-container">
-                <motion.button
-                    whileTap={{ scale: 0.97 }}
-                    className={`nav-item ${isActive ? 'active' : ''} ${depth > 0 ? 'sub-item' : ''}`}
+            <div key={item.id} className={`sidebar-item ${isActive ? 'active' : ''}`}>
+                <div
+                    className="sidebar-link"
                     onClick={() => {
                         if (hasSubItems && !isRetracted) toggleExpand(item.id);
                         else if (item.id?.startsWith('/')) navigate(item.id);
                     }}
-                    title={item.label}
-                    style={{ paddingLeft: !isRetracted ? `${depth * 16 + 16}px` : undefined }}
                 >
-                    {item.icon
-                        ? <item.icon size={22} weight={isActive ? 'fill' : 'regular'} className="nav-icon" />
-                        : depth > 0 && !isRetracted && <div className="sub-item-bullet" />
-                    }
-                    {!isRetracted && (
-                        <>
-                            <span className="nav-label">{item.label}</span>
-                            {hasSubItems && (
-                                <motion.div
-                                    className="expand-icon-wrapper"
-                                    animate={{ rotate: isExpanded ? 90 : 0 }}
-                                    transition={{ duration: 0.2, ease: "easeInOut" }}
-                                    onClick={e => { e.stopPropagation(); toggleExpand(item.id); }}
-                                >
-                                    <CaretRight size={13} />
-                                </motion.div>
-                            )}
-                        </>
-                    )}
-                </motion.button>
+                    {Icon && <Icon size={22} weight={isActive ? "fill" : "regular"} />}
+                    {!isRetracted && <span>{item.label}</span>}
 
-                <AnimatePresence initial={false}>
-                    {hasSubItems && isExpanded && !isRetracted && (
+                    {/* Floating Menu for retracted mode */}
+                    {isRetracted && hasSubItems && (
+                        <div className="floating-menu">
+                            <div className="sidebar-section-label" style={{ margin: '0 0 10px 0' }}>{item.label}</div>
+                            {item.subItems.map((sub: any) => (
+                                <div key={sub.id} className="sidebar-submenu-item" onClick={() => navigate(sub.id)}>
+                                    {sub.label}
+                                </div>
+                            ))}
+                        </div>
+                    )}
+                </div>
+
+                <AnimatePresence>
+                    {!isRetracted && hasSubItems && isExpanded && (
                         <motion.div
-                            className="sub-items-container overflow-hidden"
+                            className="sidebar-submenu"
                             initial="closed"
                             animate="open"
                             exit="closed"
                             variants={accordionVariants}
                         >
-                            {item.subItems.map((sub: any) => renderMenuItem(sub, depth + 1))}
+                            {item.subItems.map((sub: any) => (
+                                <div
+                                    key={sub.id}
+                                    className={`sidebar-submenu-item ${location.pathname === sub.id ? 'active' : ''}`}
+                                    onClick={() => navigate(sub.id)}
+                                >
+                                    {sub.label}
+                                </div>
+                            ))}
                         </motion.div>
                     )}
                 </AnimatePresence>
@@ -210,96 +170,59 @@ const Sidebar: React.FC<SidebarProps> = ({ isRetracted, onToggleRetraction, them
         );
     };
 
-    React.useEffect(() => {
-        const iv = setInterval(() => {
-            const diff = Date.now() - statusStartTime;
-            const h = Math.floor(diff / 3600000);
-            const m = Math.floor((diff % 3600000) / 60000);
-            const s = Math.floor((diff % 60000) / 1000);
-            setTimer(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
-        }, 1000);
-        return () => clearInterval(iv);
-    }, [statusStartTime]);
-
     return (
-        <aside className={`sidebar ${isRetracted ? 'retracted' : 'expanded'}`}>
-            <div className="sidebar-header">
-                <motion.button
-                    whileTap={{ scale: 0.9 }}
-                    whileHover={{ backgroundColor: 'var(--border)' }}
-                    className="toggle-btn"
-                    onClick={onToggleRetraction}
-                    title={isRetracted ? 'Expandir' : 'Recolher'}>
-                    {isRetracted ? <CaretDoubleRight size={20} /> : <CaretDoubleLeft size={20} />}
-                </motion.button>
-                {!isRetracted && <span className="logo-text">TITÃ</span>}
+        <aside className={`sidebar ${isRetracted ? 'retracted' : ''}`}>
+            {/* Header / Search */}
+            <div className="sidebar-search-container">
+                <div className="sidebar-search" onClick={onToggleRetraction}>
+                    <MagnifyingGlass size={18} />
+                    {!isRetracted && (
+                        <>
+                            <input
+                                placeholder="Buscar..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                            />
+                            <div className="search-shortcut">⌘ S</div>
+                        </>
+                    )}
+                </div>
             </div>
 
-            <nav className="sidebar-nav ic-sidebar-scroll">
-                {menuGroups.map((group, gIdx) => {
-                    const isGroupExpanded = expandedItems.has(group.label);
-                    return (
-                        <div key={gIdx} className="nav-group">
-                            {!isRetracted && (
-                                <motion.div
-                                    className="nav-group-header"
-                                    onClick={() => toggleExpand(group.label)}
-                                    whileTap={{ opacity: 0.7 }}
-                                >
-                                    <span className="nav-group-label">{group.label}</span>
-                                    <motion.div
-                                        className="group-expand-icon"
-                                        animate={{ rotate: isGroupExpanded ? 90 : 0 }}
-                                        transition={{ duration: 0.2, ease: "easeInOut" }}
-                                    >
-                                        <CaretRight size={13} />
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                            <AnimatePresence initial={false}>
-                                {(isRetracted || isGroupExpanded) && (
-                                    <motion.div
-                                        key={group.label + '-items'}
-                                        initial={isRetracted ? false : 'closed'}
-                                        animate="open"
-                                        exit="closed"
-                                        variants={accordionVariants}
-                                        className="overflow-hidden"
-                                    >
-                                        {group.items.map(item => renderMenuItem(item))}
-                                    </motion.div>
-                                )}
-                            </AnimatePresence>
-                        </div>
-                    );
-                })}
+            {/* Navigation */}
+            <nav className="sidebar-nav">
+                {menuGroups.map((group, idx) => (
+                    <div key={idx}>
+                        {!isRetracted && <div className="sidebar-section-label">{group.label}</div>}
+                        {group.items.map(item => renderMenuItem(item))}
+                    </div>
+                ))}
             </nav>
 
-            <div className="sidebar-footer">
-                <div className="footer-toolbar">
-                    {!isRetracted && (
-                        <button className={`footer-item ${finish === 'matte' ? 'active' : ''}`} onClick={onToggleFinish}
-                            title={finish === 'matte' ? 'Ativar Brilho' : 'Ativar Fosco'}>
-                            <Lightning size={22} weight={finish === 'matte' ? 'fill' : 'duotone'} />
+            {/* Bottom Actions & Profile */}
+            <div style={{ padding: '4px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {!isRetracted && (
+                    <div style={{ display: 'flex', gap: '8px', marginBottom: '8px' }}>
+                        <button className="sidebar-search" style={{ padding: '8px', flex: 1 }} onClick={onToggleTheme}>
+                            {theme === 'dark' ? <Sun size={18} /> : <Moon size={18} />}
                         </button>
-                    )}
-
-                    {!isRetracted && (
-                        <button className="footer-item" onClick={onToggleTheme}
-                            title={theme === 'dark' ? 'Modo Claro' : theme === 'light' ? 'Modo Soft' : 'Modo Escuro'}>
-                            {theme === 'dark' ? <Sun size={22} weight="duotone" /> : theme === 'light' ? <Moon size={22} weight="duotone" /> : <Palette size={22} weight="duotone" />}
+                        <button className="sidebar-search" style={{ padding: '8px' }} onClick={onToggleRetraction}>
+                            {isRetracted ? <CaretDoubleRight size={18} /> : <CaretDoubleLeft size={18} />}
                         </button>
-                    )}
+                    </div>
+                )}
 
-                    <button className="footer-item" title="Ajustes" onClick={() => navigate('/ajustes')}>
-                        {isRetracted ? <User size={22} weight="duotone" /> : <Gear size={22} weight="duotone" />}
-                    </button>
-
+                <div className="sidebar-profile" onClick={() => navigate('/ajustes')}>
+                    <img
+                        src="https://ui-avatars.com/api/?name=Joao+Sollatori&background=2563eb&color=fff"
+                        alt="Avatar"
+                        className="profile-avatar"
+                    />
                     {!isRetracted && (
-                        <button className="footer-item logout" title="Sair"
-                            onClick={() => { if (window.confirm('Deseja sair do TITA?')) window.location.reload(); }}>
-                            <SignOut size={22} weight="duotone" />
-                        </button>
+                        <div className="profile-info">
+                            <span className="profile-name">João Sollatori</span>
+                            <span className="profile-role">Administrador</span>
+                        </div>
                     )}
                 </div>
             </div>
