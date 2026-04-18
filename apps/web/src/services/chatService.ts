@@ -30,6 +30,7 @@ export interface Message {
     reactions: string[];
     file_url?: string;
     file_name?: string;
+    status?: 'pending' | 'sent' | 'delivered' | 'read';
     created_at: string;
 }
 

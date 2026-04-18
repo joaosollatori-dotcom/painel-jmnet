@@ -8,7 +8,7 @@ import {
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
     IdentificationCard, Wrench, WifiHigh, Clock, TrendUp, WarningCircle,
-    CaretDoubleRight, CaretDoubleLeft
+    CaretDoubleRight, CaretDoubleLeft, Check
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -37,10 +37,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     useEffect(() => {
         loadData();
-        const subscription = subscribeToMessages(chatId, (newMsg) => {
+        const subscription = subscribeToMessages(chatId, (newMsg: any) => {
             setMessages(prev => {
-                const updated = prev.filter(m => !(m.text === newMsg.text && (m as any).pending));
-                if (updated.find(m => m.id === newMsg.id)) return updated;
+                // Remove a versão otimista baseada no ID temporário ou no texto idêntico enquanto pendente
+                const updated = prev.filter(m => !(m.text === newMsg.text && m.status === 'pending'));
+                // Evita duplicatas se a mensagem já foi inserida pelo retorno do sendMessage
+                if (updated.find(m => m.id === newMsg.id)) {
+                    // Mas se o status mudou, atualiza a mensagem existente
+                    return updated.map(m => m.id === newMsg.id ? newMsg : m);
+                }
                 return [...updated, newMsg];
             });
         });
@@ -68,33 +73,47 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         }
     };
 
-    const handleSendMessage = async (customText?: string) => {
+    const handleSendMessage = async (customText?: string, fileData?: { url: string, name: string }) => {
         const textToSend = customText || message.trim();
-        if (!textToSend || !conversation || conversation.is_closed) return;
+        if (!textToSend && !fileData) return;
+        if (!conversation || conversation.is_closed) return;
 
         setMessage('');
         setShowEmojiPicker(false);
         const optimisticId = `temp-${Date.now()}`;
-        const optimisticMsg: any = {
+
+        // Versão otimista LOCAL (Status PENDING - Relógio)
+        const optimisticMsg: Message = {
             id: optimisticId,
             conversation_id: chatId,
             sender: 'Você',
-            text: textToSend,
+            text: textToSend || (fileData ? `Arquivo: ${fileData.name}` : ''),
             is_user: true,
             is_bot: false,
+            file_url: fileData?.url,
+            file_name: fileData?.name,
             created_at: new Date().toISOString(),
-            pending: true
+            status: 'pending',
+            reactions: []
         };
 
         setMessages(prev => [...prev, optimisticMsg]);
+
         try {
-            const realMsg = await sendMessage(chatId, {
+            // Chamada Real ao Supabase
+            const realMsg: any = await sendMessage(chatId, {
                 sender: 'Você',
-                text: textToSend,
+                text: textToSend || (fileData ? `Arquivo: ${fileData.name}` : ''),
                 is_user: true,
-                is_bot: false
+                is_bot: false,
+                file_url: fileData?.url,
+                file_name: fileData?.name
             });
-            if (realMsg) setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
+
+            // Substitui a mensagem otimista pela real retornada pelo banco (sem simulações de timer)
+            if (realMsg) {
+                setMessages(prev => prev.map(m => m.id === optimisticId ? realMsg : m));
+            }
         } catch (err) {
             setMessages(prev => prev.filter(m => m.id !== optimisticId));
             showToast('Erro ao enviar mensagem', 'error');
@@ -104,29 +123,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
-
-        showToast(`Enviando ${files.length} arquivo(s)...`, 'info');
-
+        showToast(`Fazendo upload de ${files.length} arquivo(s)...`, 'info');
         for (let i = 0; i < files.length; i++) {
             const file = files[i];
             try {
-                // Simulação/Placeholder de upload para UI ágil
-                const mockUrl = URL.createObjectURL(file);
-                const optimisticId = `upload-${Date.now()}-${i}`;
-
-                setMessages(prev => [...prev, {
-                    id: optimisticId,
-                    conversation_id: chatId,
-                    sender: 'Você',
-                    text: `📎 Enviando: ${file.name}`,
-                    is_user: true,
-                    is_bot: false,
-                    created_at: new Date().toISOString()
-                }]);
-
-                // Chamada real ao serviço (deve suportar FormData no backend)
-                await uploadChatFile(chatId, file);
-                showToast('Arquivo enviado!', 'success');
+                const uploadResult = await uploadChatFile(file);
+                await handleSendMessage(undefined, uploadResult);
             } catch (err) {
                 showToast(`Erro ao enviar ${file.name}`, 'error');
             }
@@ -134,17 +136,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         if (fileInputRef.current) fileInputRef.current.value = '';
     };
 
-    const onEmojiClick = (emojiData: any) => {
-        setMessage(prev => prev + emojiData.emoji);
+    const renderStatusIcon = (status?: string) => {
+        // Status REAIS vindos do banco de dados
+        switch (status) {
+            case 'pending': return <Clock size={12} weight="bold" />;
+            case 'sent': return <Check size={12} weight="bold" />;
+            case 'delivered': return <Checks size={14} weight="bold" />;
+            case 'read': return <Checks size={14} weight="bold" style={{ color: '#34b7f1' }} />;
+            default: return <Check size={12} weight="bold" />; // Fallback para enviado se não houver status
+        }
     };
 
+    const onEmojiClick = (emojiData: any) => setMessage(prev => prev + emojiData.emoji);
     const formatTime = (ts: string) => new Date(ts).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
 
     if (loading) return <LoadingScreen message="Sincronizando Chat..." />;
 
     return (
         <div className={`chat-container ${isInfoRetracted ? 'info-retracted' : ''}`}>
-            {/* Coluna Central: Janela de Chat */}
             <div className="chat-window">
                 <header className="chat-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
@@ -183,8 +192,21 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
                     {messages.map((msg) => (
                         <div key={msg.id} className={`msg-bubble ${msg.is_user || msg.is_bot ? 'msg-outbound' : 'msg-inbound'}`}>
+                            {msg.file_url && (
+                                <div className="msg-file-attachment" style={{ marginBottom: '8px', padding: '8px', background: 'rgba(255,255,255,0.1)', borderRadius: '8px', cursor: 'pointer' }} onClick={() => window.open(msg.file_url)}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <FileText size={24} />
+                                        <span style={{ fontSize: '0.85rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{msg.file_name}</span>
+                                    </div>
+                                </div>
+                            )}
                             {msg.text}
-                            <span className="msg-time">{formatTime(msg.created_at)}</span>
+                            <div className="msg-footer">
+                                <span className="msg-time">{formatTime(msg.created_at)}</span>
+                                {(msg.is_user || msg.is_bot) && (
+                                    <span className="msg-status">{renderStatusIcon(msg.status)}</span>
+                                )}
+                            </div>
                         </div>
                     ))}
                     <div ref={messagesEndRef} />
@@ -200,50 +222,29 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                 </div>
 
                 <footer className="chat-input-area">
-                    {/* Emoji Picker Popover */}
                     <AnimatePresence>
                         {showEmojiPicker && (
                             <motion.div initial={{ opacity: 0, bottom: '80px' }} animate={{ opacity: 1, bottom: '100px' }} exit={{ opacity: 0 }} style={{ position: 'absolute', right: '2rem', zIndex: 1000 }}>
-                                <EmojiPicker
-                                    onEmojiClick={onEmojiClick}
-                                    theme={Theme.AUTO}
-                                    emojiStyle={EmojiStyle.NATIVE}
-                                />
+                                <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.AUTO} emojiStyle={EmojiStyle.NATIVE} />
                             </motion.div>
                         )}
                     </AnimatePresence>
-
                     <div className="input-container">
-                        <input
-                            type="file"
-                            multiple
-                            ref={fileInputRef}
-                            style={{ display: 'none' }}
-                            onChange={handleFileUpload}
-                            accept="image/*,video/*,audio/*,application/pdf"
-                        />
-                        <Paperclip
-                            size={22}
-                            style={{ cursor: 'pointer', opacity: 0.6 }}
-                            onClick={() => fileInputRef.current?.click()}
-                        />
-                        <Smiley
-                            size={22}
-                            style={{ cursor: 'pointer', opacity: 0.6 }}
-                            onClick={() => setShowEmojiPicker(!showEmojiPicker)}
-                        />
+                        <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} accept="image/*,video/*,audio/*,application/pdf" />
+                        <Paperclip size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => fileInputRef.current?.click()} />
+                        <Smiley size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setShowEmojiPicker(!showEmojiPicker)} />
                         <input
                             placeholder="Digite aqui..."
                             value={message}
                             onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={(e) => e.key === 'Enter' && handleSendMessage()}
+                            onKeyDown={(e) => {
+                                if (e.key === 'Enter' && (e.ctrlKey || !e.shiftKey)) {
+                                    e.preventDefault();
+                                    handleSendMessage();
+                                }
+                            }}
                         />
-                        <PaperPlaneTilt
-                            size={24}
-                            weight="fill"
-                            style={{ color: 'var(--accent)', cursor: 'pointer' }}
-                            onClick={() => handleSendMessage()}
-                        />
+                        <PaperPlaneTilt size={24} weight="fill" style={{ color: 'var(--accent-chat)', cursor: 'pointer' }} onClick={() => handleSendMessage()} />
                     </div>
                 </footer>
             </div>
@@ -258,29 +259,24 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             <h4 style={{ margin: 0 }}>{conversation?.contact_name}</h4>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{conversation?.contact_phone}</span>
                         </div>
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-                            <div className="nav-group">
-                                <div className="sidebar-section-label">Informações</div>
-                                <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
-                                        <span>Status ISP</span>
-                                        <span style={{ color: '#10b981', fontWeight: 'bold' }}>Online</span>
-                                    </div>
-                                    <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                                        <span>Plano</span>
-                                        <span>Giga Fibra 500M</span>
-                                    </div>
+                        <div className="nav-group">
+                            <div className="sidebar-section-label">Informações</div>
+                            <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+                                    <span>Status ISP</span>
+                                    <span style={{ color: '#10b981', fontWeight: 'bold' }}>Online</span>
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                                    <span>Plano</span>
+                                    <span>Giga Fibra 500M</span>
                                 </div>
                             </div>
                         </div>
                     </motion.div>
                 ) : (
                     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '20px' }}>
-                        <div className="avatar-small" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>
-                            {conversation?.contact_name.charAt(0)}
-                        </div>
-                        <Wrench size={22} style={{ opacity: 0.6 }} />
-                        <CurrencyDollar size={22} style={{ opacity: 0.6 }} />
+                        <div className="avatar-small" style={{ background: 'var(--bg-surface)', border: '1px solid var(--border)' }}>{conversation?.contact_name.charAt(0)}</div>
+                        <Wrench size={22} style={{ opacity: 0.6 }} /><CurrencyDollar size={22} style={{ opacity: 0.6 }} />
                     </div>
                 )}
             </aside>
