@@ -52,6 +52,22 @@ export interface Lead {
     // Aliases para compatibilidade legada
     createdAt?: string;
     updatedAt?: string;
+    stageId?: string;
+    provedor?: string;
+}
+
+export interface LeadHistory {
+    id: string;
+    leadId: string;
+    lead_id?: string;
+    type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'WA' | 'WHATSAPP' | 'EMAIL' | 'TASK' | 'DOCUMENT' | 'SYSTEM' | 'SYS';
+    content?: string;
+    duration?: number;
+    fromStage?: string;
+    toStage?: string;
+    responsavelId?: string;
+    dataEvento: string;
+    metadata?: any;
 }
 
 export const getLeads = async (): Promise<Lead[]> => {
@@ -65,12 +81,22 @@ export const getLeads = async (): Promise<Lead[]> => {
         return [];
     }
 
-    // Mapeamento de segurança para garantir que o front encontre createdAt/updatedAt se precisar
     return (data || []).map(l => ({
         ...l,
         createdAt: l.created_at,
         updatedAt: l.updated_at
     }));
+};
+
+export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
+    const { data, error } = await supabase
+        .from('leads')
+        .insert([{ ...lead, updated_at: new Date().toISOString() }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
