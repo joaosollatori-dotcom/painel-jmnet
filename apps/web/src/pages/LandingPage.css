@@ -10,16 +10,23 @@
     --lp-glass-border: rgba(255, 255, 255, 0.08);
 }
 
+/* Reset para garantir scroll */
+:global(.app-container.no-sidebar) {
+    overflow-y: auto !important;
+    height: auto !important;
+    position: relative !important;
+}
+
 .landing-container {
     min-height: 100vh;
-    width: 100vw;
-    position: absolute;
-    top: 0;
-    left: 0;
+    width: 100%;
+    position: relative;
     background: var(--lp-bg);
     color: var(--lp-text-primary);
     font-family: 'Outfit', 'Inter', sans-serif;
     overflow-x: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
 /* Navigation */
@@ -309,6 +316,24 @@
     justify-content: center;
 }
 
+/* Base Footer */
+.lp-base-footer {
+    padding: 40px 2rem;
+    background: rgba(0, 0, 0, 0.3);
+    border-top: 1px solid var(--lp-glass-border);
+    text-align: center;
+}
+
+.lp-base-footer-content {
+    max-width: 1200px;
+    margin: 0 auto;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    color: var(--lp-text-secondary);
+    font-size: 0.8rem;
+}
+
 /* Success State */
 .lp-success {
     text-align: center;
@@ -335,5 +360,10 @@
 
     .lp-title {
         font-size: 3rem;
+    }
+
+    .lp-base-footer-content {
+        flex-direction: column;
+        gap: 1rem;
     }
 }
