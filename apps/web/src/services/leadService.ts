@@ -29,6 +29,7 @@ export interface Lead {
     canalEntrada: 'WhatsApp' | 'Ligação' | 'Formulário Web' | 'Indicação' | 'Visita' | 'Campanha';
     campanha?: string;
     vendedorId?: string;
+    vendedorNome?: string; // Cache do nome para o Ranking
 
     // Classificação
     tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
@@ -38,13 +39,17 @@ export interface Lead {
     statusQualificacao: 'PENDENTE' | 'EM_ANALISE' | 'QUALIFICADO' | 'DESQUALIFICADO';
     statusViabilidade: 'PENDENTE' | 'EM_ANALISE' | 'VIAVEL' | 'INVIAVEL' | 'ESPECIAL';
 
-    // Proposta
+    // Proposta e Fechamento (DADOS PARA O MOTOR)
     planoSelecionado?: string;
+    valorPlano?: number; // Para cálculo de LTV/Ticket Médio no Dashboard
+    custoLead?: number; // Para cálculo de CAC real
     statusProposta?: 'ENVIADA' | 'VISUALIZADA' | 'ACEITA' | 'RECUSADA';
+    motivoPerda?: 'PRECO' | 'SINAL' | 'CONCORRENCIA' | 'FIDELIDADE' | 'ATENDIMENTO' | 'OUTROS';
 
-    // Datas e Controle (PADRÃO DO SEU DB: camelCase)
+    // Datas e Controle (PADRÃO DO SEU DB)
     dataEntrada: string;
     dataUltimaInteracao: string;
+    dataPrimeiroContato?: string; // Para o SLA de Resposta
     dataProximoContato?: string;
     createdAt: string;
     updatedAt: string;
@@ -83,7 +88,6 @@ export interface Appointment {
 }
 
 export const getLeads = async (): Promise<Lead[]> => {
-    // Usando explicitamente createdAt pois o Supabase reportou erro 42703 (coluna não existe) para created_at
     const { data, error } = await supabase
         .from('leads')
         .select('*')
@@ -91,11 +95,8 @@ export const getLeads = async (): Promise<Lead[]> => {
 
     if (error) {
         console.error('Erro Supabase (getLeads):', error);
-        // Fallback final caso o banco mude novamente
-        const { data: fallback } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
-        return fallback || [];
+        return [];
     }
-
     return data || [];
 };
 
@@ -105,12 +106,12 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
         .insert([{ ...lead, updatedAt: new Date().toISOString() }])
         .select()
         .single();
-
     if (error) throw error;
     return data;
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
+    // Limpeza de campos calculados antes do envio
     const { id: _id, createdAt: _c, created_at: _c2, ...cleanUpdates } = updates as any;
 
     const { error } = await supabase
@@ -127,23 +128,16 @@ export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => 
         .select('*')
         .eq('leadId', leadId)
         .order('dataEvento', { ascending: false });
-
-    if (error) return [];
     return data || [];
 };
 
+// ... restante mantido ...
 export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
     const { metadados, metadata, leadId, ...cleanHistory } = history as any;
     const { data, error } = await supabase
         .from('lead_history')
-        .insert([{
-            ...cleanHistory,
-            leadId: leadId || history.leadId,
-            dataEvento: new Date().toISOString()
-        }])
-        .select()
-        .single();
-
+        .insert([{ ...cleanHistory, leadId: leadId || history.leadId, dataEvento: new Date().toISOString() }])
+        .select().single();
     if (error) throw error;
     return data;
 };
@@ -154,7 +148,6 @@ export const getAppointments = async (): Promise<Appointment[]> => {
         .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao, statusAgendamento')
         .not('dataInstalacao', 'is', null)
         .order('dataInstalacao', { ascending: true });
-
     if (error) return [];
     return (data || []).map(l => ({
         id: l.id,
