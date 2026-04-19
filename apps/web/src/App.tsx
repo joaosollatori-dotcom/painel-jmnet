@@ -111,9 +111,6 @@ const App: React.FC = () => {
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRetracted, lastCtrlSpace, toggleSidebar, showToast]);
 
-  if (loading) return <LoadingScreen />;
-  if (!session) return <Auth />;
-
   // Detector de clique fora da sidebar (Blindagem UX)
   useEffect(() => {
     const handleOutsideClick = (e: MouseEvent) => {
@@ -136,6 +133,9 @@ const App: React.FC = () => {
       window.removeEventListener('click', handleOutsideClick);
     };
   }, [isRetracted, toggleSidebar]);
+
+  if (loading) return <LoadingScreen />;
+  if (!session) return <Auth />;
 
   return (
     <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
