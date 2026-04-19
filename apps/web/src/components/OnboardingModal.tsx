@@ -23,25 +23,39 @@ const OnboardingModal: React.FC = () => {
         console.log("TITÃ DEBUG: Iniciando criação da organização...", { tenantName, tenantSlug });
 
         try {
-            // 1. Criar o Tenant
-            const { data: tenant, error: tError } = await supabase
+            // 1. Criar o Tenant (Apenas Insert)
+            console.log("TITÃ DEBUG: Executando INSERT na tabela tenants...");
+            const { error: tError } = await supabase
                 .from('tenants')
                 .insert([{
                     name: tenantName,
                     slug: tenantSlug.toLowerCase().replace(/\s/g, '-'),
-                    plan: 'ENTERPRISE' // Primeiro usuário é sempre Master
-                }])
-                .select()
-                .single();
+                    plan: 'ENTERPRISE'
+                }]);
 
             if (tError) {
-                console.error("TITÃ DEBUG: Erro na tabela tenants:", tError);
+                console.error("TITÃ DEBUG: Erro no INSERT de tenants:", tError);
                 throw tError;
             }
 
-            console.log("TITÃ DEBUG: Tenant criado com sucesso:", tenant.id);
+            console.log("TITÃ DEBUG: INSERT concluído. Buscando ID do tenant criado...");
 
-            // 2. Vincular o Usuário como ADMIN da nova empresa
+            // 2. Buscar o ID do tenant que acabamos de criar (Select separado)
+            const { data: tenant, error: sError } = await supabase
+                .from('tenants')
+                .select('id')
+                .eq('slug', tenantSlug.toLowerCase().replace(/\s/g, '-'))
+                .maybeSingle();
+
+            if (sError || !tenant) {
+                console.error("TITÃ DEBUG: Erro ao recuperar ID do tenant:", sError);
+                throw sError || new Error("ID do tenant não encontrado após inserção");
+            }
+
+            console.log("TITÃ DEBUG: ID recuperado com sucesso:", tenant.id);
+
+            // 3. Vincular o Perfil
+            console.log("TITÃ DEBUG: Vinculando perfil ao tenant...");
             const { error: pError } = await supabase
                 .from('profiles')
                 .update({
@@ -52,11 +66,11 @@ const OnboardingModal: React.FC = () => {
                 .eq('id', user?.id);
 
             if (pError) {
-                console.error("TITÃ DEBUG: Erro ao atualizar perfil:", pError);
+                console.error("TITÃ DEBUG: Erro no update do perfil:", pError);
                 throw pError;
             }
 
-            console.log("TITÃ DEBUG: Perfil vinculado. Finalizando...");
+            console.log("TITÃ DEBUG: Onboarding completo!");
             setStep(2);
             showToast('Organização fundada com sucesso!', 'success');
 
