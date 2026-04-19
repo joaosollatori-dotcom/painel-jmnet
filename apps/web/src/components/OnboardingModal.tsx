@@ -20,6 +20,8 @@ const OnboardingModal: React.FC = () => {
         if (!tenantName || !tenantSlug) return;
 
         setLoading(true);
+        console.log("TITÃ DEBUG: Iniciando criação da organização...", { tenantName, tenantSlug });
+
         try {
             // 1. Criar o Tenant
             const { data: tenant, error: tError } = await supabase
@@ -32,7 +34,12 @@ const OnboardingModal: React.FC = () => {
                 .select()
                 .single();
 
-            if (tError) throw tError;
+            if (tError) {
+                console.error("TITÃ DEBUG: Erro na tabela tenants:", tError);
+                throw tError;
+            }
+
+            console.log("TITÃ DEBUG: Tenant criado com sucesso:", tenant.id);
 
             // 2. Vincular o Usuário como ADMIN da nova empresa
             const { error: pError } = await supabase
@@ -44,8 +51,12 @@ const OnboardingModal: React.FC = () => {
                 })
                 .eq('id', user?.id);
 
-            if (pError) throw pError;
+            if (pError) {
+                console.error("TITÃ DEBUG: Erro ao atualizar perfil:", pError);
+                throw pError;
+            }
 
+            console.log("TITÃ DEBUG: Perfil vinculado. Finalizando...");
             setStep(2);
             showToast('Organização fundada com sucesso!', 'success');
 

@@ -23,21 +23,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         let mounted = true;
 
         const initAuth = async () => {
+            console.log("TITÃ DEBUG: Verificando sessão inicial...");
             const { data: { session } } = await supabase.auth.getSession();
             if (!mounted) return;
 
             if (session) {
+                console.log("TITÃ DEBUG: Sessão encontrada para:", session.user.email);
                 setSession(session);
                 setUser(session.user);
                 await fetchProfile();
             } else {
+                console.log("TITÃ DEBUG: Nenhuma sessão ativa.");
                 setLoading(false);
             }
         };
 
         initAuth();
 
-        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+        const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+            console.log("TITÃ DEBUG: Mudança de Auth detectada:", event);
             if (!mounted) return;
             setSession(session);
             setUser(session?.user ?? null);
@@ -55,11 +59,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const fetchProfile = async () => {
+        console.log("TITÃ DEBUG: Buscando perfil no banco...");
         try {
             const p = await getCurrentProfile();
+            console.log("TITÃ DEBUG: Perfil retornado:", p ? "Encontrado" : "Não encontrado (null)");
             setProfile(p);
         } catch (err) {
-            console.error("Error fetching profile:", err);
+            console.error("TITÃ DEBUG: Erro fatal no fetchProfile:", err);
         } finally {
             setLoading(false);
         }
