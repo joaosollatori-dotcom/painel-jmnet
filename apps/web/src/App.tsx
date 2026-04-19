@@ -71,7 +71,7 @@ const App: React.FC = () => {
     localStorage.setItem('sidebar-retracted', newState.toString());
   };
 
-  // Atalhos Globais Imutáveis
+  // Atalhos Globais Imutáveis (v2.05.01)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.ctrlKey && e.key === '.') {
