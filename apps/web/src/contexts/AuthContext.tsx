@@ -22,31 +22,18 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         let mounted = true;
 
-        const initAuth = async () => {
-            console.log("TITÃ DEBUG: Verificando sessão inicial...");
-            const { data: { session } } = await supabase.auth.getSession();
-            if (!mounted) return;
-
-            if (session) {
-                console.log("TITÃ DEBUG: Sessão encontrada para:", session.user.email);
-                setSession(session);
-                setUser(session.user);
-                await fetchProfile();
-            } else {
-                console.log("TITÃ DEBUG: Nenhuma sessão ativa.");
-                setLoading(false);
-            }
-        };
-
-        initAuth();
+        console.log("TITÃ DEBUG: Iniciando listener de Auth...");
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("TITÃ DEBUG: Mudança de Auth detectada:", event);
+            console.log("TITÃ DEBUG: Evento de Auth:", event);
             if (!mounted) return;
+
             setSession(session);
             setUser(session?.user ?? null);
-            if (session) await fetchProfile();
-            else {
+
+            if (session) {
+                await fetchProfile();
+            } else {
                 setProfile(null);
                 setLoading(false);
             }
