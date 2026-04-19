@@ -143,14 +143,14 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
         ];
 
         let currentIdx = -1;
-        if (localLead.statusQualificacao === 'PENDENTE') currentIdx = 0;
-        if (localLead.statusQualificacao === 'EM_ANALISE') currentIdx = 0;
-        if (localLead.statusQualificacao === 'QUALIFICADO') currentIdx = 1;
-        if (localLead.statusViabilidade === 'EM_ANALISE') currentIdx = 1;
-        if (localLead.statusViabilidade === 'VIAVEL') currentIdx = 2;
-        if (localLead.statusProposta === 'ENVIADA' || localLead.statusProposta === 'VISUALIZADA') currentIdx = 3;
-        if (localLead.statusProposta === 'ACEITA') currentIdx = 4;
-        if (localLead.statusQualificacao === 'DESQUALIFICADO' || localLead.statusProposta === 'RECUSADA') currentIdx = -2;
+        if (localLead?.statusQualificacao === 'PENDENTE') currentIdx = 0;
+        if (localLead?.statusQualificacao === 'EM_ANALISE') currentIdx = 0;
+        if (localLead?.statusQualificacao === 'QUALIFICADO') currentIdx = 1;
+        if (localLead?.statusViabilidade === 'EM_ANALISE') currentIdx = 1;
+        if (localLead?.statusViabilidade === 'VIAVEL') currentIdx = 2;
+        if (localLead?.statusProposta === 'ENVIADA' || localLead?.statusProposta === 'VISUALIZADA') currentIdx = 3;
+        if (localLead?.statusProposta === 'ACEITA') currentIdx = 4;
+        if (localLead?.statusQualificacao === 'DESQUALIFICADO' || localLead?.statusProposta === 'RECUSADA') currentIdx = -2;
 
         return (
             <header className="fixed-header">

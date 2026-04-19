@@ -108,19 +108,20 @@ const LeadsManager: React.FC = () => {
 
     const processedLeads = useMemo(() => {
         let result = leads.filter(l => {
+            if (!l) return false;
             const matchesSearch =
-                l.nomeCompleto.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                (l.nomeCompleto?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
                 l.cpfCnpj?.includes(searchTerm) ||
-                l.telefonePrincipal.includes(searchTerm) ||
-                l.logradouro?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                l.bairro?.toLowerCase().includes(searchTerm.toLowerCase());
+                l.telefonePrincipal?.includes(searchTerm) ||
+                (l.logradouro?.toLowerCase() || '').includes(searchTerm.toLowerCase()) ||
+                (l.bairro?.toLowerCase() || '').includes(searchTerm.toLowerCase());
             const matchesStage = !stageFilter || l.statusQualificacao === stageFilter;
             const matchesViability = !viabilityFilter || l.statusViabilidade === viabilityFilter;
             return matchesSearch && matchesStage && matchesViability;
         });
         if (currentQuickFilter === 'noContact48h') {
             const limit = new Date(Date.now() - 48 * 60 * 60 * 1000);
-            result = result.filter(l => new Date(l.dataUltimaInteracao) < limit);
+            result = result.filter(l => l.dataUltimaInteracao && new Date(l.dataUltimaInteracao) < limit);
         } else if (currentQuickFilter === 'pendingViability') {
             result = result.filter(l => l.statusViabilidade === 'PENDENTE' || l.statusViabilidade === 'EM_ANALISE');
         } else if (currentQuickFilter === 'stalledProposals') {
@@ -133,7 +134,8 @@ const LeadsManager: React.FC = () => {
     const groupedLeads = useMemo(() => {
         if (groupBy === 'none') return { 'Todos os Leads': processedLeads };
         return processedLeads.reduce((acc, lead) => {
-            const groupKey = groupBy === 'stage' ? lead.statusQualificacao : groupBy === 'viability' ? lead.statusViabilidade : lead.vendedorId || 'Sem Vendedor';
+            if (!lead) return acc;
+            const groupKey = groupBy === 'stage' ? (lead.statusQualificacao || 'Pendente') : groupBy === 'viability' ? (lead.statusViabilidade || 'Em Análise') : lead.vendedorId || 'Sem Vendedor';
             if (!acc[groupKey]) acc[groupKey] = [];
             acc[groupKey].push(lead);
             return acc;
