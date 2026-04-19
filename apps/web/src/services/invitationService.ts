@@ -29,18 +29,25 @@ export const createInvitation = async (email: string, role: UserRole): Promise<s
 };
 
 export const getInvitations = async (): Promise<Invitation[]> => {
-    const { data, error } = await supabase
-        .from('invitations')
-        .select('*')
-        .is('used_at', null)
-        .gt('expires_at', new Date().toISOString());
+    try {
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('*')
+            .is('used_at', null)
+            .gt('expires_at', new Date().toISOString());
 
-    if (error) throw error;
-    return data.map(d => ({
-        id: d.id,
-        email: d.email,
-        role: d.role as UserRole,
-        token: d.invite_token,
-        expiresAt: d.expires_at
-    }));
+        if (error) {
+            console.warn("Invitations table not found. Run SQL migration.");
+            return [];
+        }
+        return data.map(d => ({
+            id: d.id,
+            email: d.email,
+            role: d.role as UserRole,
+            token: d.invite_token,
+            expiresAt: d.expires_at
+        }));
+    } catch (e) {
+        return [];
+    }
 };

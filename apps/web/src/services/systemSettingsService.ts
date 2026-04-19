@@ -28,12 +28,10 @@ export const getSystemSettings = async (): Promise<SystemSetting[]> => {
     try {
         const { data, error } = await supabase
             .from('system_settings')
-            .select('*')
-            .order('category', { ascending: true })
-            .order('label', { ascending: true });
+            .select('*');
 
-        if (error || !data || data.length === 0) {
-            // Se falhar (tabela não existe) ou estiver vazia, retorna os defaults em memória para não quebrar a aplicação
+        if (error) {
+            console.warn("System settings table not found. Using defaults.");
             return defaultSettings;
         }
 
@@ -45,7 +43,7 @@ export const getSystemSettings = async (): Promise<SystemSetting[]> => {
             value: d.value,
             isActive: d.is_active ?? d.isActive
         }));
-    } catch (err) {
+    } catch (e) {
         return defaultSettings;
     }
 };

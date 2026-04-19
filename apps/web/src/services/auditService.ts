@@ -33,22 +33,29 @@ export const logAction = async (action: string, resource: string, details: any =
 };
 
 export const getGlobalAuditLogs = async (limit = 100): Promise<AuditLog[]> => {
-    const { data, error } = await supabase
-        .from('audit_logs')
-        .select(`
-            *,
-            profiles:actor_id (full_name, email),
-            tenants:tenant_id (name)
-        `)
-        .order('created_at', { ascending: false })
-        .limit(limit);
+    try {
+        const { data, error } = await supabase
+            .from('audit_logs')
+            .select(`
+                *,
+                profiles:actor_id (full_name, email),
+                tenants:tenant_id (name)
+            `)
+            .order('created_at', { ascending: false })
+            .limit(limit);
 
-    if (error) throw error;
-    return data.map(d => ({
-        ...d,
-        actorId: d.actor_id,
-        tenantId: d.tenant_id,
-        ipAddress: d.ip_address,
-        createdAt: d.created_at
-    }));
+        if (error) {
+            console.warn("Audit logs table not found or inaccessible. Run SQL migration.");
+            return [];
+        }
+        return data.map(d => ({
+            ...d,
+            actorId: d.actor_id,
+            tenantId: d.tenant_id,
+            ipAddress: d.ip_address,
+            createdAt: d.created_at
+        }));
+    } catch (e) {
+        return [];
+    }
 };

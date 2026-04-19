@@ -1,10 +1,11 @@
 .settings-manager-pane {
-    padding: 2rem;
+    padding: 2.5rem;
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: var(--bg-deep);
-    color: var(--text-primary);
+    background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
+    color: #f8fafc;
+    font-family: 'Inter', sans-serif;
 }
 
 .settings-header {
@@ -17,11 +18,15 @@
 .settings-header h1 {
     display: flex;
     align-items: center;
-    gap: 12px;
-    font-size: 1.5rem;
-    font-weight: 800;
+    gap: 14px;
+    font-size: 1.8rem;
+    font-weight: 900;
     margin: 0;
-    color: var(--text-primary);
+    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+    letter-spacing: -0.5px;
 }
 
 .settings-header p {
@@ -38,14 +43,16 @@
 }
 
 .settings-sidebar {
-    width: 260px;
+    width: 280px;
     display: flex;
     flex-direction: column;
-    gap: 8px;
-    background: var(--bg-surface);
-    padding: 1.5rem;
-    border-radius: 16px;
-    border: 1px solid var(--border);
+    gap: 10px;
+    background: rgba(15, 23, 42, 0.6);
+    backdrop-filter: blur(12px);
+    padding: 1.8rem;
+    border-radius: 20px;
+    border: 1px solid rgba(59, 130, 246, 0.15);
+    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
 }
 
 .sett-tab {
@@ -89,14 +96,16 @@
 }
 
 .sett-panel {
-    background: var(--bg-surface);
-    border: 1px solid var(--border);
-    border-radius: 20px;
-    padding: 2rem;
+    background: rgba(15, 23, 42, 0.4);
+    backdrop-filter: blur(20px);
+    border: 1px solid rgba(59, 130, 246, 0.1);
+    border-radius: 24px;
+    padding: 2.5rem;
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
+    box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.05);
 }
 
 .sett-panel-header {
@@ -122,11 +131,23 @@
 
 /* Editor Box */
 .sett-editor-box {
-    background: var(--bg-deep);
-    border: 1px dashed var(--border);
-    border-radius: 12px;
-    padding: 1.5rem;
-    margin-bottom: 1.5rem;
+    background: rgba(30, 41, 59, 0.5);
+    border: 2px solid rgba(59, 130, 246, 0.2);
+    border-radius: 16px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+    position: relative;
+    overflow: hidden;
+}
+
+.sett-editor-box::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 4px;
+    background: linear-gradient(90deg, #3b82f6, transparent);
 }
 
 .sett-grid {
@@ -161,9 +182,10 @@
 }
 
 .sett-item-row:hover {
-    border-color: var(--border);
-    transform: translateY(-2px);
-    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+    border-color: rgba(59, 130, 246, 0.4);
+    transform: translateX(10px);
+    background: rgba(30, 41, 59, 0.8);
+    box-shadow: -5px 0 20px rgba(59, 130, 246, 0.15);
 }
 
 .sett-item-row.disabled {

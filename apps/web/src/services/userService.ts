@@ -30,50 +30,61 @@ export interface Tenant {
 }
 
 export const getCurrentProfile = async (): Promise<Profile | null> => {
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) return null;
+    try {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return null;
 
-    const { data, error } = await supabase
-        .from('profiles')
-        .select(`
-            *,
-            tenants (
-                name,
-                slug
-            )
-        `)
-        .eq('id', user.id)
-        .single();
+        const { data, error } = await supabase
+            .from('profiles')
+            .select(`
+                *,
+                tenants (
+                    name,
+                    slug
+                )
+            `)
+            .eq('id', user.id)
+            .single();
 
-    if (error) {
-        console.error('Error fetching profile:', error);
+        if (error) {
+            console.warn("Profile not found in 'profiles' table. Run SQL migration.");
+            return null;
+        }
+
+        return {
+            ...data,
+            tenantId: data.tenant_id,
+            fullName: data.full_name,
+            isActive: data.is_active,
+            role: data.role as UserRole
+        };
+    } catch (e) {
         return null;
     }
-
-    return {
-        ...data,
-        tenantId: data.tenant_id,
-        fullName: data.full_name,
-        isActive: data.is_active,
-        role: data.role as UserRole
-    };
 };
 
 export const getTenantUsers = async (tenantId: string): Promise<Profile[]> => {
-    const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('tenant_id', tenantId);
+    try {
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('tenant_id', tenantId);
 
-    if (error) throw error;
+        if (error) {
+            console.warn("Profiles table not found. Using empty list.");
+            return [];
+        }
 
-    return data.map(d => ({
-        ...d,
-        tenantId: d.tenant_id,
-        fullName: d.full_name,
-        isActive: d.is_active,
-        role: d.role as UserRole
-    }));
+        return data.map(d => ({
+            ...d,
+            tenantId: d.tenant_id,
+            fullName: d.full_name,
+            isActive: d.is_active,
+            role: d.role as UserRole
+        }));
+    } catch (e) {
+        return [];
+    }
 };
 
 export const updateUserProfile = async (userId: string, updates: Partial<Profile>): Promise<void> => {

@@ -44,13 +44,20 @@ export const consumeRemoteAccessKey = async (key: string): Promise<boolean> => {
 };
 
 export const getAllowedIPs = async (): Promise<AllowedIP[]> => {
-    const { data, error } = await supabase.from('allowed_ips').select('*');
-    if (error) throw error;
-    return data.map(d => ({
-        id: d.id,
-        ipAddress: d.ip_address,
-        description: d.description
-    }));
+    try {
+        const { data, error } = await supabase.from('allowed_ips').select('*');
+        if (error) {
+            console.warn("Allowed IPs table not found. Run SQL migration.");
+            return [];
+        }
+        return data.map(d => ({
+            id: d.id,
+            ipAddress: d.ip_address,
+            description: d.description
+        }));
+    } catch (e) {
+        return [];
+    }
 };
 
 export const addAllowedIP = async (ip: string, description: string): Promise<void> => {
