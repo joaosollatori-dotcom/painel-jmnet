@@ -16,7 +16,7 @@ export interface LeadHistory {
     leadId: string;
     stageId: string;
     responsavelId?: string;
-    dataEntrada: string;
+    dataEvento: string;
     motivoPerda?: string;
     observacoes?: string;
 }
@@ -55,7 +55,7 @@ export const moveLead = async (leadId: string, stageId: string, details?: Partia
     await supabase.from('lead_history').insert([{
         leadId,
         stageId,
-        dataEntrada: new Date().toISOString(),
+        dataEvento: new Date().toISOString(),
         ...details
     }]);
 };

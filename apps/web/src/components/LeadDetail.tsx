@@ -30,10 +30,36 @@ interface LeadDetailProps {
     onUpdate: () => void;
 }
 
-const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
+const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClose, onUpdate }) => {
+    const { leadId: paramLeadId } = useParams<{ leadId: string }>();
+    const navigate = useNavigate();
     const { showToast } = useToast();
-    const [localLead, setLocalLead] = useState<Lead>(lead);
+
+    const [localLead, setLocalLead] = useState<Lead | null>(propLead || null);
+    const [loading, setLoading] = useState(!propLead);
     const [activeTab, setActiveTab] = useState<'timeline' | 'dados' | 'qualificacao' | 'viabilidade' | 'proposta' | 'agendamento'>('timeline');
+
+    useEffect(() => {
+        if (!propLead && paramLeadId) {
+            loadLeadData(paramLeadId);
+        } else if (propLead) {
+            setLocalLead(propLead);
+            setLoading(false);
+        }
+    }, [propLead, paramLeadId]);
+
+    const loadLeadData = async (id: string) => {
+        setLoading(true);
+        try {
+            const { getLead } = await import('../services/leadService');
+            const data = await getLead(id);
+            setLocalLead(data);
+        } catch (err) {
+            showToast('Erro ao carregar lead', 'error');
+        } finally {
+            setLoading(false);
+        }
+    };
     const [isEditing, setIsEditing] = useState<string | null>(null);
     const [relatedAppts, setRelatedAppts] = useState<Appointment[]>([]);
     const [historyLogs, setHistoryLogs] = useState<LeadHistory[]>([]);
@@ -134,6 +160,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     };
 
     const renderHeader = () => {
+        if (!localLead) return null;
         const stages = [
             { id: 'NOVO', label: 'Novo', field: 'statusQualificacao', value: 'PENDENTE' },
             { id: 'QUALIF', label: 'Qualif', field: 'statusQualificacao', value: 'QUALIFICADO' },
@@ -237,6 +264,10 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
             </div>
         );
     };
+
+    if (loading) return <div className="loading-state"><h3>Carregando Lead...</h3></div>;
+    if (!localLead) return <div className="loading-state"><h3>Lead não encontrado</h3><button onClick={() => onClose ? onClose() : navigate('/crm')}>Voltar</button></div>;
+
 
     const renderQualificacaoTab = () => (
         <div className="tab-pane-qualificacao">

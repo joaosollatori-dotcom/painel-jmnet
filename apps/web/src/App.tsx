@@ -97,9 +97,10 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Navigate to="/atendimento" />} />
           <Route path="/atendimento" element={<ChatPage />} />
-          <Route path="/agentes" element={<div className="loading-state"><h3>Robôs Titã AI</h3><p>Módulo em implementação...</p></div>} />
+          <Route path="/agentes" element={<div className="loading-state"><h3>Robôs Titã AI</h3><p>Módulo de inteligência em processamento...</p></div>} />
           <Route path="/crm" element={<LeadsManager />} />
           <Route path="/crm/lead/:leadId" element={<LeadDetail />} />
+          <Route path="/crm_tasks" element={<div className="loading-state"><h3>Agendas e Tarefas</h3><p>Módulo em implementação...</p></div>} />
           <Route path="/kanban" element={<SalesPipeline />} />
           <Route path="/financeiro" element={<FinanceManager />} />
           <Route path="/os" element={<OSManager />} />
