@@ -15,7 +15,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
     try {
         // 1. Buscar em Leads (Usando nomeCompleto e created_at corretos)
         const { data: leads, error: leadError } = await supabase
-            .from('leads')
+            .from('Lead')
             .select('id, nomeCompleto, planoSelecionado')
             .ilike('nomeCompleto', `%${query}%`)
             .limit(3);

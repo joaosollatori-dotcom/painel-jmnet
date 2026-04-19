@@ -90,7 +90,7 @@ export interface Appointment {
 
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
-        .from('leads')
+        .from('Lead')
         .select('*')
         .order('createdAt', { ascending: false });
 
@@ -101,9 +101,19 @@ export const getLeads = async (): Promise<Lead[]> => {
     return data || [];
 };
 
+export const getLead = async (id: string): Promise<Lead> => {
+    const { data, error } = await supabase
+        .from('Lead')
+        .select('*')
+        .eq('id', id)
+        .single();
+    if (error) throw error;
+    return data;
+};
+
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
     const { data, error } = await supabase
-        .from('leads')
+        .from('Lead')
         .insert([{ ...lead, updatedAt: new Date().toISOString() }])
         .select()
         .single();
@@ -116,7 +126,7 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<vo
     const { id: _id, createdAt: _c, created_at: _c2, ...cleanUpdates } = updates as any;
 
     const { error } = await supabase
-        .from('leads')
+        .from('Lead')
         .update({ ...cleanUpdates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
@@ -145,7 +155,7 @@ export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<
 
 export const getAppointments = async (): Promise<Appointment[]> => {
     const { data, error } = await supabase
-        .from('leads')
+        .from('Lead')
         .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao, statusAgendamento')
         .not('dataInstalacao', 'is', null)
         .order('dataInstalacao', { ascending: true });

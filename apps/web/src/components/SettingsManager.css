@@ -134,7 +134,8 @@
     background: var(--bg-surface-light);
     border: 2px solid var(--accent-soft);
     border-radius: 16px;
-    padding: 2rem;
+    padding: 4rem 2rem;
+    /* Aumentado em 50%+ para robustez visual */
     margin-bottom: 2rem;
     position: relative;
     overflow: hidden;

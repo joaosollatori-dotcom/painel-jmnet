@@ -41,7 +41,7 @@ const SettingsManager: React.FC = () => {
 
             const [settingsData, usersData] = await Promise.all([
                 getSystemSettings(),
-                getTenantUsers(profile?.tenantId || 'system')
+                profile?.tenantId ? getTenantUsers(profile.tenantId) : Promise.resolve([])
             ]);
             setSettings(settingsData);
             setUsers(usersData);
@@ -138,7 +138,7 @@ const SettingsManager: React.FC = () => {
         <div className="settings-manager-pane">
             <header className="settings-header">
                 <div>
-                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador)</h1>
+                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.05.02</h1>
                     <p>Controle global de variáveis, motivos de perda e tipos operacionais.</p>
                 </div>
             </header>

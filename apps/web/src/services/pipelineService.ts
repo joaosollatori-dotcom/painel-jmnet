@@ -45,7 +45,7 @@ export const getSalesStages = async (): Promise<SalesStage[]> => {
 export const moveLead = async (leadId: string, stageId: string, details?: Partial<LeadHistory>): Promise<void> => {
     // 1. Atualiza o lead
     const { error: leadErr } = await supabase
-        .from('leads')
+        .from('Lead')
         .update({ stageId, updatedAt: new Date().toISOString() })
         .eq('id', leadId);
 
@@ -61,7 +61,7 @@ export const moveLead = async (leadId: string, stageId: string, details?: Partia
 };
 
 export const getPipelineStats = async () => {
-    const { data: leads } = await supabase.from('leads').select('*');
+    const { data: leads } = await supabase.from('Lead').select('*');
     const { data: history } = await supabase.from('lead_history').select('*');
 
     const total = leads?.length || 0;
