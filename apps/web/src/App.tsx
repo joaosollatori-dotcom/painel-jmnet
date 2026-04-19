@@ -73,39 +73,62 @@ const App: React.FC = () => {
     localStorage.setItem('sidebar-retracted', newState.toString());
   };
 
-  // Atalhos Globais Imutáveis (v2.05.01)
+  // Atalhos Globais Imutáveis (v2.05.03 - Protected)
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // Sidebar Toggle
+      // Sidebar Toggle (Ctrl + .)
       if (e.ctrlKey && e.key === '.') {
         e.preventDefault();
         toggleSidebar();
       }
 
-      // Ctrl + Space (1x -> Atendimento, 2x -> CRM)
+      // Ctrl + Space (1x -> Dark, 2x -> Light)
       if (e.ctrlKey && e.code === 'Space') {
         e.preventDefault();
         const now = Date.now();
         if (now - lastCtrlSpace < 400) {
-          navigate('/crm');
-          showToast('Navegação: Leads / CRM', 'info');
+          setTheme('light');
+          showToast('Tema: Modo Claro', 'info');
         } else {
-          navigate('/atendimento');
-          showToast('Navegação: Atendimento', 'info');
+          setTheme('dark');
+          showToast('Tema: Modo Escuro', 'info');
         }
         setLastCtrlSpace(now);
       }
 
-      // Shift + Space -> Ajustes
+      // Shift + Space -> Soft Mode
       if (e.shiftKey && e.code === 'Space') {
         e.preventDefault();
-        navigate('/ajustes');
-        showToast('Navegação: Ajustes do Sistema', 'info');
+        setTheme('soft');
+        showToast('Tema: Modo Soft (Eye Care)', 'info');
       }
     };
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [isRetracted, lastCtrlSpace, navigate, showToast]);
+  }, [isRetracted, lastCtrlSpace, toggleSidebar, showToast]);
+
+  // Detector de clique fora da sidebar (Blindagem UX)
+  useEffect(() => {
+    const handleOutsideClick = (e: MouseEvent) => {
+      if (!isRetracted) {
+        const sidebar = document.querySelector('.sidebar');
+        // Não fecha se o clique for no botão de toggle ou dentro da sidebar
+        if (sidebar && !sidebar.contains(e.target as Node)) {
+          toggleSidebar();
+        }
+      }
+    };
+
+    // Pequeno delay para evitar que o clique que abriu feche instantaneamente
+    const timer = setTimeout(() => {
+      window.addEventListener('click', handleOutsideClick);
+    }, 100);
+
+    return () => {
+      clearTimeout(timer);
+      window.removeEventListener('click', handleOutsideClick);
+    };
+  }, [isRetracted, toggleSidebar]);
 
   return (
     <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
