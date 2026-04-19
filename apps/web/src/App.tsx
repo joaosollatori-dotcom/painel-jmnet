@@ -15,7 +15,6 @@ import { useToast } from './contexts/ToastContext';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
 import LoadingScreen from './components/LoadingScreen';
-import OnboardingModal from './components/OnboardingModal';
 import './App.css';
 
 const App: React.FC = () => {
@@ -137,9 +136,6 @@ const App: React.FC = () => {
 
   if (loading) return <LoadingScreen />;
   if (!session) return <Auth />;
-
-  // Interceptador de Onboarding (SaaS Flow)
-  if (session && !profile?.tenantId) return <OnboardingModal />;
 
   return (
     <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>

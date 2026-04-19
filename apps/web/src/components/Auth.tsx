@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { supabase } from '../lib/supabase';
-import { Key, Envelope, ShieldCheck, ArrowRight, Spinner } from '@phosphor-icons/react';
+import { Key, Envelope, ShieldCheck, ArrowRight, Spinner, Buildings } from '@phosphor-icons/react';
 import { useToast } from '../contexts/ToastContext';
 import './Auth.css';
 
@@ -9,6 +9,7 @@ const Auth: React.FC = () => {
     const [loading, setLoading] = useState(false);
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [companyName, setCompanyName] = useState('');
     const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
 
     const handleAuth = async (e: React.FormEvent) => {
@@ -21,9 +22,18 @@ const Auth: React.FC = () => {
                 if (error) throw error;
                 showToast('Bem-vindo ao TITÃ ISP!', 'success');
             } else if (mode === 'signup') {
-                const { error } = await supabase.auth.signUp({ email, password });
+                const { error } = await supabase.auth.signUp({
+                    email,
+                    password,
+                    options: {
+                        data: {
+                            company_name: companyName,
+                            full_name: email.split('@')[0]
+                        }
+                    }
+                });
                 if (error) throw error;
-                showToast('Confirme seu e-mail para ativar a conta.', 'info');
+                showToast('Verifique seu e-mail para confirmar a conta e a organização!', 'success');
             } else {
                 const { error } = await supabase.auth.resetPasswordForEmail(email);
                 if (error) throw error;
@@ -80,10 +90,23 @@ const Auth: React.FC = () => {
                             </div>
                         )}
 
+                        {mode === 'signup' && (
+                            <div className="titan-field">
+                                <label><Buildings size={18} /> Nome da Organização / ISP</label>
+                                <input
+                                    className="titan-input"
+                                    placeholder="Ex: PoloNet Telecom"
+                                    value={companyName}
+                                    onChange={e => setCompanyName(e.target.value)}
+                                    required
+                                />
+                            </div>
+                        )}
+
                         <button className="btn-titan-auth" disabled={loading}>
                             {loading ? <Spinner className="animate-spin" /> : (
                                 <>
-                                    {mode === 'login' ? 'ENTRAR NO SISTEMA' : mode === 'signup' ? 'CADASTRAR CONTA' : 'ENVIAR LINK'}
+                                    {mode === 'login' ? 'ENTRAR NO SISTEMA' : mode === 'signup' ? 'FUNDAR ORGANIZAÇÃO & CRIAR CONTA' : 'ENVIAR LINK'}
                                     <ArrowRight weight="bold" />
                                 </>
                             )}
