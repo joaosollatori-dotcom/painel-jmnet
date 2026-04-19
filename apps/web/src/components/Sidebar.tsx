@@ -21,7 +21,9 @@ import {
     MagnifyingGlass,
     WarningCircle,
     ChartLine,
+    SignOut,
 } from '@phosphor-icons/react';
+import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
 
 interface SidebarProps {
@@ -42,6 +44,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
     const { isRetracted, onToggleRetraction, theme, onToggleTheme } = props;
     const location = useLocation();
     const navigate = useNavigate();
+    const { profile, signOut } = useAuth();
     const [expandedItems, setExpandedItems] = useState<Set<string>>(new Set());
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<SearchResult[]>([]);
@@ -288,17 +291,28 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
             </nav>
 
             {/* Profile Footer */}
-            <div className="sidebar-profile" onClick={() => navigate('/ajustes')}>
-                <img
-                    src={`https://ui-avatars.com/api/?name=Joao+Sollatori&background=${theme === 'dark' ? '2563eb' : '0f172a'}&color=fff`}
-                    alt="Avatar"
-                    className="profile-avatar"
-                />
+            <div className="sidebar-profile">
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1, cursor: 'pointer' }} onClick={() => navigate('/ajustes')}>
+                    <img
+                        src={`https://ui-avatars.com/api/?name=${profile?.fullName || 'User'}&background=${theme === 'dark' ? '2563eb' : '0f172a'}&color=fff`}
+                        alt="Avatar"
+                        className="profile-avatar"
+                    />
+                    {!isRetracted && (
+                        <div className="profile-info">
+                            <span className="profile-name">{profile?.fullName || 'Conectando...'}</span>
+                            <span className="profile-role">{profile?.role || 'Usuário'}</span>
+                        </div>
+                    )}
+                </div>
                 {!isRetracted && (
-                    <div className="profile-info">
-                        <span className="profile-name">João Sollatori</span>
-                        <span className="profile-role">Administrador</span>
-                    </div>
+                    <button
+                        onClick={() => { if (window.confirm('Encerrar sessão?')) signOut(); }}
+                        style={{ background: 'none', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '8px' }}
+                        title="Sair"
+                    >
+                        <SignOut size={20} weight="bold" />
+                    </button>
                 )}
             </div>
         </aside>

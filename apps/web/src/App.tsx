@@ -12,10 +12,14 @@ import NetworkManager from './components/NetworkManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
 import SettingsManager from './components/SettingsManager';
 import { useToast } from './contexts/ToastContext';
+import { useAuth } from './contexts/AuthContext';
+import Auth from './components/Auth';
+import LoadingScreen from './components/LoadingScreen';
 import './App.css';
 
 const App: React.FC = () => {
   const { showToast, removeToast } = useToast();
+  const { session, loading, signOut } = useAuth();
   const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>(() => (localStorage.getItem('tita-theme') as 'dark' | 'light' | 'soft') || 'dark');
   const [finish, setFinish] = useState<'matte' | 'glossy'>(() => (localStorage.getItem('tita-finish') as 'matte' | 'glossy') || 'glossy');
   const [accentColor, setAccentColor] = useState(() => localStorage.getItem('tita-chat-accent') || '#991b1b');
@@ -106,6 +110,9 @@ const App: React.FC = () => {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, [isRetracted, lastCtrlSpace, toggleSidebar, showToast]);
+
+  if (loading) return <LoadingScreen />;
+  if (!session) return <Auth />;
 
   // Detector de clique fora da sidebar (Blindagem UX)
   useEffect(() => {
