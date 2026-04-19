@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { supabase } from '../supabaseClient';
+import { supabase } from '../lib/supabase';
 import { Key, Envelope, ShieldCheck, ArrowRight, Spinner } from '@phosphor-icons/react';
 import { useToast } from '../contexts/ToastContext';
 import './Auth.css';
