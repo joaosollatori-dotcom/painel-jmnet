@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Routes, Route, Navigate } from 'react-router-dom';
 import Sidebar from './components/Sidebar';
 import ChatArea from './components/ChatArea';
 import ChatList from './components/ChatList';
@@ -10,10 +10,10 @@ import FinanceManager from './components/FinanceManager';
 import OSManager from './components/OSManager';
 import NetworkManager from './components/NetworkManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
-import { ToastProvider, useToast } from './contexts/ToastContext';
+import { useToast } from './contexts/ToastContext';
 import './App.css';
 
-const AppContent: React.FC = () => {
+const App: React.FC = () => {
   const { showToast, removeToast } = useToast();
   const [theme, setTheme] = useState<'dark' | 'light' | 'soft'>(() => (localStorage.getItem('tita-theme') as 'dark' | 'light' | 'soft') || 'dark');
   const [finish, setFinish] = useState<'matte' | 'glossy'>(() => (localStorage.getItem('tita-finish') as 'matte' | 'glossy') || 'glossy');
@@ -36,7 +36,6 @@ const AppContent: React.FC = () => {
       setOfflineToastId(id);
     };
 
-    // Caso o app já inicie offline
     if (!navigator.onLine && !offlineToastId) {
       handleOffline();
     }
@@ -72,32 +71,30 @@ const AppContent: React.FC = () => {
   };
 
   return (
-    <BrowserRouter>
-      <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
-        <Sidebar
-          isRetracted={isRetracted}
-          onToggleRetraction={toggleSidebar}
-          theme={theme}
-          onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'soft' : 'dark')}
-          finish={finish}
-          onToggleFinish={() => setFinish(prev => prev === 'matte' ? 'glossy' : 'matte')}
-        />
-        <main className="content">
-          <Routes>
-            <Route path="/" element={<Navigate to="/atendimento" />} />
-            <Route path="/atendimento" element={<ChatPage />} />
-            <Route path="/crm" element={<LeadsManager />} />
-            <Route path="/crm/lead/:leadId" element={<LeadDetail />} />
-            <Route path="/kanban" element={<SalesPipeline />} />
-            <Route path="/financeiro" element={<FinanceManager />} />
-            <Route path="/os" element={<OSManager />} />
-            <Route path="/os/:osId" element={<OSManager />} />
-            <Route path="/rede" element={<NetworkManager />} />
-            <Route path="/ocorrencias" element={<OcorrenciasManager />} />
-          </Routes>
-        </main>
-      </div>
-    </BrowserRouter>
+    <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
+      <Sidebar
+        isRetracted={isRetracted}
+        onToggleRetraction={toggleSidebar}
+        theme={theme}
+        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'soft' : 'dark')}
+        finish={finish}
+        onToggleFinish={() => setFinish(prev => prev === 'matte' ? 'glossy' : 'matte')}
+      />
+      <main className="content">
+        <Routes>
+          <Route path="/" element={<Navigate to="/atendimento" />} />
+          <Route path="/atendimento" element={<ChatPage />} />
+          <Route path="/crm" element={<LeadsManager />} />
+          <Route path="/crm/lead/:leadId" element={<LeadDetail />} />
+          <Route path="/kanban" element={<SalesPipeline />} />
+          <Route path="/financeiro" element={<FinanceManager />} />
+          <Route path="/os" element={<OSManager />} />
+          <Route path="/os/:osId" element={<OSManager />} />
+          <Route path="/rede" element={<NetworkManager />} />
+          <Route path="/ocorrencias" element={<OcorrenciasManager />} />
+        </Routes>
+      </main>
+    </div>
   );
 };
 
@@ -114,11 +111,5 @@ const ChatPage: React.FC = () => {
     </div>
   );
 };
-
-const App: React.FC = () => (
-  <ToastProvider>
-    <AppContent />
-  </ToastProvider>
-);
 
 export default App;
