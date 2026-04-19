@@ -70,6 +70,17 @@ export interface LeadHistory {
     metadata?: any;
 }
 
+export interface Appointment {
+    id: string;
+    leadId?: string;
+    titulo: string;
+    dataInicio: string;
+    status: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
+    tecnicoId?: string;
+    vendedorId?: string;
+    tipo: 'VISITA_COMERCIAL' | 'INSTALACAO' | 'DEMONSTRACAO' | 'LIGACAO' | 'RETORNO_PROPOSTA' | 'VISTORIA_TECNICA';
+}
+
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
         .from('leads')
@@ -108,6 +119,53 @@ export const updateLead = async (id: string, updates: Partial<Lead>): Promise<vo
         .eq('id', id);
 
     if (error) throw error;
+};
+
+export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => {
+    const { data, error } = await supabase
+        .from('lead_history')
+        .select('*')
+        .eq('leadId', leadId)
+        .order('dataEvento', { ascending: false });
+
+    if (error) return [];
+    return data || [];
+};
+
+export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
+    const { metadados, metadata, leadId, ...cleanHistory } = history as any;
+    const { data, error } = await supabase
+        .from('lead_history')
+        .insert([{
+            ...cleanHistory,
+            leadId: leadId || history.leadId,
+            dataEvento: new Date().toISOString()
+        }])
+        .select()
+        .single();
+
+    if (error) throw error;
+    return data;
+};
+
+export const getAppointments = async (): Promise<Appointment[]> => {
+    const { data, error } = await supabase
+        .from('leads')
+        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao, statusAgendamento')
+        .not('dataInstalacao', 'is', null)
+        .order('dataInstalacao', { ascending: true });
+
+    if (error) return [];
+    return (data || []).map(l => ({
+        id: l.id,
+        leadId: l.id,
+        titulo: `Instalação: ${l.nomeCompleto}`,
+        dataInicio: l.dataInstalacao,
+        status: (l.statusAgendamento || (l.statusQualificacao === 'CONCLUIDO' ? 'CONCLUIDO' : 'AGENDADO')) as Appointment['status'],
+        tecnicoId: l.tecnicoId,
+        vendedorId: l.vendedorId,
+        tipo: 'INSTALACAO'
+    }));
 };
 
 export const createAppointment = async (appt: any) => {
