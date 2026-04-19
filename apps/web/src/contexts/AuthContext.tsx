@@ -20,14 +20,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 0. Timeout de emergência (v2.05.07)
-        const timeout = setTimeout(() => {
-            if (loading) {
-                console.warn("Auth timeout reached. Releasing UI.");
-                setLoading(false);
-            }
-        }, 6000);
-
         // 1. Verificar sessão atual
         supabase.auth.getSession().then(({ data: { session } }) => {
             setSession(session);
@@ -47,10 +39,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        return () => {
-            subscription.unsubscribe();
-            clearTimeout(timeout);
-        };
+        return () => subscription.unsubscribe();
     }, []);
 
     const fetchProfile = async () => {
