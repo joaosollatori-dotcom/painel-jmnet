@@ -20,16 +20,25 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
-        // 1. Verificar sessão atual
-        supabase.auth.getSession().then(({ data: { session } }) => {
-            setSession(session);
-            setUser(session?.user ?? null);
-            if (session) fetchProfile();
-            else setLoading(false);
-        });
+        let mounted = true;
 
-        // 2. Escutar mudanças de estado (Login/Logout)
+        const initAuth = async () => {
+            const { data: { session } } = await supabase.auth.getSession();
+            if (!mounted) return;
+
+            if (session) {
+                setSession(session);
+                setUser(session.user);
+                await fetchProfile();
+            } else {
+                setLoading(false);
+            }
+        };
+
+        initAuth();
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (_event, session) => {
+            if (!mounted) return;
             setSession(session);
             setUser(session?.user ?? null);
             if (session) await fetchProfile();
@@ -39,7 +48,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             }
         });
 
-        return () => subscription.unsubscribe();
+        return () => {
+            mounted = false;
+            subscription.unsubscribe();
+        };
     }, []);
 
     const fetchProfile = async () => {
