@@ -71,6 +71,18 @@ const App: React.FC = () => {
     localStorage.setItem('sidebar-retracted', newState.toString());
   };
 
+  // Atalhos Globais Imutáveis
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.ctrlKey && e.key === '.') {
+        e.preventDefault();
+        toggleSidebar();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isRetracted]);
+
   return (
     <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
       <Sidebar
@@ -85,6 +97,7 @@ const App: React.FC = () => {
         <Routes>
           <Route path="/" element={<Navigate to="/atendimento" />} />
           <Route path="/atendimento" element={<ChatPage />} />
+          <Route path="/agentes" element={<div className="loading-state"><h3>Robôs Titã AI</h3><p>Módulo em implementação...</p></div>} />
           <Route path="/crm" element={<LeadsManager />} />
           <Route path="/crm/lead/:leadId" element={<LeadDetail />} />
           <Route path="/kanban" element={<SalesPipeline />} />

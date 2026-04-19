@@ -3,9 +3,9 @@
     height: 100%;
     display: flex;
     flex-direction: column;
-    background: radial-gradient(circle at top left, #0f172a 0%, #020617 100%);
-    color: #f8fafc;
-    font-family: 'Inter', sans-serif;
+    background: var(--bg-deep);
+    color: var(--text-primary);
+    font-family: var(--font-body);
 }
 
 .settings-header {
@@ -22,7 +22,7 @@
     font-size: 1.8rem;
     font-weight: 900;
     margin: 0;
-    background: linear-gradient(90deg, #3b82f6, #60a5fa);
+    background: linear-gradient(90deg, var(--accent), #60a5fa);
     -webkit-background-clip: text;
     background-clip: text;
     -webkit-text-fill-color: transparent;
@@ -47,12 +47,12 @@
     display: flex;
     flex-direction: column;
     gap: 10px;
-    background: rgba(15, 23, 42, 0.6);
-    backdrop-filter: blur(12px);
+    background: var(--bg-surface);
+    backdrop-filter: var(--glass-blur);
     padding: 1.8rem;
     border-radius: 20px;
-    border: 1px solid rgba(59, 130, 246, 0.15);
-    box-shadow: 0 15px 35px rgba(0, 0, 0, 0.4);
+    border: 1px solid var(--border);
+    box-shadow: var(--shadow);
 }
 
 .sett-tab {
@@ -96,16 +96,16 @@
 }
 
 .sett-panel {
-    background: rgba(15, 23, 42, 0.4);
-    backdrop-filter: blur(20px);
-    border: 1px solid rgba(59, 130, 246, 0.1);
+    background: var(--bg-surface);
+    backdrop-filter: var(--glass-blur);
+    border: 1px solid var(--border);
     border-radius: 24px;
     padding: 2.5rem;
     flex: 1;
     display: flex;
     flex-direction: column;
     overflow-y: auto;
-    box-shadow: inset 0 0 40px rgba(59, 130, 246, 0.05);
+    box-shadow: var(--shadow);
 }
 
 .sett-panel-header {
@@ -131,8 +131,8 @@
 
 /* Editor Box */
 .sett-editor-box {
-    background: rgba(30, 41, 59, 0.5);
-    border: 2px solid rgba(59, 130, 246, 0.2);
+    background: var(--bg-surface-light);
+    border: 2px solid var(--accent-soft);
     border-radius: 16px;
     padding: 2rem;
     margin-bottom: 2rem;
@@ -147,7 +147,7 @@
     left: 0;
     width: 100%;
     height: 4px;
-    background: linear-gradient(90deg, #3b82f6, transparent);
+    background: linear-gradient(90deg, var(--accent), transparent);
 }
 
 .sett-grid {
@@ -182,10 +182,10 @@
 }
 
 .sett-item-row:hover {
-    border-color: rgba(59, 130, 246, 0.4);
+    border-color: var(--accent);
     transform: translateX(10px);
-    background: rgba(30, 41, 59, 0.8);
-    box-shadow: -5px 0 20px rgba(59, 130, 246, 0.15);
+    background: var(--bg-surface-light);
+    box-shadow: -5px 0 20px var(--accent-soft);
 }
 
 .sett-item-row.disabled {
@@ -523,7 +523,7 @@
 }
 
 .security-card {
-    background: var(--bg-deep);
+    background: var(--bg-surface-light);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.5rem;
@@ -545,7 +545,7 @@
 }
 
 .remote-key-gen {
-    background: rgba(0, 0, 0, 0.2);
+    background: var(--accent-soft);
     border-radius: 8px;
     padding: 10px;
 }
@@ -554,7 +554,7 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background: #000;
+    background: var(--bg-deep);
     padding: 12px;
     border-radius: 6px;
 }
@@ -596,7 +596,7 @@
 }
 
 .audit-logs-section {
-    background: var(--bg-deep);
+    background: var(--bg-surface);
     border: 1px solid var(--border);
     border-radius: 16px;
     padding: 1.5rem;
@@ -611,7 +611,7 @@
 }
 
 .audit-feed {
-    background: rgba(0, 0, 0, 0.3);
+    background: var(--bg-deep);
     border-radius: 12px;
     max-height: 400px;
     overflow-y: auto;
