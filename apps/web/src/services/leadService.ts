@@ -42,16 +42,17 @@ export interface Lead {
     planoSelecionado?: string;
     statusProposta?: 'ENVIADA' | 'VISUALIZADA' | 'ACEITA' | 'RECUSADA';
 
-    // Datas e Controle (PADRÃO DB)
+    // Datas e Controle (PADRÃO DO SEU DB: camelCase)
     dataEntrada: string;
     dataUltimaInteracao: string;
     dataProximoContato?: string;
-    created_at: string;
-    updated_at: string;
+    createdAt: string;
+    updatedAt: string;
 
-    // Aliases para compatibilidade legada
-    createdAt?: string;
-    updatedAt?: string;
+    // Fallbacks para Realtime/Novos Schemas
+    created_at?: string;
+    updated_at?: string;
+
     stageId?: string;
     provedor?: string;
 }
@@ -82,27 +83,26 @@ export interface Appointment {
 }
 
 export const getLeads = async (): Promise<Lead[]> => {
+    // Usando explicitamente createdAt pois o Supabase reportou erro 42703 (coluna não existe) para created_at
     const { data, error } = await supabase
         .from('leads')
         .select('*')
-        .order('created_at', { ascending: false });
+        .order('createdAt', { ascending: false });
 
     if (error) {
         console.error('Erro Supabase (getLeads):', error);
-        return [];
+        // Fallback final caso o banco mude novamente
+        const { data: fallback } = await supabase.from('leads').select('*').order('created_at', { ascending: false });
+        return fallback || [];
     }
 
-    return (data || []).map(l => ({
-        ...l,
-        createdAt: l.created_at,
-        updatedAt: l.updated_at
-    }));
+    return data || [];
 };
 
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
     const { data, error } = await supabase
         .from('leads')
-        .insert([{ ...lead, updated_at: new Date().toISOString() }])
+        .insert([{ ...lead, updatedAt: new Date().toISOString() }])
         .select()
         .single();
 
@@ -111,11 +111,11 @@ export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
 };
 
 export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
-    const { id: _id, created_at: _c, createdAt: _c2, ...cleanUpdates } = updates as any;
+    const { id: _id, createdAt: _c, created_at: _c2, ...cleanUpdates } = updates as any;
 
     const { error } = await supabase
         .from('leads')
-        .update({ ...cleanUpdates, updated_at: new Date().toISOString() })
+        .update({ ...cleanUpdates, updatedAt: new Date().toISOString() })
         .eq('id', id);
 
     if (error) throw error;
