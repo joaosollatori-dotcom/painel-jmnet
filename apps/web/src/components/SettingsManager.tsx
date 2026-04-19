@@ -1,18 +1,21 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, PencilSimple, Trash, Warning, FloppyDisk, Prohibit, ListBullets } from '@phosphor-icons/react';
-import { motion } from 'framer-motion';
+import { ShieldCheck, Plus, PencilSimple, Trash, Warning, FloppyDisk, Prohibit, ListBullets, Users, Key, UserCircle } from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'framer-motion';
 import { getSystemSettings, saveSystemSetting, deleteSystemSetting, SystemSetting } from '../services/systemSettingsService';
+import { getTenantUsers, updateUserProfile, Profile, UserRole } from '../services/userService';
 import { useToast } from '../contexts/ToastContext';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
     const { showToast } = useToast();
     const [settings, setSettings] = useState<SystemSetting[]>([]);
-    const [activeTab, setActiveTab] = useState<'LOSS_REASON' | 'OS_TYPE' | 'OCCURRENCE_TYPE'>('LOSS_REASON');
+    const [users, setUsers] = useState<Profile[]>([]);
+    const [activeTab, setActiveTab] = useState<'LOSS_REASON' | 'OS_TYPE' | 'OCCURRENCE_TYPE' | 'USERS'>('LOSS_REASON');
     const [isLoading, setIsLoading] = useState(true);
 
     // Edit Form State
     const [editingItem, setEditingItem] = useState<Partial<SystemSetting> | null>(null);
+    const [editingUser, setEditingUser] = useState<Partial<Profile> | null>(null);
 
     useEffect(() => {
         loadSettings();
@@ -20,9 +23,18 @@ const SettingsManager: React.FC = () => {
 
     const loadSettings = async () => {
         setIsLoading(true);
-        const data = await getSystemSettings();
-        setSettings(data);
-        setIsLoading(false);
+        try {
+            const [settingsData, usersData] = await Promise.all([
+                getSystemSettings(),
+                getTenantUsers('system') // Placeholder for now, will use real tenantId from auth later
+            ]);
+            setSettings(settingsData);
+            setUsers(usersData);
+        } catch (error) {
+            console.error("Error loading administration data:", error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const handleSave = async () => {
@@ -92,6 +104,10 @@ const SettingsManager: React.FC = () => {
                     <button className={`sett-tab ${activeTab === 'OCCURRENCE_TYPE' ? 'active' : ''}`} onClick={() => setActiveTab('OCCURRENCE_TYPE')}>
                         <Warning size={18} /> Tipos de Ocorrências
                     </button>
+                    <div className="sett-sidebar-divider" />
+                    <button className={`sett-tab ${activeTab === 'USERS' ? 'active' : ''}`} onClick={() => setActiveTab('USERS')}>
+                        <Users size={18} /> Equipe e Permissões
+                    </button>
                 </aside>
 
                 {/* Main Content */}
@@ -103,12 +119,19 @@ const SettingsManager: React.FC = () => {
                                     {activeTab === 'LOSS_REASON' && 'Gerenciar Motivos de Perda (CRM)'}
                                     {activeTab === 'OS_TYPE' && 'Tipos de Ordens de Serviço (Técnico)'}
                                     {activeTab === 'OCCURRENCE_TYPE' && 'Tipificação de Ocorrências (Suporte)'}
+                                    {activeTab === 'USERS' && 'Controle de Acessos e Níveis (SaaS)'}
                                 </h2>
-                                <span>Altere, ative ou adicione novas opções que refletirão globalmente no sistema.</span>
+                                <span>
+                                    {activeTab === 'USERS'
+                                        ? 'Configure quem pode acessar o TITÃ e quais ações podem executar.'
+                                        : 'Altere, ative ou adicione novas opções que refletirão globalmente no sistema.'}
+                                </span>
                             </div>
-                            <button className="btn-titan-primary" onClick={() => setEditingItem({ label: '', value: '', isActive: true })}>
-                                <Plus weight="bold" /> NOVO ITEM
-                            </button>
+                            {activeTab !== 'USERS' && (
+                                <button className="btn-titan-primary" onClick={() => setEditingItem({ label: '', value: '', isActive: true })}>
+                                    <Plus weight="bold" /> NOVO ITEM
+                                </button>
+                            )}
                         </div>
 
                         {editingItem && (
@@ -144,6 +167,35 @@ const SettingsManager: React.FC = () => {
                         <div className="sett-list">
                             {isLoading ? (
                                 <div className="sett-loading">Sincronizando com Supabase...</div>
+                            ) : activeTab === 'USERS' ? (
+                                <div className="user-settings-grid">
+                                    {users.map(user => (
+                                        <div key={user.id} className="user-card-titan">
+                                            <div className="user-card-header">
+                                                <div className="user-main-info">
+                                                    <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.fullName}&background=random`} alt="" />
+                                                    <div>
+                                                        <h4>{user.fullName}</h4>
+                                                        <span>{user.email}</span>
+                                                    </div>
+                                                </div>
+                                                <div className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</div>
+                                            </div>
+                                            <div className="user-card-actions">
+                                                <button className="btn-titan-outline-sm" onClick={() => setEditingUser(user)}>
+                                                    <Key size={14} /> PERMISSÕES
+                                                </button>
+                                                <div className="status-toggle" onClick={() => {/* status handle */ }}>
+                                                    <div className={`t-knob ${user.isActive ? 'on' : 'off'}`} />
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <button className="add-user-placeholder">
+                                        <Plus size={32} />
+                                        <span>Convidar Membro</span>
+                                    </button>
+                                </div>
                             ) : currentSettingsList.length === 0 ? (
                                 <div className="sett-empty">Nenhum item configurado nesta categoria.</div>
                             ) : (
@@ -164,6 +216,72 @@ const SettingsManager: React.FC = () => {
                                 ))
                             )}
                         </div>
+
+                        {/* Advanced Role/Permissions Modal (Zoho Style) */}
+                        <AnimatePresence>
+                            {editingUser && (
+                                <motion.div
+                                    className="permissions-modal-overlay"
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                >
+                                    <motion.div
+                                        className="permissions-modal"
+                                        initial={{ scale: 0.9, opacity: 0 }}
+                                        animate={{ scale: 1, opacity: 1 }}
+                                        exit={{ scale: 0.9, opacity: 0 }}
+                                    >
+                                        <header>
+                                            <div>
+                                                <h3>Ajustar Perfil: {editingUser.fullName}</h3>
+                                                <p>Nível de acesso Zoho-Style (Granular)</p>
+                                            </div>
+                                            <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
+                                        </header>
+
+                                        <div className="role-selector-box">
+                                            <label>Nível Hierárquico</label>
+                                            <div className="role-options">
+                                                {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
+                                                    <button
+                                                        key={r}
+                                                        className={`role-opt ${editingUser.role === r ? 'selected' : ''}`}
+                                                        onClick={() => setEditingUser({ ...editingUser, role: r as UserRole })}
+                                                    >
+                                                        {r}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+
+                                        <div className="permissions-matrix">
+                                            <div className="matrix-row header">
+                                                <div className="resource-col">Módulo</div>
+                                                <div>Ver</div>
+                                                <div>Criar</div>
+                                                <div>Editar</div>
+                                                <div>Apagar</div>
+                                            </div>
+                                            {['Leads', 'Vendas', 'OS', 'Financeiro', 'Rede'].map(mod => (
+                                                <div key={mod} className="matrix-row">
+                                                    <div className="resource-col">{mod}</div>
+                                                    <div><input type="checkbox" defaultChecked /></div>
+                                                    <div><input type="checkbox" defaultChecked /></div>
+                                                    <div><input type="checkbox" defaultChecked /></div>
+                                                    <div><input type="checkbox" /></div>
+                                                </div>
+                                            ))}
+                                        </div>
+
+                                        <div className="modal-footer">
+                                            <button className="btn-titan-secondary" onClick={() => setEditingUser(null)}>CANCELAR</button>
+                                            <button className="btn-titan-primary">ATUALIZAR ACESSOS</button>
+                                        </div>
+                                    </motion.div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
                     </div>
                 </main>
             </div>

@@ -75,6 +75,12 @@
     border-left: 3px solid #3b82f6;
 }
 
+.sett-sidebar-divider {
+    height: 1px;
+    background: var(--border);
+    margin: 8px 0;
+}
+
 .settings-content {
     flex: 1;
     display: flex;
@@ -245,7 +251,6 @@
     color: #ef4444;
 }
 
-.sett-empty,
 .sett-loading {
     padding: 3rem;
     text-align: center;
@@ -254,4 +259,230 @@
     background: var(--bg-deep);
     border-radius: 12px;
     border: 1px dashed var(--border);
+}
+
+/* User Settings Grid */
+.user-settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+    gap: 1.5rem;
+}
+
+.user-card-titan {
+    background: var(--bg-deep);
+    border: 1px solid var(--border);
+    border-radius: 16px;
+    padding: 1.5rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1.2rem;
+    transition: all 0.2s;
+}
+
+.user-card-titan:hover {
+    border-color: #3b82f6;
+    transform: translateY(-4px);
+    box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+}
+
+.user-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.user-main-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.user-main-info img {
+    width: 44px;
+    height: 44px;
+    border-radius: 12px;
+    object-fit: cover;
+}
+
+.user-main-info h4 {
+    margin: 0;
+    font-size: 0.95rem;
+    font-weight: 700;
+}
+
+.user-main-info span {
+    font-size: 0.75rem;
+    color: var(--text-secondary);
+}
+
+.role-badge {
+    padding: 4px 10px;
+    border-radius: 6px;
+    font-size: 0.65rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.role-badge.admin {
+    background: rgba(239, 68, 68, 0.1);
+    color: #ef4444;
+}
+
+.role-badge.vendedor {
+    background: rgba(59, 130, 246, 0.1);
+    color: #3b82f6;
+}
+
+.role-badge.tecnico {
+    background: rgba(245, 158, 11, 0.1);
+    color: #f59e0b;
+}
+
+.role-badge.suporte {
+    background: rgba(16, 185, 129, 0.1);
+    color: #10b981;
+}
+
+.user-card-actions {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding-top: 1rem;
+    border-top: 1px solid var(--border);
+}
+
+.add-user-placeholder {
+    border: 2px dashed var(--border);
+    border-radius: 16px;
+    background: transparent;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.2s;
+    min-height: 180px;
+}
+
+.add-user-placeholder:hover {
+    background: rgba(59, 130, 246, 0.05);
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
+/* Permissions Modal */
+.permissions-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.8);
+    backdrop-filter: blur(8px);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 10000;
+}
+
+.permissions-modal {
+    background: var(--bg-surface);
+    width: 90%;
+    max-width: 800px;
+    border-radius: 24px;
+    border: 1px solid var(--border);
+    box-shadow: 0 40px 100px rgba(0, 0, 0, 0.5);
+    overflow: hidden;
+}
+
+.permissions-modal header {
+    padding: 2rem;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.permissions-modal h3 {
+    margin: 0;
+    font-size: 1.4rem;
+}
+
+.permissions-modal p {
+    margin: 5px 0 0;
+    color: var(--text-secondary);
+    font-size: 0.9rem;
+}
+
+.close-modal {
+    background: transparent;
+    border: none;
+    color: var(--text-secondary);
+    font-size: 2rem;
+    cursor: pointer;
+}
+
+.role-selector-box {
+    padding: 2rem;
+    background: var(--bg-deep);
+}
+
+.role-options {
+    display: flex;
+    gap: 12px;
+    margin-top: 12px;
+}
+
+.role-opt {
+    padding: 10px 20px;
+    border-radius: 10px;
+    border: 1px solid var(--border);
+    background: var(--bg-surface);
+    color: var(--text-secondary);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-opt.selected {
+    background: #3b82f6;
+    color: #fff;
+    border-color: #3b82f6;
+}
+
+.permissions-matrix {
+    padding: 1rem 2rem;
+}
+
+.matrix-row {
+    display: grid;
+    grid-template-columns: 200px repeat(4, 1fr);
+    padding: 12px 0;
+    border-bottom: 1px solid var(--border);
+    align-items: center;
+    text-align: center;
+}
+
+.matrix-row.header {
+    font-weight: 800;
+    font-size: 0.75rem;
+    text-transform: uppercase;
+    color: var(--text-secondary);
+}
+
+.resource-col {
+    text-align: left;
+    font-weight: 700;
+    color: var(--text-primary);
+}
+
+.modal-footer {
+    padding: 2rem;
+    display: flex;
+    justify-content: flex-end;
+    gap: 12px;
+    border-top: 1px solid var(--border);
 }

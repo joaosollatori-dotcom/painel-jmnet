@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface Lead {
     id: string;
+    tenantId: string; // SaaS Isolation
     // Identidade
     nomeCompleto: string;
     cpfCnpj?: string;

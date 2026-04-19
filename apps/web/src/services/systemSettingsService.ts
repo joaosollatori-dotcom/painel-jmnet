@@ -2,6 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface SystemSetting {
     id: string;
+    tenantId: string; // SaaS Isolation
     category: 'LOSS_REASON' | 'OS_TYPE' | 'OCCURRENCE_TYPE';
     label: string;
     value: string;
@@ -11,16 +12,16 @@ export interface SystemSetting {
 
 // Default fallbacks caso a tabela ainda não exista no Supabase do cliente
 const defaultSettings: SystemSetting[] = [
-    { id: '1', category: 'LOSS_REASON', label: 'Preço / Financeiro', value: 'PRECO', isActive: true },
-    { id: '2', category: 'LOSS_REASON', label: 'Sinal Ruim / Instabilidade', value: 'SINAL', isActive: true },
-    { id: '3', category: 'LOSS_REASON', label: 'Concorrência agressiva', value: 'CONCORRENCIA', isActive: true },
-    { id: '4', category: 'LOSS_REASON', label: 'Fidelidade operadora', value: 'FIDELIDADE', isActive: true },
-    { id: '5', category: 'LOSS_REASON', label: 'Demora no atendimento', value: 'ATENDIMENTO', isActive: true },
-    { id: '6', category: 'OS_TYPE', label: 'Instalação Fibra', value: 'INSTALACAO', isActive: true },
-    { id: '7', category: 'OS_TYPE', label: 'Reparo de Rompimento', value: 'REPARO', isActive: true },
-    { id: '8', category: 'OS_TYPE', label: 'Mudança de Endereço', value: 'MUDANCA', isActive: true },
-    { id: '9', category: 'OCCURRENCE_TYPE', label: 'Queda Geral', value: 'QUEDA_GERAL', isActive: true },
-    { id: '10', category: 'OCCURRENCE_TYPE', label: 'Lentidão', value: 'LENTIDAO', isActive: true }
+    { id: '1', tenantId: 'system', category: 'LOSS_REASON', label: 'Preço / Financeiro', value: 'PRECO', isActive: true },
+    { id: '2', tenantId: 'system', category: 'LOSS_REASON', label: 'Sinal Ruim / Instabilidade', value: 'SINAL', isActive: true },
+    { id: '3', tenantId: 'system', category: 'LOSS_REASON', label: 'Concorrência agressiva', value: 'CONCORRENCIA', isActive: true },
+    { id: '4', tenantId: 'system', category: 'LOSS_REASON', label: 'Fidelidade operadora', value: 'FIDELIDADE', isActive: true },
+    { id: '5', tenantId: 'system', category: 'LOSS_REASON', label: 'Demora no atendimento', value: 'ATENDIMENTO', isActive: true },
+    { id: '6', tenantId: 'system', category: 'OS_TYPE', label: 'Instalação Fibra', value: 'INSTALACAO', isActive: true },
+    { id: '7', tenantId: 'system', category: 'OS_TYPE', label: 'Reparo de Rompimento', value: 'REPARO', isActive: true },
+    { id: '8', tenantId: 'system', category: 'OS_TYPE', label: 'Mudança de Endereço', value: 'MUDANCA', isActive: true },
+    { id: '9', tenantId: 'system', category: 'OCCURRENCE_TYPE', label: 'Queda Geral', value: 'QUEDA_GERAL', isActive: true },
+    { id: '10', tenantId: 'system', category: 'OCCURRENCE_TYPE', label: 'Lentidão', value: 'LENTIDAO', isActive: true }
 ];
 
 export const getSystemSettings = async (): Promise<SystemSetting[]> => {
@@ -38,6 +39,7 @@ export const getSystemSettings = async (): Promise<SystemSetting[]> => {
 
         return data.map(d => ({
             id: d.id,
+            tenantId: d.tenant_id,
             category: d.category,
             label: d.label,
             value: d.value,
