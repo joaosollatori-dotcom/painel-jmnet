@@ -20,6 +20,7 @@ import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
 import 'leaflet/dist/leaflet.css';
 import './LeadDetail.css';
 import { Lead, LeadHistory, updateLead, Appointment, getAppointments, getLeadHistory } from '../services/leadService';
+import { getSystemSettings, SystemSetting } from '../services/systemSettingsService';
 import { dispatchCall, dispatchWhatsApp, dispatchNote, logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
 
@@ -41,6 +42,7 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     const [showApptModal, setShowApptModal] = useState(false);
     const [newVendedorId, setNewVendedorId] = useState('');
     const [timelineFilter, setTimelineFilter] = useState<'ALL' | 'CALL' | 'WA' | 'SYS'>('ALL');
+    const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
 
     useEffect(() => {
         setLocalLead(lead);
@@ -48,12 +50,14 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
     }, [lead]);
 
     const loadLeadContext = async () => {
-        const [appts, hist] = await Promise.all([
+        const [appts, hist, settings] = await Promise.all([
             getAppointments(),
-            getLeadHistory(lead.id)
+            getLeadHistory(lead.id),
+            getSystemSettings()
         ]);
         setRelatedAppts(appts.filter(a => a.leadId === lead.id));
         setHistoryLogs(hist);
+        setSystemSettings(settings);
     };
 
     const handleFieldUpdate = async (field: keyof Lead, value: any) => {
@@ -253,12 +257,9 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <label>Motivo da Perda (Realtime BI)</label>
                             <select className="titan-select" value={localLead.motivoPerda || ''} onChange={(e) => handleFieldUpdate('motivoPerda', e.target.value)}>
                                 <option value="">Selecione o motivo...</option>
-                                <option value="PRECO">Preço Alto / Financeiro</option>
-                                <option value="SINAL">Sinal Ruim / Instabilidade</option>
-                                <option value="CONCORRENCIA">Concorrência agressiva</option>
-                                <option value="FIDELIDADE">Fidelidade operadora antiga</option>
-                                <option value="ATENDIMENTO">Demora no atendimento</option>
-                                <option value="OUTROS">Outros motivos</option>
+                                {systemSettings.filter(s => s.category === 'LOSS_REASON' && s.isActive).map(s => (
+                                    <option key={s.id} value={s.value}>{s.label}</option>
+                                ))}
                             </select>
                         </div>
                     )}
@@ -304,10 +305,9 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                             <label>Por que recusou?</label>
                             <select className="titan-select" value={localLead.motivoPerda || ''} onChange={(e) => handleFieldUpdate('motivoPerda', e.target.value)}>
                                 <option value="">Selecione...</option>
-                                <option value="PRECO">Achou caro</option>
-                                <option value="CONCORRENCIA">Foi para o concorrente</option>
-                                <option value="SINAL">Dúvida sobre sinal</option>
-                                <option value="OUTROS">Mudança de ideia</option>
+                                {systemSettings.filter(s => s.category === 'LOSS_REASON' && s.isActive).map(s => (
+                                    <option key={s.id} value={s.value}>{s.label}</option>
+                                ))}
                             </select>
                         </div>
                     )}
@@ -349,8 +349,10 @@ const LeadDetail: React.FC<LeadDetailProps> = ({ lead, onClose, onUpdate }) => {
                         <div className="titan-field highlight-warning">
                             <label>Motivo Inviabilidade</label>
                             <select className="titan-select" value={localLead.motivoPerda || ''} onChange={(e) => handleFieldUpdate('motivoPerda', e.target.value)}>
-                                <option value="SINAL">Sem porta no CPO</option>
-                                <option value="OUTROS">Área restrita / Posteamento</option>
+                                <option value="">Selecione...</option>
+                                {systemSettings.filter(s => s.category === 'LOSS_REASON' && s.isActive).map(s => (
+                                    <option key={s.id} value={s.value}>{s.label}</option>
+                                ))}
                             </select>
                         </div>
                     )}

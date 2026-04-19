@@ -10,6 +10,7 @@ import FinanceManager from './components/FinanceManager';
 import OSManager from './components/OSManager';
 import NetworkManager from './components/NetworkManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
+import SettingsManager from './components/SettingsManager';
 import { useToast } from './contexts/ToastContext';
 import './App.css';
 
@@ -92,6 +93,7 @@ const App: React.FC = () => {
           <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
+          <Route path="/ajustes" element={<SettingsManager />} />
         </Routes>
       </main>
     </div>

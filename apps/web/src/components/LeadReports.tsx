@@ -8,12 +8,20 @@ import {
 } from '@phosphor-icons/react';
 import { motion } from 'framer-motion';
 import { Lead } from '../services/leadService';
+import { getSystemSettings, SystemSetting } from '../services/systemSettingsService';
+import { useEffect, useState } from 'react';
 
 interface LeadReportsProps {
     leads: Lead[];
 }
 
 const LeadReports: React.FC<LeadReportsProps> = ({ leads }) => {
+
+    const [settings, setSettings] = useState<SystemSetting[]>([]);
+
+    useEffect(() => {
+        getSystemSettings().then(data => setSettings(data));
+    }, []);
 
     const reportData = useMemo(() => {
         const now = new Date();
@@ -39,18 +47,16 @@ const LeadReports: React.FC<LeadReportsProps> = ({ leads }) => {
             : 0;
 
         // 4. Motivos de Perda Reais (Vindo da coluna 'motivoPerda')
-        const lossMapping: Record<string, string> = {
-            'PRECO': 'Preço / Financeiro',
-            'SINAL': 'Sinal / CPO Cheio',
-            'CONCORRENCIA': 'Concorrência',
-            'FIDELIDADE': 'Fidelidade Operadora',
-            'ATENDIMENTO': 'Demora no Retorno',
-            'OUTROS': 'Outros / Mudança'
-        };
+        const lossMapping = settings
+            .filter(s => s.category === 'LOSS_REASON')
+            .reduce((acc, s) => {
+                acc[s.value] = s.label;
+                return acc;
+            }, {} as Record<string, string>);
 
         const lossStats = leads.reduce((acc, l) => {
             if (l.motivoPerda) {
-                const label = lossMapping[l.motivoPerda] || 'Não Especificado';
+                const label = lossMapping[l.motivoPerda] || l.motivoPerda;
                 acc[label] = (acc[label] || 0) + 1;
             }
             return acc;
@@ -80,7 +86,7 @@ const LeadReports: React.FC<LeadReportsProps> = ({ leads }) => {
                 .sort((a, b) => b.rate - a.rate)
                 .slice(0, 5)
         };
-    }, [leads]);
+    }, [leads, settings]);
 
     return (
         <div className="reports-container">
