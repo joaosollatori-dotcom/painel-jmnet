@@ -7,18 +7,31 @@ import { getGlobalAuditLogs, AuditLog } from '../services/auditService';
 import { createInvitation, getInvitations, Invitation } from '../services/invitationService';
 import { generateRemoteAccessKey, getAllowedIPs, addAllowedIP, removeAllowedIP, AllowedIP } from '../services/remoteAccessService';
 import { useToast } from '../contexts/ToastContext';
+import { useNavigate, useParams } from 'react-router-dom';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
     const { showToast } = useToast();
+    const navigate = useNavigate();
+    const { section, subsection } = useParams();
     const [settings, setSettings] = useState<SystemSetting[]>([]);
     const [users, setUsers] = useState<Profile[]>([]);
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [allowedIps, setAllowedIps] = useState<AllowedIP[]>([]);
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
-    const [activeTab, setActiveTab] = useState<'LOSS_REASON' | 'OS_TYPE' | 'OCCURRENCE_TYPE' | 'USERS' | 'SECURITY'>('LOSS_REASON');
     const [isLoading, setIsLoading] = useState(true);
+
+    // Mapeamento de URL para Categoria interna
+    const routeToTab: Record<string, string> = {
+        'crm/perda': 'LOSS_REASON',
+        'os/tipos': 'OS_TYPE',
+        'suporte/ocorrencias': 'OCCURRENCE_TYPE',
+        'equipe': 'USERS',
+        'seguranca': 'SECURITY'
+    };
+
+    const activeTab = routeToTab[`${section}/${subsection}`] || routeToTab[section || ''] || 'LOSS_REASON';
 
     // Edit/Modal States
     const [editingItem, setEditingItem] = useState<Partial<SystemSetting> | null>(null);
@@ -138,7 +151,7 @@ const SettingsManager: React.FC = () => {
         <div className="settings-manager-pane">
             <header className="settings-header">
                 <div>
-                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.05.02</h1>
+                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.05.17</h1>
                     <p>Controle global de variáveis, motivos de perda e tipos operacionais.</p>
                 </div>
             </header>
@@ -146,21 +159,21 @@ const SettingsManager: React.FC = () => {
             <div className="settings-layout">
                 {/* Lateral Settings Menu */}
                 <aside className="settings-sidebar">
-                    <button className={`sett-tab ${activeTab === 'LOSS_REASON' ? 'active' : ''}`} onClick={() => setActiveTab('LOSS_REASON')}>
+                    <button className={`sett-tab ${activeTab === 'LOSS_REASON' ? 'active' : ''}`} onClick={() => navigate('/ajustes/crm/perda')}>
                         <Prohibit size={18} /> Motivos de Perda
                     </button>
-                    <button className={`sett-tab ${activeTab === 'OS_TYPE' ? 'active' : ''}`} onClick={() => setActiveTab('OS_TYPE')}>
+                    <button className={`sett-tab ${activeTab === 'OS_TYPE' ? 'active' : ''}`} onClick={() => navigate('/ajustes/os/tipos')}>
                         <ListBullets size={18} /> Tipos de OS
                     </button>
-                    <button className={`sett-tab ${activeTab === 'OCCURRENCE_TYPE' ? 'active' : ''}`} onClick={() => setActiveTab('OCCURRENCE_TYPE')}>
+                    <button className={`sett-tab ${activeTab === 'OCCURRENCE_TYPE' ? 'active' : ''}`} onClick={() => navigate('/ajustes/suporte/ocorrencias')}>
                         <Warning size={18} /> Tipos de Ocorrências
                     </button>
                     <div className="sett-sidebar-divider" />
-                    <button className={`sett-tab ${activeTab === 'USERS' ? 'active' : ''}`} onClick={() => setActiveTab('USERS')}>
+                    <button className={`sett-tab ${activeTab === 'USERS' ? 'active' : ''}`} onClick={() => navigate('/ajustes/equipe')}>
                         <Users size={18} /> Equipe e Permissões
                     </button>
-                    {currentProfile?.role === 'SUPER_ADMIN' && (
-                        <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => setActiveTab('SECURITY')}>
+                    {(currentProfile?.role === 'SUPER_ADMIN' || currentProfile?.role === 'ADMIN') && (
+                        <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => navigate('/ajustes/seguranca')}>
                             <ShieldCheck size={18} /> Auditoria e Segurança
                         </button>
                     )}

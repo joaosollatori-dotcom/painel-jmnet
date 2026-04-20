@@ -164,6 +164,8 @@ const App: React.FC = () => {
           <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/ajustes" element={<SettingsManager />} />
+          <Route path="/ajustes/:section" element={<SettingsManager />} />
+          <Route path="/ajustes/:section/:subsection" element={<SettingsManager />} />
         </Routes>
       </main>
     </div>
