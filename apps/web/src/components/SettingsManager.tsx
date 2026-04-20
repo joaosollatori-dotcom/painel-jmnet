@@ -151,7 +151,7 @@ const SettingsManager: React.FC = () => {
         <div className="settings-manager-pane">
             <header className="settings-header">
                 <div>
-                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.05.17</h1>
+                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.05.19</h1>
                     <p>Controle global de variáveis, motivos de perda e tipos operacionais.</p>
                 </div>
             </header>

@@ -24,9 +24,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         console.log("TITÃ DEBUG: Iniciando listener de Auth...");
 
+        // Safety Unlock: Se em 7 segundos não tivermos resposta, libera a UI
+        const safetyUnlock = setTimeout(() => {
+            if (mounted && loading) {
+                console.warn("TITÃ DEBUG: Safety Unlock ativado (Timeout)");
+                setLoading(false);
+            }
+        }, 7000);
+
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log("TITÃ DEBUG: Evento de Auth:", event);
             if (!mounted) return;
+
+            clearTimeout(safetyUnlock);
 
             // Limpeza de URL pós-confirmação (v2.05.16)
             if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
