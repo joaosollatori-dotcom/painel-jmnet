@@ -233,7 +233,7 @@ const LandingPage: React.FC = () => {
             <div className="lp-base-footer">
                 <div className="lp-base-footer-content">
                     <div>TITÃ ISP © 2026. CNPJ: 62.195.228/0001-31</div>
-                    <div style={{ opacity: 0.6 }}>v 2.02.29</div>
+                    <div style={{ opacity: 0.6 }}>v 2.05.16</div>
                 </div>
             </div>
         </div>

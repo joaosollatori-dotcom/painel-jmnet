@@ -28,6 +28,14 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log("TITÃ DEBUG: Evento de Auth:", event);
             if (!mounted) return;
 
+            // Limpeza de URL pós-confirmação (v2.05.16)
+            if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
+                if (window.location.hash || window.location.search.includes('type=recovery')) {
+                    console.log("TITÃ DEBUG: Limpando URL de autenticação...");
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+
             setSession(session);
             setUser(session?.user ?? null);
 
