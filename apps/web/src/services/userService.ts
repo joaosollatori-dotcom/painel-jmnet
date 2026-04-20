@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { User } from '@supabase/supabase-js';
 
 export type UserRole = 'SUPER_ADMIN' | 'ADMIN' | 'VENDEDOR' | 'TECNICO' | 'SUPORTE';
 
@@ -29,9 +30,9 @@ export interface Tenant {
     isActive: boolean;
 }
 
-export const getCurrentProfile = async (): Promise<Profile | null> => {
+export const getCurrentProfile = async (passedUser?: User): Promise<Profile | null> => {
     try {
-        const { data: { user } } = await supabase.auth.getUser();
+        const user = passedUser || (await supabase.auth.getUser()).data.user;
         if (!user) return null;
 
         const { data, error } = await supabase

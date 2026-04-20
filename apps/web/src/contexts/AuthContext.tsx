@@ -40,7 +40,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(session?.user ?? null);
 
             if (session) {
-                await fetchProfile();
+                await fetchProfile(session.user);
             } else {
                 setProfile(null);
                 setLoading(false);
@@ -53,10 +53,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         };
     }, []);
 
-    const fetchProfile = async () => {
-        console.log("TITÃ DEBUG: Buscando perfil no banco...");
+    const fetchProfile = async (u: User) => {
+        console.log("TITÃ DEBUG: Buscando perfil no banco para:", u.email);
         try {
-            const p = await getCurrentProfile();
+            const p = await getCurrentProfile(u);
             console.log("TITÃ DEBUG: Perfil retornado:", p ? "Encontrado" : "Não encontrado (null)");
             setProfile(p);
         } catch (err) {
