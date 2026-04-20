@@ -26,74 +26,73 @@ interface WikiArticle {
 const WIKI_ARTICLES: WikiArticle[] = [
     {
         id: '1',
-        category: 'Início Rápido',
-        title: 'Primeiros Passos no TITÃ | ISP',
+        category: 'Atendimento',
+        title: 'Central de Chat: Ações Rápidas e Bi-lateralidade',
         icon: Lightning,
-        tags: ['onboarding', 'tutorial'],
+        tags: ['atendimento', 'produtividade', 'chat'],
         content: `
-            # Bem-vindo ao TITÃ | ISP
+            # Guia de Operações de Alta Performance no Atendimento
             
-            O TITÃ é um Command Center completo projetado especificamente para Provedores de Internet. 
-            Nesta Wiki, você encontrará tudo o que precisa para dominar a plataforma.
+            O módulo de Atendimento do TITÃ | ISP foi projetado para transformar conversas em ações operacionais imediatas. Através do **Command Center de Ações Rápidas**, o atendente pode interagir com o CRM e o setor técnico sem sair da janela de chat.
             
-            ### O que você pode fazer:
-            1. **Gestão de Leads:** Acompanhe o funil de vendas desde o primeiro contato.
-            2. **Atendimento:** Centralize chats de WhatsApp e Instagram em um só lugar.
-            3. **Ordens de Serviço:** Gerencie instalações e reparos técnicos com precisão.
-            4. **Financeiro:** Controle faturamento e cobranças de forma integrada.
+            ### 1. Abertura de Ocorrências em Tempo Real
+            Ao identificar um problema recorrente ou uma reclamação formal, utilize o botão **"Ocorrência"**.
+            - **Ação:** O sistema captura automaticamente os dados do contato e gera um protocolo exclusivo.
+            - **Resultado:** Um novo registro é criado na tabela de Ocorrências, disparando notificações para os gestores e garantindo que o SLA de resposta seja iniciado.
+            
+            ### 2. Geração de Ordens de Serviço (OS)
+            Para problemas que exigem visita técnica ou manutenção física:
+            - **Ação:** Clique em **"Nova OS"**. O sistema pré-preenche os dados de endereço e contato.
+            - **Resultado:** A OS é enviada ao módulo técnico, agendando a demanda conforme a prioridade selecionada (Urgente, Alta ou Normal).
+            
+            ### 3. Edição Rápida de Cadastro
+            Mantenha a base de dados atualizada sem fricção:
+            - **Ação:** Use a função **"Cadastro"** para abrir o modal de edição rápida.
+            - **Resultado:** Informações de Nome e Telefone são sincronizadas instantaneamente no CRM e no Lead Manager, evitando dados obsoletos.
         `
     },
     {
         id: '2',
-        category: 'Operações',
-        title: 'Gestão de CRM e Funil de Vendas',
-        icon: Users,
-        tags: ['vendas', 'crm', 'leads'],
+        category: 'Técnico',
+        title: 'Monitoramento e Verificação de Sinal (dBm)',
+        icon: DeviceMobile,
+        tags: ['técnico', 'sinal', 'monitoramento'],
         content: `
-            # Gestão de Leads ISP
+            # Diagnóstico Técnico Bi-lateral
             
-            O módulo CRM permite o acompanhamento detalhado de cada prospecto.
+            A função de **Verificação de Sinal** permite um diagnóstico preliminar da conexão do cliente diretamente pela interface de atendimento, reduzindo a necessidade de transferência para o suporte nível 2.
             
-            ### Estágios do Funil:
-            - **Qualificação:** Identificação do perfil do cliente.
-            - **Viabilidade:** Verificação técnica de disponibilidade de rede.
-            - **Proposta:** Envio e negociação de planos.
-            - **Fechamento:** Finalização da venda e criação do contrato.
+            ### Como realizar a verificação:
+            1. **Identificação:** Dentro de uma conversa ativa, localize o painel de Ações Rápidas na barra lateral direita.
+            2. **Execução:** Clique em **"Ver. Sinal"**. O TITÃ realiza uma consulta assíncrona aos concentradores e equipamentos de rede.
+            3. **Leitura de Resultados:** 
+               - **Sinal Verde (-16 a -25 dBm):** Conexão excelente de fibra.
+               - **Sinal Amarelo (-26 a -28 dBm):** Atenção, possível dobra de fibra ou conector sujo.
+               - **Sinal Vermelho (Acima de -28 dBm):** Crítico, recomendável abertura de OS para limpeza.
+            
+            **Vantagem Operacional:** Essa ação é registrada nos logs de auditoria, permitindo que o técnico de campo saiba que um teste já foi realizado antes da visita.
         `
     },
     {
         id: '3',
         category: 'Configurações',
-        title: 'Segurança e Multi-tenant',
+        title: 'Segurança e Governança Multi-tenant',
         icon: ShieldCheck,
         tags: ['segurança', 'admin', 'tenant'],
         content: `
-            # Segurança e Isolamento de Dados
+            # Isolamento de Dados e Conformidade SaaS
             
-            O TITÃ utiliza arquitetura Multi-tenant, garantindo que os dados de cada provedor sejam isolados e seguros.
+            O TITÃ | ISP opera sob uma arquitetura rigorosa de **Multi-tenancy**, garantindo que as operações de um provedor sejam invisíveis e inacessíveis para outros.
             
-            ### Níveis de Acesso:
-            - **SUPER_ADMIN:** Acesso total a todas as configurações e logs.
-            - **ADMIN:** Gestão total de um tenant específico.
-            - **VENDEDOR:** Acesso limitado a leads e atendimentos.
-            - **TECNICO:** Foco em ordens de serviço e status de rede.
-        `
-    },
-    {
-        id: '4',
-        category: 'Rede',
-        title: 'Integração com Equipamentos',
-        icon: DeviceMobile,
-        tags: ['rede', 'hardware', 'monitoramento'],
-        content: `
-            # Monitoramento de Rede
+            ### Mecanismos de Proteção:
+            - **Tenant Isolation:** Cada registro de Lead, OS ou Mensagem possui um ` + "`tenant_id`" + ` imutável vinculado ao perfil do usuário logado.
+            - **RLS (Row Level Security):** O banco de dados Supabase aplica filtros automáticos em nível de linha. Mesmo que uma consulta tente burlar o sistema, o Postgres bloqueia qualquer dado que não pertença ao tenant do usuário.
             
-            Acesse relatórios em tempo real de ONUs e concentradores.
-            
-            ### Funcionalidades:
-            - **Status de Conexão:** Verifique se o cliente está online/offline.
-            - **Sinal Óptico:** Monitore a atenuação da fibra em dBm.
-            - **Uptime:** Acompanhe o tempo de atividade dos equipamentos.
+            ### Resultantes de Auditoria:
+            Todas as ações rápidas executadas no chat (Abertura de OS, Troca de Status, Verificação de Sinal) geram um **Audit Log** automático contendo:
+            1. Identificação do Atendente (Actor ID)
+            2. Timestamp da operação.
+            3. Objeto alterado e Tenant afetado.
         `
     }
 ];
