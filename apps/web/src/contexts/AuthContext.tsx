@@ -54,10 +54,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             if (session) {
                 // Só busca perfil se o usuário mudou OU se não temos perfil e não estamos buscando
                 if (session.user.id !== lastFetchedUserId.current || (!profileRef.current && !fetchInProgress.current)) {
-                    clearTimeout(safetyUnlock);
                     await fetchProfile(session.user);
+                    clearTimeout(safetyUnlock);
                 } else {
                     setLoading(false);
+                    clearTimeout(safetyUnlock);
                 }
             } else {
                 lastFetchedUserId.current = null;
@@ -83,7 +84,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         lastFetchedUserId.current = u.id;
 
         try {
-            const p = await getCurrentProfile(u);
+            // Corrida com timeout para não travar o app nunca (v2.05.21)
+            const timeoutPromise = new Promise((_, reject) =>
+                setTimeout(() => reject(new Error("Timeout Supabase Query")), 8000)
+            );
+
+            const profilePromise = getCurrentProfile(u);
+            const p = await Promise.race([profilePromise, timeoutPromise]) as Profile | null;
 
             // Verificação de segurança: O usuário ainda é o mesmo que iniciou esta busca?
             if (lastFetchedUserId.current !== u.id) {
@@ -95,7 +102,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setProfile(p);
             profileRef.current = p;
         } catch (err) {
-            console.error("TITÃ DEBUG: Erro fatal no fetchProfile:", err);
+            console.error("TITÃ DEBUG: Erro no fetchProfile (Timeout ou SQL):", err);
         } finally {
             setLoading(false);
             fetchInProgress.current = false;
