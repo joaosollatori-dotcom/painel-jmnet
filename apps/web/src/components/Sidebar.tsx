@@ -24,6 +24,7 @@ import {
     SignOut,
     BookOpen,
     ChatCircleDots,
+    Calendar,
 } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';

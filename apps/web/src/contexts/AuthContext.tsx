@@ -27,7 +27,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         let mounted = true;
 
-        console.log("TITÃ DEBUG: [V2.05.28] Proteção Anti-Loop Ativada");
+        console.log("TITÃ DEBUG: [V2.05.29] Proteção Anti-Loop Ativada");
 
         const safetyTimeout = setTimeout(() => {
             if (mounted) {
