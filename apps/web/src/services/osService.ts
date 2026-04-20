@@ -2,7 +2,7 @@ import { supabase } from '../lib/supabase';
 
 export interface ServiceOrder {
     id: string;
-    order_type: string;
+    type: string;
     status: 'ABERTA' | 'EM_EXECUCAO' | 'FINALIZADA' | 'CANCELADA';
     description: string;
     priority: 'NORMAL' | 'ALTA' | 'URGENTE';

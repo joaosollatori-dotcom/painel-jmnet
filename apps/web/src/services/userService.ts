@@ -41,10 +41,10 @@ export const getCurrentProfile = async (passedUser?: User): Promise<Profile | nu
 
         console.log("TITÃ DEBUG: Consultando banco para ID:", user.id);
 
-        // Timeout agressivo de 5s para o banco (v2.05.22)
+        // Timeout agressivo de 15s para o banco
         const { data, error } = await Promise.race([
             supabase.from('profiles').select('*').eq('id', user.id).single(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 5000))
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 15000))
         ]) as any;
 
         if (error) {

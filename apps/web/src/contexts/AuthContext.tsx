@@ -34,7 +34,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 console.warn("TITÃ DEBUG: EMERGENCY UNLOCK!");
                 setLoading(false);
             }
-        }, 8000);
+        }, 20000);
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             const now = Date.now();
@@ -82,7 +82,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
         try {
             const timeoutPromise = new Promise((_, reject) =>
-                setTimeout(() => reject(new Error("DB Timeout")), 6000)
+                setTimeout(() => reject(new Error("DB Timeout")), 15000)
             );
 
             const p = await Promise.race([getCurrentProfile(u), timeoutPromise]) as Profile | null;

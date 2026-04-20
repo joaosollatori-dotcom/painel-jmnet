@@ -32,7 +32,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
         // 2. Buscar em Ordens de Serviço (Tabela correta: service_orders)
         const { data: ordens, error: osError } = await supabase
             .from('service_orders')
-            .select('id, customer_name, order_type')
+            .select('id, customer_name, type')
             .or(`customer_name.ilike.%${query}%,id.ilike.%${query}%`)
             .limit(3);
 
@@ -41,7 +41,7 @@ export const globalSearch = async (query: string): Promise<SearchResult[]> => {
                 id: o.id,
                 type: 'os',
                 title: o.customer_name,
-                subtitle: `OS: ${o.order_type} (#${o.id.slice(0, 5)})`
+                subtitle: `OS: ${o.type} (#${o.id.slice(0, 5)})`
             }));
         }
 

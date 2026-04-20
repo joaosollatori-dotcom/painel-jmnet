@@ -147,7 +147,7 @@ const OSManager: React.FC = () => {
                     </div>
                 ) : filteredOSS.map(os => (
                     <div key={os.id} className="os-card">
-                        <div className="os-id">#{os.id.slice(0, 8)} • {os.order_type}</div>
+                        <div className="os-id">#{os.id.slice(0, 8)} • {os.type}</div>
                         <div className="os-customer">{os.customer_name}</div>
                         <div className="os-card-actions">
                             <span className={`os-priority-badge ${os.priority === 'URGENTE' ? 'urgente' : 'normal'}`}>
@@ -180,7 +180,7 @@ const OSManager: React.FC = () => {
                                         <Wrench size={24} weight="duotone" />
                                     </div>
                                     <div>
-                                        <div className="header-type">{selectedOS.order_type}</div>
+                                        <div className="header-type">{selectedOS.type}</div>
                                         <h2 className="header-title">#{selectedOS.id.slice(0, 8)}</h2>
                                     </div>
                                 </div>

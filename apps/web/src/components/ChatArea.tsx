@@ -147,7 +147,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                 case 'os':
                     await createServiceOrder({
                         customer_name: conversation.contact_name,
-                        order_type: 'MANUTENCAO',
+                        type: 'MANUTENCAO',
                         status: 'ABERTA',
                         priority: 'NORMAL',
                         description: 'Abertura rápida via chat.'
