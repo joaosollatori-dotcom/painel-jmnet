@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     ListChecks, MagnifyingGlass, Funnel, CaretRight, Warning,
     CheckCircle, Info, Clock, User, HardDrive, ClipboardText,
-    ChatCircleDots, FileText, Package, Wrench, X, Save
+    ChatCircleDots, FileText, Package, Wrench, X, FloppyDisk
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { supabase } from '../lib/supabase';
@@ -159,7 +159,7 @@ const OcorrenciasManager: React.FC = () => {
                                     <h2 style={{ margin: 0 }}>{selectedOco.customer_name}</h2>
                                 </div>
                                 <div style={{ display: 'flex', gap: '12px' }}>
-                                    <button className="wiki-cat-btn" onClick={() => handleSave(selectedOco)}><Save /> Salvar Alterações</button>
+                                    <button className="wiki-cat-btn" onClick={() => handleSave(selectedOco)}><FloppyDisk /> Salvar Alterações</button>
                                     <button className="wiki-cat-btn" style={{ borderColor: '#ef4444', color: '#ef4444' }} onClick={() => setSelectedOco(null)}><X /> Fechar</button>
                                 </div>
                             </header>
