@@ -28,11 +28,12 @@ export const getServiceOrders = async (): Promise<ServiceOrder[]> => {
     return data || [];
 };
 
-export const createServiceOrder = async (os: Partial<ServiceOrder>): Promise<ServiceOrder> => {
+export const createServiceOrder = async (os: Partial<ServiceOrder>, tenantId?: string): Promise<ServiceOrder> => {
     const { data, error } = await supabase
         .from('service_orders')
         .insert([{
             ...os,
+            tenant_id: tenantId,
             status: os.status || 'ABERTA',
             priority: os.priority || 'NORMAL',
             created_at: new Date().toISOString()

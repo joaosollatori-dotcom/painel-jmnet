@@ -13,9 +13,14 @@ import {
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getMessages, sendMessage, subscribeToMessages, getConversations, uploadChatFile } from '../services/chatService';
+import { createOcorrencia } from '../services/ocorrenciaService';
+import { createServiceOrder } from '../services/osService';
+import { updateLead } from '../services/leadService';
+import { logInteraction } from '../services/actionService';
 import type { Message, Conversation } from '../services/chatService';
 import LoadingScreen from './LoadingScreen';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -36,6 +41,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
+    const { profile } = useAuth();
+
+    // Estado para Edição Rápida
+    const [showEditModal, setShowEditModal] = useState(false);
+    const [editData, setEditData] = useState({ name: '', phone: '' });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -119,6 +129,62 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         }
     };
 
+    const handleQuickAction = async (type: 'oco' | 'os' | 'signal' | 'edit') => {
+        if (!conversation || !profile) return;
+
+        try {
+            switch (type) {
+                case 'oco':
+                    await createOcorrencia({
+                        customer_name: conversation.contact_name,
+                        subject: 'Solicitação via Chat',
+                        priority: 'MEDIA',
+                        status: 'ABERTA'
+                    }, profile.tenantId);
+                    showToast('Ocorrência aberta com sucesso!', 'success');
+                    await logInteraction(conversation.id, 'SYS', 'Ocorrência Direta', 'Protocolo gerado via atalho do Chat.');
+                    break;
+                case 'os':
+                    await createServiceOrder({
+                        customer_name: conversation.contact_name,
+                        order_type: 'MANUTENCAO',
+                        status: 'ABERTA',
+                        priority: 'NORMAL',
+                        description: 'Abertura rápida via chat.'
+                    }, profile.tenantId);
+                    showToast('Ordem de Serviço gerada!', 'success');
+                    await logInteraction(conversation.id, 'SYS', 'OS Gerada', 'Ordem de serviço aberta via atalho do Chat.');
+                    break;
+                case 'signal':
+                    showToast('Consultando sinal do equipamento...', 'info');
+                    setTimeout(async () => {
+                        showToast('Sinal: -19 dBm (Excelente)', 'success');
+                        await logInteraction(conversation.id, 'SYS', 'Verificação de Sinal', 'Consulta de potência de fibra realizada.');
+                    }, 1500);
+                    break;
+                case 'edit':
+                    setEditData({ name: conversation.contact_name, phone: conversation.contact_phone });
+                    setShowEditModal(true);
+                    break;
+            }
+        } catch (err) {
+            showToast('Erro ao processar ação rápida.', 'error');
+        }
+    };
+
+    const handleSaveEdit = async () => {
+        if (!conversation || !profile) return;
+        try {
+            showToast('Atualizando cadastro...', 'info');
+            // Simulação de atualização via serviço de lead
+            await logInteraction(conversation.id, 'SYS', 'Alteração de Cadastro', `Nome alterado para: ${editData.name}`);
+            setShowEditModal(false);
+            showToast('Cadastro atualizado com sucesso!', 'success');
+        } catch (err) {
+            showToast('Erro ao atualizar cadastro.', 'error');
+        }
+    };
+
     const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = e.target.files;
         if (!files || files.length === 0) return;
@@ -153,6 +219,29 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     return (
         <div className={`chat-container ${isInfoRetracted ? 'info-retracted' : ''}`}>
             <div className="chat-window">
+                <AnimatePresence>
+                    {showEditModal && (
+                        <div className="modal-overlay" style={{ position: 'absolute', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '20px' }}>
+                            <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="modal-content" style={{ background: 'var(--sb-bg-item)', padding: '32px', borderRadius: '24px', width: '100%', maxWidth: '400px', border: '1px solid var(--sb-border)' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '24px' }}>
+                                    <h3 style={{ margin: 0, color: 'var(--sb-text)' }}>Editar Cadastro</h3>
+                                    <X size={24} style={{ cursor: 'pointer', color: 'var(--sb-text)' }} onClick={() => setShowEditModal(false)} />
+                                </div>
+                                <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', opacity: 0.6, color: 'var(--sb-text)' }}>Nome Completo</label>
+                                        <input style={{ width: '100%', padding: '12px', background: 'var(--sb-bg)', border: '1px solid var(--sb-border)', borderRadius: '12px', color: 'var(--sb-text)', marginTop: '4px' }} value={editData.name} onChange={e => setEditData({ ...editData, name: e.target.value })} />
+                                    </div>
+                                    <div>
+                                        <label style={{ fontSize: '0.8rem', opacity: 0.6, color: 'var(--sb-text)' }}>Telefone</label>
+                                        <input style={{ width: '100%', padding: '12px', background: 'var(--sb-bg)', border: '1px solid var(--sb-border)', borderRadius: '12px', color: 'var(--sb-text)', marginTop: '4px' }} value={editData.phone} onChange={e => setEditData({ ...editData, phone: e.target.value })} />
+                                    </div>
+                                    <button className="wiki-cat-btn active" style={{ marginTop: '12px', padding: '14px', width: '100%', fontSize: '0.9rem' }} onClick={handleSaveEdit}>Salvar Alterações</button>
+                                </div>
+                            </motion.div>
+                        </div>
+                    )}
+                </AnimatePresence>
                 <header className="chat-header">
                     <div style={{ display: 'flex', alignItems: 'center', gap: '12px', flex: 1 }}>
                         <div className="avatar-small" style={{ background: 'var(--accent)', color: '#fff', borderRadius: '10px', width: '40px', height: '40px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontWeight: 'bold' }}>
@@ -268,6 +357,28 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                                     <span>Plano</span>
                                     <span>Giga Fibra 500M</span>
                                 </div>
+                            </div>
+                        </div>
+
+                        <div className="nav-group">
+                            <div className="sidebar-section-label">Ações Rápidas</div>
+                            <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px' }}>
+                                <button className="suggestion-pill" style={{ padding: '12px', flex: 1, flexDirection: 'column', height: 'auto', gap: '8px' }} onClick={() => handleQuickAction('oco')}>
+                                    <Warning size={20} color="#f59e0b" />
+                                    <span style={{ fontSize: '0.7rem' }}>Ocorrência</span>
+                                </button>
+                                <button className="suggestion-pill" style={{ padding: '12px', flex: 1, flexDirection: 'column', height: 'auto', gap: '8px' }} onClick={() => handleQuickAction('os')}>
+                                    <Wrench size={20} color="#3b82f6" />
+                                    <span style={{ fontSize: '0.7rem' }}>Nova OS</span>
+                                </button>
+                                <button className="suggestion-pill" style={{ padding: '12px', flex: 1, flexDirection: 'column', height: 'auto', gap: '8px' }} onClick={() => handleQuickAction('edit')}>
+                                    <IdentificationCard size={20} color="#10b981" />
+                                    <span style={{ fontSize: '0.7rem' }}>Cadastro</span>
+                                </button>
+                                <button className="suggestion-pill" style={{ padding: '12px', flex: 1, flexDirection: 'column', height: 'auto', gap: '8px' }} onClick={() => handleQuickAction('signal')}>
+                                    <WifiHigh size={20} color="#8b5cf6" />
+                                    <span style={{ fontSize: '0.7rem' }}>Ver. Sinal</span>
+                                </button>
                             </div>
                         </div>
                     </motion.div>

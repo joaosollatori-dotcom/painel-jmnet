@@ -28,11 +28,12 @@ export const getOcorrencias = async (): Promise<Ocorrencia[]> => {
     return data || [];
 };
 
-export const createOcorrencia = async (oco: Partial<Ocorrencia>): Promise<Ocorrencia> => {
+export const createOcorrencia = async (oco: Partial<Ocorrencia>, tenantId?: string): Promise<Ocorrencia> => {
     const { data, error } = await supabase
         .from('customer_occurrences')
         .insert([{
             ...oco,
+            tenant_id: tenantId,
             opening_date: new Date().toISOString(),
             last_update: new Date().toISOString()
         }])
