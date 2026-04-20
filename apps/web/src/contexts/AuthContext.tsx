@@ -1,4 +1,4 @@
-import React, { createContext, useContext, useEffect, useState } from 'react';
+import React, { createContext, useContext, useEffect, useState, useRef } from 'react';
 import { Session, User } from '@supabase/supabase-js';
 import { supabase } from '../lib/supabase';
 import { Profile, getCurrentProfile } from '../services/userService';
@@ -19,6 +19,10 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const [profile, setProfile] = useState<Profile | null>(null);
     const [loading, setLoading] = useState(true);
 
+    const lastFetchedUserId = useRef<string | null>(null);
+    const fetchInProgress = useRef<boolean>(false);
+    const profileRef = useRef<Profile | null>(null);
+
     useEffect(() => {
         let mounted = true;
 
@@ -36,8 +40,6 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             console.log("TITÃ DEBUG: Evento de Auth:", event);
             if (!mounted) return;
 
-            clearTimeout(safetyUnlock);
-
             // Limpeza de URL pós-confirmação (v2.05.16)
             if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
                 if (window.location.hash || window.location.search.includes('type=recovery')) {
@@ -50,10 +52,19 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(session?.user ?? null);
 
             if (session) {
-                await fetchProfile(session.user);
+                // Só busca perfil se o usuário mudou OU se não temos perfil e não estamos buscando
+                if (session.user.id !== lastFetchedUserId.current || (!profileRef.current && !fetchInProgress.current)) {
+                    clearTimeout(safetyUnlock);
+                    await fetchProfile(session.user);
+                } else {
+                    setLoading(false);
+                }
             } else {
+                lastFetchedUserId.current = null;
                 setProfile(null);
+                profileRef.current = null;
                 setLoading(false);
+                clearTimeout(safetyUnlock);
             }
         });
 
@@ -64,15 +75,30 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const fetchProfile = async (u: User) => {
+        // Se já estamos buscando este mesmo usuário, não faz nada
+        if (fetchInProgress.current && lastFetchedUserId.current === u.id) return;
+
         console.log("TITÃ DEBUG: Buscando perfil no banco para:", u.email);
+        fetchInProgress.current = true;
+        lastFetchedUserId.current = u.id;
+
         try {
             const p = await getCurrentProfile(u);
+
+            // Verificação de segurança: O usuário ainda é o mesmo que iniciou esta busca?
+            if (lastFetchedUserId.current !== u.id) {
+                console.warn("TITÃ DEBUG: Descartando fetch de perfil obsoleto.");
+                return;
+            }
+
             console.log("TITÃ DEBUG: Perfil retornado:", p ? "Encontrado" : "Não encontrado (null)");
             setProfile(p);
+            profileRef.current = p;
         } catch (err) {
             console.error("TITÃ DEBUG: Erro fatal no fetchProfile:", err);
         } finally {
             setLoading(false);
+            fetchInProgress.current = false;
         }
     };
 

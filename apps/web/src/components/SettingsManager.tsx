@@ -7,11 +7,13 @@ import { getGlobalAuditLogs, AuditLog } from '../services/auditService';
 import { createInvitation, getInvitations, Invitation } from '../services/invitationService';
 import { generateRemoteAccessKey, getAllowedIPs, addAllowedIP, removeAllowedIP, AllowedIP } from '../services/remoteAccessService';
 import { useToast } from '../contexts/ToastContext';
+import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
     const { showToast } = useToast();
+    const { profile } = useAuth();
     const navigate = useNavigate();
     const { section, subsection } = useParams();
     const [settings, setSettings] = useState<SystemSetting[]>([]);
@@ -19,7 +21,6 @@ const SettingsManager: React.FC = () => {
     const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
     const [allowedIps, setAllowedIps] = useState<AllowedIP[]>([]);
     const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [currentProfile, setCurrentProfile] = useState<Profile | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
     // Mapeamento de URL para Categoria interna
@@ -49,9 +50,6 @@ const SettingsManager: React.FC = () => {
     const loadSettings = async () => {
         setIsLoading(true);
         try {
-            const profile = await getCurrentProfile();
-            setCurrentProfile(profile);
-
             const [settingsData, usersData] = await Promise.all([
                 getSystemSettings(),
                 profile?.tenantId ? getTenantUsers(profile.tenantId) : Promise.resolve([])
@@ -172,7 +170,7 @@ const SettingsManager: React.FC = () => {
                     <button className={`sett-tab ${activeTab === 'USERS' ? 'active' : ''}`} onClick={() => navigate('/ajustes/equipe')}>
                         <Users size={18} /> Equipe e Permissões
                     </button>
-                    {(currentProfile?.role === 'SUPER_ADMIN' || currentProfile?.role === 'ADMIN') && (
+                    {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
                         <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => navigate('/ajustes/seguranca')}>
                             <ShieldCheck size={18} /> Auditoria e Segurança
                         </button>
@@ -341,7 +339,9 @@ const SettingsManager: React.FC = () => {
                                                 <div className={`t-knob ${item.isActive ? 'on' : 'off'}`} />
                                             </div>
                                             <button className="icon-btn edit" title="Editar Label" onClick={() => setEditingItem(item)}><PencilSimple size={18} /></button>
-                                            <button className="icon-btn trash" title="Deletar (CUIDADO)" onClick={() => handleDelete(item.id)}><Trash size={18} /></button>
+                                            {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
+                                                <button className="icon-btn trash" title="Deletar (CUIDADO)" onClick={() => handleDelete(item.id)}><Trash size={18} /></button>
+                                            )}
                                         </div>
                                     </div>
                                 ))
