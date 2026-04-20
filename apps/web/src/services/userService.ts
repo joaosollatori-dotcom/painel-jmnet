@@ -31,20 +31,28 @@ export interface Tenant {
 }
 
 export const getCurrentProfile = async (passedUser?: User): Promise<Profile | null> => {
+    console.log("TITÃ DEBUG: Iniciando getCurrentProfile...");
     try {
         const user = passedUser || (await supabase.auth.getUser()).data.user;
-        if (!user) return null;
-
-        const { data, error } = await supabase
-            .from('profiles')
-            .select('*')
-            .eq('id', user.id)
-            .single();
-
-        if (error) {
-            console.warn("Profile not found in 'profiles' table. Run SQL migration.");
+        if (!user) {
+            console.log("TITÃ DEBUG: Usuário não encontrado em getCurrentProfile");
             return null;
         }
+
+        console.log("TITÃ DEBUG: Consultando banco para ID:", user.id);
+
+        // Timeout agressivo de 5s para o banco (v2.05.22)
+        const { data, error } = await Promise.race([
+            supabase.from('profiles').select('*').eq('id', user.id).single(),
+            new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 5000))
+        ]) as any;
+
+        if (error) {
+            console.warn("TITÃ DEBUG: Perfil não encontrado ou erro de RLS:", error);
+            return null;
+        }
+
+        console.log("TITÃ DEBUG: Dados do perfil brutos recebidos");
 
         return {
             ...data,
@@ -54,6 +62,7 @@ export const getCurrentProfile = async (passedUser?: User): Promise<Profile | nu
             role: data.role as UserRole
         };
     } catch (e) {
+        console.error("TITÃ DEBUG: Exceção em getCurrentProfile:", e);
         return null;
     }
 };

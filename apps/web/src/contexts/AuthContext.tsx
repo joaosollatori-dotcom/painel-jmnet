@@ -26,24 +26,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     useEffect(() => {
         let mounted = true;
 
-        console.log("TITÃ DEBUG: Iniciando listener de Auth...");
+        console.log("TITÃ DEBUG: [V2.05.22] Iniciando listener de Auth...");
 
-        // Safety Unlock: Se em 7 segundos não tivermos resposta, libera a UI
-        const safetyUnlock = setTimeout(() => {
-            if (mounted && loading) {
-                console.warn("TITÃ DEBUG: Safety Unlock ativado (Timeout)");
+        // Safety Unlock Definitivo: Não importa o que aconteça, libera o app em 10s
+        const finalSafetyTimeout = setTimeout(() => {
+            if (mounted) {
+                console.warn("TITÃ DEBUG: FINAL SAFETY UNLOCK TRIGGERED!");
                 setLoading(false);
             }
-        }, 7000);
+        }, 10000);
+
+        // KICKSTART: Verifica sessão atual imediatamente (v2.05.22)
+        supabase.auth.getSession().then(({ data: { session } }) => {
+            console.log("TITÃ DEBUG: Kickstart session check:", session ? "Tem sessão" : "Sem sessão");
+            if (!mounted) return;
+            if (session) {
+                setSession(session);
+                setUser(session.user);
+                fetchProfile(session.user);
+            } else {
+                setLoading(false);
+            }
+        });
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             console.log("TITÃ DEBUG: Evento de Auth:", event);
             if (!mounted) return;
 
-            // Limpeza de URL pós-confirmação (v2.05.16)
+            // Limpeza de URL pós-confirmação
             if (event === 'SIGNED_IN' || event === 'USER_UPDATED') {
                 if (window.location.hash || window.location.search.includes('type=recovery')) {
-                    console.log("TITÃ DEBUG: Limpando URL de autenticação...");
                     window.history.replaceState({}, document.title, window.location.pathname);
                 }
             }
@@ -52,26 +64,23 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
             setUser(session?.user ?? null);
 
             if (session) {
-                // Só busca perfil se o usuário mudou OU se não temos perfil e não estamos buscando
-                if (session.user.id !== lastFetchedUserId.current || (!profileRef.current && !fetchInProgress.current)) {
+                if (session.user.id !== lastFetchedUserId.current || !profileRef.current) {
                     await fetchProfile(session.user);
-                    clearTimeout(safetyUnlock);
                 } else {
                     setLoading(false);
-                    clearTimeout(safetyUnlock);
                 }
             } else {
                 lastFetchedUserId.current = null;
                 setProfile(null);
                 profileRef.current = null;
                 setLoading(false);
-                clearTimeout(safetyUnlock);
             }
         });
 
         return () => {
             mounted = false;
             subscription.unsubscribe();
+            clearTimeout(finalSafetyTimeout);
         };
     }, []);
 
