@@ -124,29 +124,29 @@ const LandingPage: React.FC = () => {
                     <div className="lp-feature-icon" style={{ background: 'rgba(37, 99, 235, 0.1)' }}>
                         <Users2 className="text-blue-500" size={32} />
                     </div>
-                    <h3 className="lp-feature-title">CRM Inteligente</h3>
+                    <h3 className="lp-feature-title">CRM & TITÃ Connect</h3>
                     <p className="lp-feature-desc">
-                        Funil de vendas integrado com WhatsApp Cloud API e automação de leads desde a primeira mensagem.
+                        Gestão de leads e chat interno integrado para alinhamento total entre vendas e suporte.
                     </p>
                 </motion.div>
 
                 <motion.div whileHover={{ y: -5 }} className="lp-feature-card">
-                    <div className="lp-feature-icon" style={{ background: 'rgba(79, 70, 229, 0.1)' }}>
-                        <Wifi className="text-indigo-500" size={32} />
+                    <div className="lp-feature-icon" style={{ background: 'rgba(236, 72, 153, 0.1)' }}>
+                        <Zap className="text-pink-500" size={32} />
                     </div>
-                    <h3 className="lp-feature-title">Gestão de Rede</h3>
+                    <h3 className="lp-feature-title">Agenda Técnica</h3>
                     <p className="lp-feature-desc">
-                        Monitoramento de OLTs, ativação de ONUs e mapa técnico em tempo real para sua equipe de campo.
+                        Controle de campo de alta performance com filtros inteligentes e visão One-Page de rotas.
                     </p>
                 </motion.div>
 
                 <motion.div whileHover={{ y: -5 }} className="lp-feature-card">
                     <div className="lp-feature-icon" style={{ background: 'rgba(16, 185, 129, 0.1)' }}>
-                        <CreditCard className="text-emerald-500" size={32} />
+                        <CheckCircle2 className="text-emerald-500" size={32} />
                     </div>
-                    <h3 className="lp-feature-title">Financeiro</h3>
+                    <h3 className="lp-feature-title">Ocorrências</h3>
                     <p className="lp-feature-desc">
-                        Emissão de faturas, baixa automática de pagamentos e controle de inadimplência rigoroso.
+                        Fluxo de protocolos de última milha com bi-lateralidade de informações e diagnóstico de sinal.
                     </p>
                 </motion.div>
             </section>
@@ -233,7 +233,7 @@ const LandingPage: React.FC = () => {
             <div className="lp-base-footer">
                 <div className="lp-base-footer-content">
                     <div>TITÃ ISP © 2026. CNPJ: 62.195.228/0001-31</div>
-                    <div style={{ opacity: 0.6 }}>v 2.05.16</div>
+                    <div style={{ opacity: 0.6 }}>v 2.05.28</div>
                 </div>
             </div>
         </div>

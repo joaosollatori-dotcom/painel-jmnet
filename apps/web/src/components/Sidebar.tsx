@@ -23,6 +23,7 @@ import {
     ChartLine,
     SignOut,
     BookOpen,
+    ChatCircleDots,
 } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
@@ -114,8 +115,15 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     },
                     { id: '/financeiro', icon: CurrencyDollar, label: 'Financeiro' },
                     { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
+                    { id: '/agenda', icon: Calendar, label: 'Agenda Técnica' },
                     { id: '/rede', icon: Globe, label: 'Gestão de Rede' },
                     { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
+                ]
+            },
+            {
+                label: 'COMUNICAÇÃO',
+                items: [
+                    { id: '/connect', icon: ChatCircleDots, label: 'TITÃ Connect' },
                 ]
             },
             {

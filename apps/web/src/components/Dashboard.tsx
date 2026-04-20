@@ -83,8 +83,8 @@ const Dashboard: React.FC = () => {
         <div className="dashboard-container">
             <header className="dashboard-header">
                 <div>
-                    <h1>Relatórios e Performance</h1>
-                    <p>Visão geral da sua operação em tempo real.</p>
+                    <h1>Relatórios e Performance <span style={{ fontSize: '0.7rem', opacity: 0.5, fontWeight: 400 }}>v2.05.28</span></h1>
+                    <p>Operação unificada: CRM, Agenda Técnica e Ocorrências em tempo real.</p>
                 </div>
                 <div className="dashboard-date">
                     {new Date().toLocaleDateString('pt-BR', { day: '2-digit', month: 'long', year: 'numeric' })}

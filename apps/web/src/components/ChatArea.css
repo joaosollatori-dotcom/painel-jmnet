@@ -233,24 +233,51 @@
     display: flex;
     flex-direction: column;
     gap: 12px;
-    margin-bottom: 8px;
+    margin-bottom: 24px;
 }
 
 .sidebar-section-label {
     font-size: 0.7rem;
     font-weight: 800;
-    color: var(--sb-primary, #2563eb);
+    color: var(--sb-primary, #3b82f6);
     text-transform: uppercase;
     letter-spacing: 0.1em;
-    opacity: 0.8;
+    opacity: 0.9;
 }
 
-[data-theme='dark'] .sidebar-section-label {
-    color: var(--sb-primary, #3b82f6);
+/* Ajustes de Tema para o Painel Lateral */
+[data-theme='light'] .chat-info-column {
+    background: #f8fafc;
+}
+
+[data-theme='soft'] .chat-info-column {
+    background: #fdf6e3;
 }
 
 .suggestion-pill {
+    background: var(--sb-bg-item, #ffffff);
+    border: 1px solid var(--sb-border, #e2e8f0);
+    border-radius: 12px;
     transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+    color: var(--sb-text, #1e293b);
+}
+
+[data-theme='dark'] .suggestion-pill {
+    background: #262626;
+    border-color: #404040;
+    color: #fff;
+}
+
+[data-theme='soft'] .suggestion-pill {
+    background: #eee8d5;
+    border-color: #dcd6c1;
+    color: #586e75;
+}
+
+.suggestion-pill:hover {
+    border-color: var(--sb-primary, #3b82f6);
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
 }
 
 .suggestion-pill:active {
@@ -259,7 +286,8 @@
 
 /* Modal Overlay */
 .modal-overlay {
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
+    background: rgba(0, 0, 0, 0.4);
     animation: fadeIn 0.3s ease;
 }
 
