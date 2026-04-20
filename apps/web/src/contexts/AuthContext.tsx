@@ -22,13 +22,13 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     const lastFetchedUserId = useRef<string | null>(null);
     const fetchInProgress = useRef<boolean>(false);
     const profileRef = useRef<Profile | null>(null);
+    const lastEventTime = useRef<number>(0);
 
     useEffect(() => {
         let mounted = true;
 
-        console.log("TITÃ DEBUG: [V2.05.23] Monitorando Auth...");
+        console.log("TITÃ DEBUG: [V2.05.24] Proteção Anti-Loop Ativada");
 
-        // Safety Unlock Definitivo (v2.05.23)
         const safetyTimeout = setTimeout(() => {
             if (mounted) {
                 console.warn("TITÃ DEBUG: EMERGENCY UNLOCK!");
@@ -37,7 +37,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }, 8000);
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
-            console.log("TITÃ DEBUG: Auth Event:", event);
+            const now = Date.now();
+
+            // Anti-Loop: Ignora eventos idênticos ou de refresh em menos de 2s se já tivermos sessão
+            if (event === 'TOKEN_REFRESHED' && now - lastEventTime.current < 2000 && profileRef.current) {
+                return;
+            }
+
+            lastEventTime.current = now;
+            console.log("TITÃ DEBUG: Auth Event (v24):", event);
+
             if (!mounted) return;
 
             setSession(session);
@@ -49,8 +58,8 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
                 profileRef.current = null;
                 lastFetchedUserId.current = null;
             } else {
-                // Se o usuário é novo ou não temos perfil, busca
-                if (session.user.id !== lastFetchedUserId.current) {
+                // Se o usuário mudou OU se não temos nenhum perfil ainda, busca.
+                if (session.user.id !== lastFetchedUserId.current || !profileRef.current) {
                     fetchProfile(session.user);
                 } else {
                     setLoading(false);

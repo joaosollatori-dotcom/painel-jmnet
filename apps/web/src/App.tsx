@@ -11,6 +11,7 @@ import OSManager from './components/OSManager';
 import NetworkManager from './components/NetworkManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
 import SettingsManager from './components/SettingsManager';
+import WikiManager from './components/WikiManager';
 import { useToast } from './contexts/ToastContext';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
@@ -164,6 +165,7 @@ const App: React.FC = () => {
           <Route path="/rede" element={<NetworkManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/ajustes" element={<SettingsManager />} />
+          <Route path="/wiki" element={<WikiManager />} />
           <Route path="/ajustes/:section" element={<SettingsManager />} />
           <Route path="/ajustes/:section/:subsection" element={<SettingsManager />} />
         </Routes>

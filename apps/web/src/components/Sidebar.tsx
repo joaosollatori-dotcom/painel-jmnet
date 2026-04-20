@@ -22,6 +22,7 @@ import {
     WarningCircle,
     ChartLine,
     SignOut,
+    BookOpen,
 } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
@@ -121,6 +122,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                 label: 'SISTEMA',
                 items: [
                     { id: '/relatorios', icon: ChartLine, label: 'Analytics' },
+                    { id: '/wiki', icon: BookOpen, label: 'Central Wiki' },
                     { id: '/ajustes', icon: Gear, label: 'Ajustes' },
                 ]
             }
