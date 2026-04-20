@@ -1,8 +1,0 @@
-adicione funções ao "clipe" e adicione o catálogo de emojis ao icone de emoji
-remova: "Novos" e "Aguardando" e "Todos"
-no cabeçalho de conversa 'anexo' adicione o botão + função "Encerrar Chat"
-No três pontinhos, coloco botões + funções: Histórico, Transferir, Participantes, Ativar AI (para continuidade de conversa caso a empresa precise uma pausa)
-No painel de dashboard coloque "Online há: {tempo calculado de tempo online}"
-online = {status}
-status: Online, Banheiro, Almoço, Offline
-troca de status é manual pel /o  usuario em nome da empresa

@@ -1,4 +1,0 @@
-rm -rf ~/Library/Application\ Support/Antigravity/Cache
-rm -rf ~/Library/Application\ Support/Antigravity/GPUCache
-rm -rf ~/.config/Antigravity/Cache ~/.config/Antigravity/GPUCache && pkill -f Antigravity ; sleep 2 && antigravity
-rm -rf ~/.config/Antigravity/Cache        ~/.config/Antigravity/GPUCache        ~/.antigravity        ~/.gemini
