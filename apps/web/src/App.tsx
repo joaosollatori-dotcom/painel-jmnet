@@ -10,10 +10,10 @@ import FinanceManager from './components/FinanceManager';
 import OSManager from './components/OSManager';
 import NetworkManager from './components/NetworkManager';
 import SettingsManager from './components/SettingsManager';
+import OcorrenciasManager from './components/OcorrenciasManager';
 import WikiManager from './components/WikiManager';
-import OcorrenciasPreview from './components/OcorrenciasPreview';
-import OSAgendaPreview from './components/OSAgendaPreview';
-import InternalChatPreview from './components/InternalChatPreview';
+import OSAgenda from './components/OSAgenda';
+import InternalChat from './components/InternalChat';
 import { useToast } from './contexts/ToastContext';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
@@ -165,9 +165,9 @@ const App: React.FC = () => {
           <Route path="/os" element={<OSManager />} />
           <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/rede" element={<NetworkManager />} />
-          <Route path="/ocorrencias" element={<OcorrenciasPreview />} />
-          <Route path="/agenda" element={<OSAgendaPreview />} />
-          <Route path="/connect" element={<InternalChatPreview />} />
+          <Route path="/ocorrencias" element={<OcorrenciasManager />} />
+          <Route path="/agenda" element={<OSAgenda />} />
+          <Route path="/connect" element={<InternalChat />} />
           <Route path="/ajustes" element={<SettingsManager />} />
           <Route path="/wiki" element={<WikiManager />} />
           <Route path="/ajustes/:section" element={<SettingsManager />} />
