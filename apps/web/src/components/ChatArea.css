@@ -227,3 +227,48 @@
     padding: 2rem 0;
     align-items: center;
 }
+
+/* Painel de Ações e Grupos */
+.nav-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-bottom: 8px;
+}
+
+.sidebar-section-label {
+    font-size: 0.7rem;
+    font-weight: 800;
+    color: var(--sb-primary, #2563eb);
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+    opacity: 0.8;
+}
+
+[data-theme='dark'] .sidebar-section-label {
+    color: var(--sb-primary, #3b82f6);
+}
+
+.suggestion-pill {
+    transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.suggestion-pill:active {
+    transform: scale(0.95);
+}
+
+/* Modal Overlay */
+.modal-overlay {
+    backdrop-filter: blur(4px);
+    animation: fadeIn 0.3s ease;
+}
+
+@keyframes fadeIn {
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+}
