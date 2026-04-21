@@ -25,7 +25,11 @@ server.setSerializerCompiler(serializerCompiler);
 
 export async function setupServer() {
 	// Register Plugins
-	await server.register(cors);
+	await server.register(cors, {
+		origin: true, // Em dev permite tudo, em prod podemos filtrar
+		methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+		credentials: true,
+	});
 	await server.register(jwt, {
 		secret: process.env.JWT_SECRET || "super-secret-key",
 	});
@@ -75,7 +79,7 @@ export async function setupServer() {
 if (!process.env.VERCEL) {
 	setupServer().then(async (server) => {
 		try {
-			const port = Number(process.env.PORT) || 3000;
+			const port = Number(process.env.PORT) || 3001;
 			await server.listen({ port, host: "0.0.0.0" });
 			console.log(`🚀 Server ready at http://localhost:${port}`);
 		} catch (err) {
