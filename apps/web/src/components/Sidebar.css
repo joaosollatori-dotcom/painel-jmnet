@@ -9,29 +9,28 @@
     --sidebar-ease: cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* Temas */
-[data-theme='dark'] {
-    --sb-bg: #131313;
-    --sb-bg-item: rgba(255, 255, 255, 0.03);
-    --sb-bg-active: rgba(255, 255, 255, 0.08);
-    --sb-text: #94a3b8;
-    --sb-text-active: #ffffff;
-    --sb-border: rgba(255, 255, 255, 0.05);
-    --sb-accent: #3b82f6;
-    --sb-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
-    --sb-tree-line: rgba(255, 255, 255, 0.1);
+/* Temas dinâmicos integrados ao index.css */
+.sidebar {
+    --sb-bg: var(--bg-surface);
+    --sb-bg-item: var(--accent-soft);
+    --sb-bg-active: color-mix(in srgb, var(--accent), transparent 85%);
+    --sb-text: var(--text-secondary);
+    --sb-text-active: var(--text-primary);
+    --sb-border: var(--border);
+    --sb-accent: var(--accent);
+    --sb-shadow: var(--shadow);
+    --sb-tree-line: var(--border-light);
 }
 
-[data-theme='light'] {
-    --sb-bg: #ffffff;
-    --sb-bg-item: rgba(0, 0, 0, 0.02);
+[data-theme='light'] .sidebar {
+    --sb-bg-item: rgba(0, 0, 0, 0.03);
     --sb-bg-active: rgba(0, 0, 0, 0.05);
-    --sb-text: #64748b;
-    --sb-text-active: #0f172a;
-    --sb-border: rgba(0, 0, 0, 0.05);
-    --sb-accent: #2563eb;
-    --sb-shadow: 0 10px 30px rgba(0, 0, 0, 0.05);
-    --sb-tree-line: rgba(0, 0, 0, 0.1);
+}
+
+[data-theme='soft'] .sidebar {
+    --sb-bg-item: rgba(107, 112, 92, 0.08);
+    /* Especial para o tom Sage */
+    --sb-bg-active: rgba(107, 112, 92, 0.15);
 }
 
 .sidebar {

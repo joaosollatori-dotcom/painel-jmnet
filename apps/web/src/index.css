@@ -1,15 +1,28 @@
 :root {
-  /* Branding Colors - Default Dark */
+  /* Branding Colors - Default Dark (Onyx Modern) */
   --primary-color: #3b82f6;
-  --bg-deep: #0e0e0e;
-  --bg-surface: #131313;
-  --bg-surface-light: #1c1b1b;
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
+  --bg-deep: #09090b;
+  /* Zinc 950 */
+  --bg-surface: #121214;
+  /* Profundidade equilibrada */
+  --bg-surface-light: #18181b;
+  /* Zinc 900 */
+  --text-primary: #fafafa;
+  /* Zinc 50 */
+  --text-secondary: #a1a1aa;
+  /* Zinc 400 */
   --accent: #3b82f6;
-  --accent-soft: rgba(59, 130, 246, 0.1);
-  --border: #222222;
-  --border-light: #2c2c2c;
+  --accent-soft: rgba(59, 130, 246, 0.12);
+  --border: #27272a;
+  /* Zinc 800 */
+  --border-light: #3f3f46;
+  /* Zinc 700 */
+
+  /* Semantic Status Colors */
+  --success: #10b981;
+  --warning: #f59e0b;
+  --danger: #ef4444;
+  --info: #06b6d4;
 
   /* Spacing System */
   --space-xs: 0.5rem;
@@ -53,36 +66,48 @@
   --bg-surface: #ffffff;
   --bg-surface-light: #f1f5f9;
   /* Slate 100 */
-  --text-primary: #0f172a;
-  /* Slate 900 */
+  --text-primary: #020617;
+  /* Slate 950 */
   --text-secondary: #475569;
   /* Slate 600 */
-  --accent: #0284c7;
-  /* Sky 600 */
-  --accent-soft: rgba(2, 132, 199, 0.08);
+  --accent: #2563eb;
+  /* Royal Blue */
+  --accent-soft: rgba(37, 99, 235, 0.1);
   --border: #e2e8f0;
   /* Slate 200 */
-  --border-light: #f1f5f9;
-  --shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.1);
-  --primary-color: #0284c7;
+  --border-light: #cbd5e1;
+  /* Slate 300 */
+  --shadow: 0 10px 40px -10px rgba(15, 23, 42, 0.12);
+  --primary-color: #2563eb;
+
+  /* Semantic Overrides */
+  --success: #059669;
+  --warning: #d97706;
+  --danger: #dc2626;
 }
 
 [data-theme='soft'] {
-  --bg-deep: #fcfaf2;
-  /* Creme suave */
+  --bg-deep: #fcfbf7;
+  /* Linen White */
   --bg-surface: #ffffff;
-  --bg-surface-light: #f5f2e6;
-  /* Off-white creme */
-  --text-primary: #423d33;
-  /* Marrom escuro quase preto */
-  --text-secondary: #7d7768;
-  --accent: #c9a66b;
-  /* Dourado/Bronze suave */
-  --accent-soft: rgba(201, 166, 107, 0.1);
-  --border: #e8e4d0;
-  --border-light: #f0ede0;
-  --shadow: 0 10px 40px -10px rgba(66, 61, 51, 0.1);
-  --primary-color: #c9a66b;
+  --bg-surface-light: #f3f0e2;
+  /* Antique White */
+  --text-primary: #2d2a26;
+  /* Charcoal Coffee */
+  --text-secondary: #716b5f;
+  /* Muted Bronze */
+  --accent: #6b705c;
+  /* Moss/Sage Green */
+  --accent-soft: rgba(107, 112, 92, 0.12);
+  --border: #e6e1cd;
+  --border-light: #dcd7bc;
+  --shadow: 0 10px 40px -10px rgba(45, 42, 38, 0.08);
+  --primary-color: #6b705c;
+
+  /* Semantic Overrides */
+  --success: #588157;
+  --warning: #b08968;
+  --danger: #bc4749;
 }
 
 body,

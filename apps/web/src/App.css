@@ -126,7 +126,7 @@
   align-items: center;
   justify-content: center;
   cursor: pointer;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  box-shadow: 0 4px 12px var(--shadow-intensity);
 }
 
 .hamburger {
@@ -269,8 +269,8 @@
 .logout-section {
   margin-top: 2rem;
   padding: 1.5rem;
-  background: rgba(239, 68, 68, 0.05);
-  border: 1px solid rgba(239, 68, 68, 0.2);
+  background: color-mix(in srgb, var(--danger), transparent 95%);
+  border: 1px solid color-mix(in srgb, var(--danger), transparent 80%);
   border-radius: var(--radius-lg);
   display: flex;
   justify-content: space-between;
@@ -278,7 +278,7 @@
 }
 
 .logout-title {
-  color: #ef4444;
+  color: var(--danger);
 }
 
 .logout-desc {
@@ -289,7 +289,7 @@
 
 .logout-button {
   padding: 10px 24px;
-  background: #ef4444;
+  background: var(--danger);
   color: #fff;
   border-radius: var(--radius-md);
   font-weight: 700;

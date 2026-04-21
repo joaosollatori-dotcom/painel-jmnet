@@ -44,8 +44,19 @@ const accordionVariants = {
     closed: { height: 0, opacity: 0, transition: { duration: 0.2, ease: "easeIn" } }
 };
 
+// Mapa de Permissões por Role (v.2.06.01)
+const ROLE_PERMISSIONS: Record<string, string[]> = {
+    SUPER_ADMIN: ['*'],
+    ADMIN: ['*'],
+    FINANCEIRO: ['/dashboard', '/financeiro', '/relatorios', '/wiki', '/ajustes', '/connect'],
+    TECNICO: ['/dashboard', '/os', '/agenda', '/rede', '/equipamentos', '/ocorrencias', '/wiki', 'atendimento_module', '/atendimento', '/connect'],
+    VENDEDOR: ['/dashboard', 'crm_group', '/crm', '/kanban', '/crm_tasks', '/atendimento', '/connect'],
+    COMERCIAL: ['/dashboard', 'crm_group', '/crm', '/kanban', '/crm_tasks', '/atendimento', '/connect'],
+    SUPORTE: ['/atendimento', 'atendimento_module', '/agentes', '/ocorrencias', '/equipamentos', '/wiki', '/connect']
+};
+
 const Sidebar: React.FC<SidebarProps> = (props) => {
-    const { isRetracted, onToggleRetraction, theme, onToggleTheme } = props;
+    const { isRetracted, onToggleRetraction, theme, onToggleTheme, finish, onToggleFinish } = props;
     const location = useLocation();
     const navigate = useNavigate();
     const { profile, signOut } = useAuth();
@@ -88,12 +99,31 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
         });
     };
 
+    const isItemActive = (item: any): boolean => {
+        if (item.id === location.pathname) return true;
+        if (item.subItems) return item.subItems.some((s: any) => isItemActive(s));
+        return false;
+    };
+
     const menuGroups = useMemo(() => {
-        const frequent = getFrequentlyAccessedModules();
+        const role = profile?.role || 'READONLY';
+        const permissions = ROLE_PERMISSIONS[role] || ROLE_PERMISSIONS['SUPORTE'];
+
+        const filterItems = (items: any[]) => {
+            if (permissions.includes('*')) return items;
+            return items.filter(item => {
+                const isAllowed = permissions.includes(item.id) || permissions.includes(item.label);
+                if (isAllowed && item.subItems) {
+                    item.subItems = item.subItems.filter((s: any) => permissions.includes(s.id));
+                }
+                return isAllowed;
+            });
+        };
+
         const baseGroups = [
             {
                 label: 'MAIN',
-                items: [
+                items: filterItems([
                     { id: '/dashboard', icon: SquaresFour, label: 'Dashboard' },
                     {
                         id: 'atendimento_module', icon: Headset, label: 'Atendimento',
@@ -102,11 +132,11 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                             { id: '/agentes', label: 'Robôs Titã AI' },
                         ]
                     },
-                ]
+                ])
             },
             {
                 label: 'OPERAÇÕES',
-                items: [
+                items: filterItems([
                     {
                         id: 'crm_group', icon: TrendUp, label: 'CRM de Leads',
                         subItems: [
@@ -121,24 +151,25 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     { id: '/rede', icon: Globe, label: 'Gestão de Rede' },
                     { id: '/equipamentos', icon: HardDrive, label: 'Equipamentos' },
                     { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
-                ]
+                ])
             },
             {
                 label: 'COMUNICAÇÃO',
-                items: [
+                items: filterItems([
                     { id: '/connect', icon: ChatCircleDots, label: 'TITÃ Connect' },
-                ]
+                ])
             },
             {
                 label: 'SISTEMA',
-                items: [
+                items: filterItems([
                     { id: '/relatorios', icon: ChartLine, label: 'Analytics' },
                     { id: '/wiki', icon: BookOpen, label: 'Central Wiki' },
                     { id: '/ajustes', icon: Gear, label: 'Ajustes' },
-                ]
+                ])
             }
-        ];
+        ].filter(g => g.items.length > 0);
 
+        const frequent = getFrequentlyAccessedModules();
         if (frequent.length > 0) {
             const frequentItems: any[] = [];
             baseGroups.forEach(g => g.items.forEach(i => { if (frequent.includes(i.id)) frequentItems.push(i) }));
@@ -147,13 +178,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
             }
         }
         return baseGroups;
-    }, []);
-
-    const isItemActive = (item: any): boolean => {
-        if (item.id === location.pathname) return true;
-        if (item.subItems) return item.subItems.some((s: any) => isItemActive(s));
-        return false;
-    };
+    }, [profile?.role]);
 
     const handleMouseEnter = (item: any, e: React.MouseEvent) => {
         if (leaveTimerRef.current) clearTimeout(leaveTimerRef.current);
