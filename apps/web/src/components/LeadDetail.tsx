@@ -84,20 +84,20 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
     const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
 
     useEffect(() => {
-        if (lead) {
-            setLocalLead(lead);
+        if (propLead) {
+            setLocalLead(propLead);
             loadLeadContext();
         }
-    }, [lead]);
+    }, [propLead]);
 
     const loadLeadContext = async () => {
-        if (!lead) return;
+        if (!propLead) return;
         const [appts, hist, settings] = await Promise.all([
             getAppointments(),
-            getLeadHistory(lead.id),
+            getLeadHistory(propLead.id),
             getSystemSettings()
         ]);
-        setRelatedAppts(appts.filter(a => a.leadId === lead.id));
+        setRelatedAppts(appts.filter(a => a.leadId === propLead.id));
         setHistoryLogs(hist);
         setSystemSettings(settings);
     };
