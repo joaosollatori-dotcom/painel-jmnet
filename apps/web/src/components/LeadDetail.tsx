@@ -721,36 +721,171 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
 
     return (
         <AnimatePresence>
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="lead-detail-titan">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="lead-detail-crm">
                 {renderHeader()}
-                <div className="detail-layout">
-                    <main className="detail-tabs-area ic-sidebar-scroll">
-                        <nav className="tab-nav-titan">
-                            <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}><Clock size={16} /> Timeline</button>
-                            <button className={activeTab === 'dados' ? 'active' : ''} onClick={() => setActiveTab('dados')}><AddressBook size={16} /> Dados</button>
-                            <button className={activeTab === 'qualificacao' ? 'active' : ''} onClick={() => setActiveTab('qualificacao')}><IdentificationBadge size={16} /> Qualificação</button>
-                            <button className={activeTab === 'viabilidade' ? 'active' : ''} onClick={() => setActiveTab('viabilidade')}><HardDrives size={16} /> Viabilidade</button>
-                            <button className={activeTab === 'proposta' ? 'active' : ''} onClick={() => setActiveTab('proposta')}><Receipt size={16} /> Proposta</button>
-                            <button className={activeTab === 'contratos' ? 'active' : ''} onClick={() => setActiveTab('contratos')} style={activeTab === 'contratos' ? {} : { borderColor: '#22c55e33' }}>
-                                <WifiHigh size={16} /> Contrato
-                            </button>
-                        </nav>
-                        <div className="tab-viewport">
-                            {activeTab === 'timeline' && renderTimeline()}
+
+                <nav className="crm-horizontal-nav">
+                    <button className={activeTab === 'timeline' ? 'active' : ''} onClick={() => setActiveTab('timeline')}>Geral (Workspace)</button>
+                    <button className={activeTab === 'dados' ? 'active' : ''} onClick={() => setActiveTab('dados')}>Preferências do Lead</button>
+                    <button className={activeTab === 'qualificacao' ? 'active' : ''} onClick={() => setActiveTab('qualificacao')}>Qualificação & Viabilidade</button>
+                    <button className={activeTab === 'contratos' ? 'active' : ''} onClick={() => setActiveTab('contratos')}>Contratos e Propostas</button>
+                    <button className={activeTab === 'viabilidade' ? 'active' : ''} onClick={() => setActiveTab('viabilidade')}>Auditoria T.I.</button>
+                </nav>
+
+                <div className="crm-main-viewport ic-sidebar-scroll">
+                    {activeTab === 'timeline' ? (
+                        <div className="crm-3-col-grid">
+                            {/* LEFT COLUMN */}
+                            <div className="crm-col crm-col-left">
+                                <div className="crm-card">
+                                    <div className="crm-card-header">
+                                        <h3>Perfil do Lead</h3>
+                                        <button className="crm-btn-link" onClick={() => setActiveTab('dados')}>Editar</button>
+                                    </div>
+                                    <div className="crm-card-body">
+                                        <div className="crm-profile-info">
+                                            <div className="profile-select-wrapper">
+                                                <select className="titan-select crm-inline-select" value={localLead?.tipoLead || 'B2C'}>
+                                                    <option value="B2C">B2C (Pessoa Física)</option>
+                                                    <option value="B2B">B2B (Empresa)</option>
+                                                </select>
+                                            </div>
+                                            <p><strong>Tipo:</strong> {localLead?.tipoLead || 'Não definido'}</p>
+                                            <p><strong>Workflow:</strong> Qualificação Internet</p>
+                                            <p><strong>Início:</strong> {new Date(localLead?.createdAt).toLocaleDateString('pt-BR')}</p>
+                                            <div className="crm-profile-message">
+                                                <strong>Mensagem Inicial:</strong>
+                                                <p>{localLead?.mensagemOrigem || 'Lead gerado sem mensagem inicial.'}</p>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="crm-card">
+                                    <div className="crm-card-header">
+                                        <h3>Ofertas & Planos</h3>
+                                        <button className="crm-btn-link" onClick={() => setActiveTab('contratos')}>Ver todos</button>
+                                    </div>
+                                    <div className="crm-card-body">
+                                        {contrato ? (
+                                            <div className="crm-offer-item offer-accepted">
+                                                <div className="offer-header">
+                                                    <span>{contrato.planoInternet || localLead?.interessePlano || 'Plano Básico'}</span>
+                                                    <span className="offer-badge accepted">{contrato.status}</span>
+                                                </div>
+                                                <h4 className="offer-price">R$ {contrato.valorMensal?.toFixed(2) || localLead?.valorPlano}</h4>
+                                                <span className="offer-date">Aceito em: {new Date(contrato.dataInicio).toLocaleDateString('pt-BR')}</span>
+                                            </div>
+                                        ) : (
+                                            <div className="crm-offer-item offer-sent">
+                                                <div className="offer-header">
+                                                    <span>Proposta de Plano ({localLead?.interessePlano || 'Não definido'})</span>
+                                                    <span className="offer-badge sent">Enviado</span>
+                                                </div>
+                                                <h4 className="offer-price">R$ {localLead?.valorPlano || '---'}</h4>
+                                                <button className="btn-titan-sm w-full mt-1-5" onClick={() => setActiveTab('contratos')}>Gerar Contrato Oficial</button>
+                                            </div>
+                                        )}
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* CENTER COLUMN (Activity Feed) */}
+                            <div className="crm-col crm-col-center">
+                                <div className="crm-composer">
+                                    <div className="composer-tabs">
+                                        <button className="active"><Pen size={16} /> Nota</button>
+                                        <button onClick={() => dispatchWhatsApp(localLead.telefonePrincipal, 'Olá!', localLead.id)}><WhatsappLogo size={16} /> WhatsApp</button>
+                                        <button onClick={() => dispatchCall(localLead.telefonePrincipal, localLead.id)}><Phone size={16} /> Ligação</button>
+                                        <button><CalendarPlus size={16} /> Tarefa</button>
+                                        <button><EnvelopeSimple size={16} /> E-mail</button>
+                                    </div>
+                                    <div className="composer-body">
+                                        <textarea
+                                            placeholder="Descreva a atividade ou registro interno..."
+                                            value={quickNote}
+                                            onChange={e => setQuickNote(e.target.value)}
+                                        ></textarea>
+                                        <div className="composer-actions">
+                                            <button className="btn-titan-primary" onClick={handleSaveQuickNote}>SALVAR REGISTRO</button>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="crm-timeline-wrapper">
+                                    <h4 className="timeline-section-title">ATIVIDADE RECENTE</h4>
+                                    {renderTimeline()}
+                                </div>
+                            </div>
+
+                            {/* RIGHT COLUMN */}
+                            <div className="crm-col crm-col-right">
+                                <div className="crm-contact-card">
+                                    <div className="contact-avatar">
+                                        {localLead.nomeCompleto?.charAt(0).toUpperCase()}
+                                        <CheckCircle size={16} weight="fill" className="validated-seal" />
+                                    </div>
+                                    <h3>{localLead.nomeCompleto}</h3>
+                                    <p className="contact-id">ID: {localLead.id.slice(0, 8).toUpperCase()}</p>
+
+                                    <button className="crm-btn-link text-center w-full mt-1-5" onClick={() => setShowTransferModal(true)}>
+                                        <UserSwitch size={14} /> Transferir Contato
+                                    </button>
+
+                                    <div className="contact-details-list">
+                                        <div><Phone size={14} /> <span>{localLead.telefonePrincipal || '---'}</span></div>
+                                        <div><EnvelopeSimple size={14} /> <span>{localLead.email || '---'}</span></div>
+                                        <div><ShareNetwork size={14} /> <span>{localLead.origem || 'Website'}</span></div>
+                                        <div><ChatCircleText size={14} /> <span>Prefere: WhatsApp</span></div>
+                                        <div><MapPin size={14} /> <span>{localLead.cidade || '---'}, {localLead.estado || '--'}</span></div>
+                                    </div>
+                                </div>
+
+                                <div className="crm-card">
+                                    <div className="crm-card-header">
+                                        <h3>Vendedor (Broker)</h3>
+                                        <button className="crm-btn-link" onClick={() => setShowTransferModal(true)}>Mudar</button>
+                                    </div>
+                                    <div className="crm-card-body broker-summary">
+                                        <div className="broker-avatar">
+                                            <User size={24} weight="duotone" />
+                                        </div>
+                                        <div>
+                                            <strong>{localLead.vendedorId === '33333333-3333-3333-3333-333333333333' ? 'Mariana Comercial' : 'Central Comercial'}</strong>
+                                            <p className="broker-contact"><Phone size={12} /> Ramal Interno</p>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className="crm-card">
+                                    <div className="crm-card-header">
+                                        <h3>Documentos</h3>
+                                        <button className="crm-btn-link">Upload</button>
+                                    </div>
+                                    <div className="crm-card-body documents-list">
+                                        <div className="doc-item">
+                                            <FileText size={16} />
+                                            <span>Contrato_Prestacao.pdf</span>
+                                            <button className="btn-icon"><ArrowsClockwise size={14} /></button>
+                                        </div>
+                                        <div className="doc-item">
+                                            <IdentificationCard size={16} />
+                                            <span>Documento_Identificacao.jpg</span>
+                                            <button className="btn-icon"><ArrowsClockwise size={14} /></button>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="crm-single-col-view">
                             {activeTab === 'dados' && renderDadosTab()}
                             {activeTab === 'qualificacao' && renderQualificacaoTab()}
-                            {activeTab === 'viabilidade' && renderViabilityTab()}
                             {activeTab === 'proposta' && renderPropostaTab()}
+                            {activeTab === 'viabilidade' && renderViabilityTab()}
                             {activeTab === 'contratos' && renderContratoTab()}
                         </div>
-                    </main>
-                    <aside className="sidebar-titan">
-                        <div className="sidebar-section">
-                            <h3>Ações Rápidas</h3>
-                            <button className="btn-titan-sm w-full mb-1" onClick={() => dispatchWhatsApp(localLead.telefonePrincipal, 'Olá!', localLead.id)}><WhatsappLogo size={20} /> WHATSAPP</button>
-                            <button className="btn-titan-sm w-full" onClick={() => dispatchCall(localLead.telefonePrincipal, localLead.id)}><Phone size={20} /> LIGAÇÃO</button>
-                        </div>
-                    </aside>
+                    )}
                 </div>
                 {showTransferModal && (
                     <div className="titan-modal-overlay">

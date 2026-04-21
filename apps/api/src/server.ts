@@ -15,6 +15,7 @@ import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes.js";
 import { bullmqPlugin } from "./plugins/bullmq.plugin.js";
 import { prismaPlugin } from "./plugins/prisma.plugin.js";
 import { redisPlugin } from "./plugins/redis.plugin.js";
+import { auditPlugin } from "./plugins/audit.plugin.js";
 
 export const server = Fastify({
 	logger: true,
@@ -61,6 +62,7 @@ export async function setupServer() {
 
 	await server.register(redisPlugin);
 	await server.register(bullmqPlugin);
+	await server.register(auditPlugin);
 
 	// Start Background Workers
 	if (!process.env.VERCEL) {

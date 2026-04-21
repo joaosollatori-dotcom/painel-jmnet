@@ -88,51 +88,51 @@ model Lead {
 }
 
 model User {
-  id                                     String               @id @db.Uuid
-  instance_id                            String?              @db.Uuid
-  aud                                    String?              @db.VarChar(255)
-  role                                   String?              @db.VarChar(255)
-  email                                  String?              @db.VarChar(255)
-  email_confirmed_at                     DateTime?            @db.Timestamptz(6)
-  invited_at                             DateTime?            @db.Timestamptz(6)
-  confirmation_token                     String?              @db.VarChar(255)
-  confirmation_sent_at                   DateTime?            @db.Timestamptz(6)
-  recovery_token                         String?              @db.VarChar(255)
-  recovery_sent_at                       String?              @db.VarChar(255)
-  email_change_token_new                 String?              @db.VarChar(255)
-  email_change_token_current             String?              @db.VarChar(255)
-  email_change_sent_at                   DateTime?            @db.Timestamptz(6)
-  last_sign_in_at                        DateTime?            @db.Timestamptz(6)
-  raw_app_meta_data                      Json?
-  raw_user_meta_data                     Json?
-  is_super_admin                         Boolean?
-  created_at                             DateTime?            @db.Timestamptz(6)
-  updated_at                             DateTime?            @db.Timestamptz(6)
-  phone                                  String?              @unique
-  phone_confirmed_at                     DateTime?            @db.Timestamptz(6)
-  phone_change_token                     String?              @default("") @db.VarChar(255)
-  phone_change_sent_at                   DateTime?            @db.Timestamptz(6)
-  confirmed_at                           DateTime?            @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
-  email_change                           String?              @default("") @db.VarChar(255)
-  password_hash                          String?              @default("") @db.VarChar(255)
-  reauthentication_token                 String?              @default("") @db.VarChar(255)
-  reauthentication_sent_at               DateTime?            @db.Timestamptz(6)
-  is_sso_user                            Boolean              @default(false)
-  deleted_at                             DateTime?            @db.Timestamptz(6)
-  is_anonymous                           Boolean              @default(false)
-  identities                             identities[]
-  mfa_factors                            mfa_factors[]
-  sessions                               sessions[]
-  one_time_tokens                       one_time_tokens[]
-  Profile                                Profile?
-  AuditLog                               AuditLog[]
-  invitations                            invitations[]
-  remote_access_keys                     remote_access_keys[]
-  assignedOS                             OrdemServico[]       @relation("TecnicoOS")
-  oauth_authorizations                  oauth_authorizations[]
-  oauth_consents                        oauth_consents[]
-  webauthn_challenges                   webauthn_challenges[]
-  webauthn_credentials                  webauthn_credentials[]
+  id                         String                 @id @db.Uuid
+  instance_id                String?                @db.Uuid
+  aud                        String?                @db.VarChar(255)
+  role                       String?                @db.VarChar(255)
+  email                      String?                @db.VarChar(255)
+  email_confirmed_at         DateTime?              @db.Timestamptz(6)
+  invited_at                 DateTime?              @db.Timestamptz(6)
+  confirmation_token         String?                @db.VarChar(255)
+  confirmation_sent_at       DateTime?              @db.Timestamptz(6)
+  recovery_token             String?                @db.VarChar(255)
+  recovery_sent_at           String?                @db.VarChar(255)
+  email_change_token_new     String?                @db.VarChar(255)
+  email_change_token_current String?                @db.VarChar(255)
+  email_change_sent_at       DateTime?              @db.Timestamptz(6)
+  last_sign_in_at            DateTime?              @db.Timestamptz(6)
+  raw_app_meta_data          Json?
+  raw_user_meta_data         Json?
+  is_super_admin             Boolean?
+  created_at                 DateTime?              @db.Timestamptz(6)
+  updated_at                 DateTime?              @db.Timestamptz(6)
+  phone                      String?                @unique
+  phone_confirmed_at         DateTime?              @db.Timestamptz(6)
+  phone_change_token         String?                @default("") @db.VarChar(255)
+  phone_change_sent_at       DateTime?              @db.Timestamptz(6)
+  confirmed_at               DateTime?              @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
+  email_change               String?                @default("") @db.VarChar(255)
+  password_hash              String?                @default("") @db.VarChar(255)
+  reauthentication_token     String?                @default("") @db.VarChar(255)
+  reauthentication_sent_at   DateTime?              @db.Timestamptz(6)
+  is_sso_user                Boolean                @default(false)
+  deleted_at                 DateTime?              @db.Timestamptz(6)
+  is_anonymous               Boolean                @default(false)
+  identities                 identities[]
+  mfa_factors                mfa_factors[]
+  sessions                   sessions[]
+  one_time_tokens            one_time_tokens[]
+  Profile                    Profile?
+  AuditLog                   AuditLog[]
+  invitations                invitations[]
+  remote_access_keys         remote_access_keys[]
+  assignedOS                 OrdemServico[]         @relation("TecnicoOS")
+  oauth_authorizations       oauth_authorizations[]
+  oauth_consents             oauth_consents[]
+  webauthn_challenges        webauthn_challenges[]
+  webauthn_credentials       webauthn_credentials[]
 
   @@index([instance_id])
   @@map("users")
@@ -140,22 +140,22 @@ model User {
 }
 
 model Assinante {
-  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome          String
-  cpfCnpj       String   @unique
-  metadata      Json?    
-  status        String   @default("ATIVO")
-  tenant_id     String?  @db.Uuid
-  
+  id        String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome      String
+  cpfCnpj   String  @unique
+  metadata  Json?
+  status    String  @default("ATIVO")
+  tenant_id String? @db.Uuid
+
   enderecos     Endereco[]
   contatos      Contato[]
   faturas       Fatura[]
   ordensServico OrdemServico[]
   svas          AssinanteSVA[]
-  
-  createdAt     DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt     DateTime @updatedAt @db.Timestamptz(6)
-  tenants       Tenant? @relation(fields: [tenant_id], references: [id])
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
+  tenants   Tenant?  @relation(fields: [tenant_id], references: [id])
 
   @@schema("public")
 }
@@ -182,7 +182,7 @@ model Contato {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   assinanteId String    @db.Uuid
   assinante   Assinante @relation(fields: [assinanteId], references: [id])
-  tipo        String    
+  tipo        String
   valor       String
 
   @@schema("public")
@@ -195,25 +195,25 @@ model Fatura {
   valor       Decimal   @db.Decimal(10, 2)
   vencimento  DateTime  @db.Timestamptz(6)
   status      String    @default("PENDENTE")
-  
-  pagamento   Pagamento?
-  notaFiscal  NotaFiscal?
-  
-  createdAt   DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt   DateTime @updatedAt @db.Timestamptz(6)
+
+  pagamento  Pagamento?
+  notaFiscal NotaFiscal?
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
   @@schema("public")
 }
 
 model Pagamento {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  faturaId  String   @unique @db.Uuid
-  fatura    Fatura   @relation(fields: [faturaId], references: [id])
-  metodo    String   
-  data      DateTime @default(now()) @db.Timestamptz(6)
-  valor     Decimal  @db.Decimal(10, 2)
-  
-  pix       PagamentoPix?
+  id       String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  faturaId String   @unique @db.Uuid
+  fatura   Fatura   @relation(fields: [faturaId], references: [id])
+  metodo   String
+  data     DateTime @default(now()) @db.Timestamptz(6)
+  valor    Decimal  @db.Decimal(10, 2)
+
+  pix PagamentoPix?
 
   @@schema("public")
 }
@@ -235,7 +235,7 @@ model OrdemServico {
   assinante       Assinante @relation(fields: [assinanteId], references: [id])
   tecnicoId       String?   @db.Uuid
   tecnico         User?     @relation("TecnicoOS", fields: [tecnicoId], references: [id])
-  tipo            String    
+  tipo            String
   status          String    @default("ABERTA")
   descricao       String
   prioridade      String    @default("MEDIA")
@@ -243,48 +243,48 @@ model OrdemServico {
   tenant_id       String?   @db.Uuid
   conversation_id String?   @db.Uuid
   occurrence_id   String?   @db.Uuid
-  
-  conversation         Conversation?         @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  occurrence           customer_occurrences? @relation(fields: [occurrence_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenants              Tenant?               @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  
-  createdAt       DateTime @default(now()) @db.Timestamptz(6)
-  updatedAt       DateTime @updatedAt @db.Timestamptz(6)
+
+  conversation Conversation?         @relation(fields: [conversation_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  occurrence   customer_occurrences? @relation(fields: [occurrence_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants      Tenant?               @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+
+  createdAt DateTime @default(now()) @db.Timestamptz(6)
+  updatedAt DateTime @updatedAt @db.Timestamptz(6)
 
   @@schema("public")
 }
 
 model OLT {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  nome      String
-  ip        String   @unique
-  modelo    String   
-  comunidade String   @default("public")
-  
-  onus      ONU[]
+  id         String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  nome       String
+  ip         String @unique
+  modelo     String
+  comunidade String @default("public")
+
+  onus ONU[]
 
   @@schema("public")
 }
 
 model ONU {
-  id          String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  oltId       String   @db.Uuid
-  olt         OLT      @relation(fields: [oltId], references: [id])
-  serial      String   @unique
-  ponPort     Int
-  status      String   @default("OFFLINE")
-  sinal       String?
+  id      String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  oltId   String  @db.Uuid
+  olt     OLT     @relation(fields: [oltId], references: [id])
+  serial  String  @unique
+  ponPort Int
+  status  String  @default("OFFLINE")
+  sinal   String?
 
   @@schema("public")
 }
 
 model NotaFiscal {
-  id        String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  faturaId  String   @unique @db.Uuid
-  fatura    Fatura   @relation(fields: [faturaId], references: [id])
-  numero    String
-  xml       String
-  status    String   @default("EMITIDA")
+  id       String @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  faturaId String @unique @db.Uuid
+  fatura   Fatura @relation(fields: [faturaId], references: [id])
+  numero   String
+  xml      String
+  status   String @default("EMITIDA")
 
   @@schema("public")
 }
@@ -293,33 +293,33 @@ model AssinanteSVA {
   id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   assinanteId String    @db.Uuid
   assinante   Assinante @relation(fields: [assinanteId], references: [id])
-  svaName     String    
+  svaName     String
   status      String    @default("ATIVO")
 
   @@schema("public")
 }
 
 model Conversation {
-  id              String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  id              String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   contact_name    String
   contact_phone   String?
-  platform        String?          @default("whatsapp")
-  status          String?          @default("new")
+  platform        String?        @default("whatsapp")
+  status          String?        @default("new")
   assigned_to     String?
-  is_pinned       Boolean?         @default(false)
-  is_archived     Boolean?         @default(false)
-  is_muted        Boolean?         @default(false)
-  is_blocked      Boolean?         @default(false)
-  unread_count    Int?             @default(0)
+  is_pinned       Boolean?       @default(false)
+  is_archived     Boolean?       @default(false)
+  is_muted        Boolean?       @default(false)
+  is_blocked      Boolean?       @default(false)
+  unread_count    Int?           @default(0)
   last_message    String?
-  last_message_at DateTime?        @default(now()) @db.Timestamptz(6)
-  ai_active       Boolean?         @default(false)
-  is_closed       Boolean?         @default(false)
-  created_at      DateTime?        @default(now()) @db.Timestamptz(6)
-  updated_at      DateTime?        @default(now()) @updatedAt @db.Timestamptz(6)
+  last_message_at DateTime?      @default(now()) @db.Timestamptz(6)
+  ai_active       Boolean?       @default(false)
+  is_closed       Boolean?       @default(false)
+  created_at      DateTime?      @default(now()) @db.Timestamptz(6)
+  updated_at      DateTime?      @default(now()) @updatedAt @db.Timestamptz(6)
   contact_email   String?
-  tenant_id       String?          @db.Uuid
-  tenants         Tenant?          @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenant_id       String?        @db.Uuid
+  tenants         Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   messages        Message[]
   ordens_servico  OrdemServico[]
 
@@ -354,7 +354,7 @@ model AuditLog {
   ip_address String?
   created_at DateTime? @default(now()) @db.Timestamptz(6)
   User       User?     @relation(fields: [actor_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenants    Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants    Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("audit_logs")
   @@schema("public")
@@ -514,7 +514,7 @@ model mfa_factors {
   web_authn_aaguid             String?          @db.Uuid
   last_webauthn_challenge_data Json?
   mfa_challenges               mfa_challenges[]
-  users                        User            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                        User             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, phone], map: "unique_phone_factor_per_user")
   @@index([user_id, created_at], map: "factor_id_created_at_idx")
@@ -542,7 +542,7 @@ model oauth_authorizations {
   approved_at           DateTime?                  @db.Timestamptz(6)
   nonce                 String?
   oauth_clients         oauth_clients              @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users                 User?                     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                 User?                      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@schema("auth")
 }
@@ -590,7 +590,7 @@ model oauth_consents {
   granted_at    DateTime      @default(now()) @db.Timestamptz(6)
   revoked_at    DateTime?     @db.Timestamptz(6)
   oauth_clients oauth_clients @relation(fields: [client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users         User         @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users         User          @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, client_id], map: "oauth_consents_user_client_unique")
   @@index([user_id, granted_at(sort: Desc)], map: "oauth_consents_user_order_idx")
@@ -607,7 +607,7 @@ model one_time_tokens {
   relates_to String
   created_at DateTime            @default(now()) @db.Timestamp(6)
   updated_at DateTime            @default(now()) @db.Timestamp(6)
-  users      User               @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users      User                @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@unique([user_id, token_type])
   @@index([relates_to], map: "one_time_tokens_relates_to_hash_idx", type: Hash)
@@ -707,7 +707,7 @@ model sessions {
   mfa_amr_claims         mfa_amr_claims[]
   refresh_tokens         refresh_tokens[]
   oauth_clients          oauth_clients?   @relation(fields: [oauth_client_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  users                  User            @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users                  User             @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([not_after(sort: Desc)])
   @@index([oauth_client_id])
@@ -756,7 +756,6 @@ model sso_providers {
 /// This model contains an expression index which requires additional setup for migrations. Visit https://pris.ly/d/expression-indexes for more info.
 // Modelo users duplicado removido (mesclado no modelo User no topo)
 
-
 /// This table contains check constraints and requires additional setup for migrations. Visit https://pris.ly/d/check-constraints for more info.
 model webauthn_challenges {
   id             String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -765,7 +764,7 @@ model webauthn_challenges {
   session_data   Json
   created_at     DateTime @default(now()) @db.Timestamptz(6)
   expires_at     DateTime @db.Timestamptz(6)
-  users          User?   @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users          User?    @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([expires_at])
   @@index([user_id])
@@ -787,7 +786,7 @@ model webauthn_credentials {
   created_at       DateTime  @default(now()) @db.Timestamptz(6)
   updated_at       DateTime  @default(now()) @db.Timestamptz(6)
   last_used_at     DateTime? @db.Timestamptz(6)
-  users            User     @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
+  users            User      @relation(fields: [user_id], references: [id], onDelete: Cascade, onUpdate: NoAction)
 
   @@index([user_id])
   @@schema("auth")
@@ -843,28 +842,28 @@ model allowed_ips {
   ip_address  String
   description String?
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
-  tenants     Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants     Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
 
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model customer_occurrences {
-  id                 String           @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  protocol           String?          @unique
+  id                 String         @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  protocol           String?        @unique
   customer_name      String
   subject            String?
   priority           String?
   status             String?
-  opening_date       DateTime?        @default(now()) @db.Timestamptz(6)
-  last_update        DateTime?        @default(now()) @db.Timestamptz(6)
-  seller_id          String?          @db.Uuid
+  opening_date       DateTime?      @default(now()) @db.Timestamptz(6)
+  last_update        DateTime?      @default(now()) @db.Timestamptz(6)
+  seller_id          String?        @db.Uuid
   description        String?
-  comments           Json?            @default("[]")
-  attachments        Json?            @default("[]")
-  tenant_id          String?          @db.Uuid
-  protocolo          String?          @unique
-  classifica__o      String?          @map("classificação")
+  comments           Json?          @default("[]")
+  attachments        Json?          @default("[]")
+  tenant_id          String?        @db.Uuid
+  protocolo          String?        @unique
+  classifica__o      String?        @map("classificação")
   setor              String?
   motivo             String?
   problema_reportado String?
@@ -872,7 +871,7 @@ model customer_occurrences {
   observacao_publica String?
   veiculo_info       String?
   veiculo_km         Int?
-  notificar_cliente  Boolean?         @default(false)
+  notificar_cliente  Boolean?       @default(false)
   ordens_servico     OrdemServico[]
 
   @@schema("public")
@@ -908,7 +907,7 @@ model invitations {
   expires_at   DateTime? @default(dbgenerated("(now() + '7 days'::interval)")) @db.Timestamptz(6)
   created_at   DateTime? @default(now()) @db.Timestamptz(6)
   User         User?     @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenants      Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants      Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -934,7 +933,7 @@ model lead_history {
   dataEvento    DateTime? @default(now()) @db.Timestamptz(6)
   responsavelId String?   @db.Uuid
   tenant_id     String?   @default(dbgenerated("get_tenant_id()")) @db.Uuid
-  tenants       Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants       Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -952,7 +951,7 @@ model Profile {
   created_at  DateTime? @default(now()) @db.Timestamptz(6)
   updated_at  DateTime? @default(now()) @db.Timestamptz(6)
   User        User      @relation(fields: [id], references: [id], onDelete: Cascade, onUpdate: NoAction)
-  tenants     Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants     Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@map("profiles")
   @@schema("public")
@@ -968,7 +967,7 @@ model remote_access_keys {
   expires_at DateTime? @default(dbgenerated("(now() + '24:00:00'::interval)")) @db.Timestamptz(6)
   created_at DateTime? @default(now()) @db.Timestamptz(6)
   User       User?     @relation(fields: [created_by], references: [id], onDelete: NoAction, onUpdate: NoAction)
-  tenants    Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants    Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
@@ -989,7 +988,6 @@ model sales_stages {
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 // Modelo service_orders removido (substituído por OrdemServico)
 
-
 /// This model contains row level security and requires additional setup for migrations. Visit https://pris.ly/d/row-level-security for more info.
 model system_settings {
   id         String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
@@ -999,7 +997,7 @@ model system_settings {
   value      String
   is_active  Boolean?  @default(true)
   created_at DateTime? @default(now()) @db.Timestamptz(6)
-  tenants    Tenant?  @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  tenants    Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 
   @@schema("public")
 }
