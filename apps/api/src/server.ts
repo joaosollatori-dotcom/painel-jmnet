@@ -9,6 +9,7 @@ import { assinantesRoutes } from "./modules/assinantes/assinantes.routes.js";
 import { financeiroRoutes } from "./modules/financeiro/financeiro.routes.js";
 import { osRoutes } from "./modules/os/os.routes.js";
 import { redeRoutes } from "./modules/rede/rede.routes.js";
+import { genieacsRoutes } from "./modules/genieacs/genieacs.routes.js";
 import { telefoniaRoutes } from "./modules/telefonia/telefonia.routes.js";
 import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes.js";
 import { bullmqPlugin } from "./plugins/bullmq.plugin.js";
@@ -49,6 +50,7 @@ export async function setupServer() {
 	await server.register(assinantesRoutes, { prefix: "/v1/assinantes" });
 	await server.register(financeiroRoutes, { prefix: "/v1/financeiro" });
 	await server.register(redeRoutes, { prefix: "/v1/rede" });
+	await server.register(genieacsRoutes, { prefix: "/v1/genieacs" });
 	await server.register(osRoutes, { prefix: "/v1/os" });
 	await server.register(telefoniaRoutes, { prefix: "/v1/telefonia" });
 	await server.register(whatsappRoutes, { prefix: "/v1/whatsapp" });

@@ -13,6 +13,7 @@ import SettingsManager from './components/SettingsManager';
 import OcorrenciasManager from './components/OcorrenciasManager';
 import WikiManager from './components/WikiManager';
 import OSAgenda from './components/OSAgenda';
+import EquipmentManager from './components/EquipmentManager';
 import InternalChat from './components/InternalChat';
 import { useToast } from './contexts/ToastContext';
 import { useAuth } from './contexts/AuthContext';
@@ -165,6 +166,7 @@ const App: React.FC = () => {
           <Route path="/os" element={<OSManager />} />
           <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/rede" element={<NetworkManager />} />
+          <Route path="/equipamentos" element={<EquipmentManager />} />
           <Route path="/ocorrencias" element={<OcorrenciasManager />} />
           <Route path="/agenda" element={<OSAgenda />} />
           <Route path="/connect" element={<InternalChat />} />

@@ -8,7 +8,7 @@ import {
     ShareNetwork, Users, Robot, CheckSquareOffset,
     Warning, X, PencilSimple, Copy, ChartLineUp,
     IdentificationCard, Wrench, WifiHigh, Clock, TrendUp, WarningCircle,
-    CaretDoubleRight, CaretDoubleLeft, Check
+    CaretDoubleRight, CaretDoubleLeft, Check, ArrowsClockwise
 } from '@phosphor-icons/react';
 import EmojiPicker, { EmojiStyle, Theme } from 'emoji-picker-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -21,6 +21,7 @@ import type { Message, Conversation } from '../services/chatService';
 import LoadingScreen from './LoadingScreen';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
+import { getDeviceSignal } from '../services/genieacsService';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -30,6 +31,8 @@ interface ChatAreaProps {
 const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const { showToast } = useToast();
     const [message, setMessage] = useState('');
+    const [signalData, setSignalData] = useState<any>(null);
+    const [loadingSignal, setLoadingSignal] = useState(false);
 
     // Persistência da Sidebar Direita via localStorage
     const [isInfoRetracted, setIsInfoRetracted] = useState(() => {
@@ -57,7 +60,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     useEffect(() => {
         loadData();
-        const subscription = subscribeToMessages(chatId, (newMsg: any) => {
+        const channel = subscribeToMessages(chatId, (newMsg: any) => {
             setMessages(prev => {
                 const updated = prev.filter(m => !(m.text === newMsg.text && m.status === 'pending'));
                 if (updated.find(m => m.id === newMsg.id)) {
@@ -66,8 +69,31 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                 return [...updated, newMsg];
             });
         });
-        return () => subscription.unsubscribe();
+        return () => {
+            import('../lib/supabase').then(({ supabase }) => supabase.removeChannel(channel));
+        };
     }, [chatId]);
+
+    // Monitoramento do Sinal via GenieACS
+    useEffect(() => {
+        if (conversation) {
+            fetchSignal();
+        }
+    }, [conversation]);
+
+    const fetchSignal = async () => {
+        if (loadingSignal) return;
+        try {
+            setLoadingSignal(true);
+            // Mock do ID do dispositivo (em prod viria do conversation.genie_id)
+            const data = await getDeviceSignal('TITAN-ONU-TESTE');
+            setSignalData(data);
+        } catch (err) {
+            console.error("Erro ao carregar sinal:", err);
+        } finally {
+            setLoadingSignal(false);
+        }
+    };
 
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -163,7 +189,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     }, 1500);
                     break;
                 case 'edit':
-                    setEditData({ name: conversation.contact_name, phone: conversation.contact_phone });
+                    setEditData({ name: conversation.contact_name || '', phone: conversation.contact_phone || '' });
                     setShowEditModal(true);
                     break;
             }
@@ -346,6 +372,36 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                             <h4 style={{ margin: 0 }}>{conversation?.contact_name}</h4>
                             <span style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>{conversation?.contact_phone}</span>
                         </div>
+                        <div className="nav-group">
+                            <div className="sidebar-section-label">Monitoramento TR-069</div>
+                            <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: '12px' }}>
+                                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                                        <WifiHigh size={16} color="var(--accent)" />
+                                        <span style={{ fontWeight: 800, fontSize: '0.7rem', opacity: 0.7 }}>SINAL ÓPTICO</span>
+                                    </div>
+                                    {loadingSignal && <motion.div animate={{ rotate: 360 }} transition={{ repeat: Infinity, duration: 1 }}><ArrowsClockwise size={14} /></motion.div>}
+                                </div>
+
+                                <div style={{ textAlign: 'center', padding: '10px 0' }}>
+                                    <div style={{ fontSize: '1.4rem', fontWeight: 900, color: signalData?.rxPower > -25 ? '#10b981' : '#ef4444' }}>
+                                        {signalData?.rxPower ? `${signalData.rxPower} dBm` : (loadingSignal ? '...' : '--')}
+                                    </div>
+                                    <div style={{ fontSize: '0.65rem', fontWeight: 800, opacity: 0.6, marginTop: '4px' }}>
+                                        {signalData?.rxPower ? (signalData.rxPower > -25 ? 'SINAL EXCELENTE' : 'SINAL CRÍTICO') : 'AGUARDANDO SYNC'}
+                                    </div>
+                                </div>
+
+                                <div style={{ height: '4px', width: '100%', background: 'rgba(0,0,0,0.1)', borderRadius: '2px', overflow: 'hidden', marginTop: '8px' }}>
+                                    <motion.div
+                                        initial={{ width: 0 }}
+                                        animate={{ width: `${Math.max(0, 100 + (signalData?.rxPower || -30) * 3)}%` }}
+                                        style={{ height: '100%', background: signalData?.rxPower > -25 ? '#10b981' : '#ef4444' }}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
                         <div className="nav-group">
                             <div className="sidebar-section-label">Informações</div>
                             <div style={{ padding: '0.75rem', background: 'var(--bg-surface)', borderRadius: '12px', border: '1px solid var(--border)', fontSize: '0.85rem' }}>

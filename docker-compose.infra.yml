@@ -1,0 +1,44 @@
+# ==========================================
+# TITÃ | ISP — Infrastructure Docker Compose
+# Serviços: MongoDB (GenieACS) + Redis (API Cache)
+# ==========================================
+
+services:
+  # MongoDB — banco de dados do GenieACS
+  mongo:
+    image: mongo:4.4-focal
+    container_name: titan_mongo
+    restart: unless-stopped
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo_data:/data/db
+    environment:
+      MONGO_INITDB_DATABASE: genieacs
+    healthcheck:
+      test: [ "CMD", "mongosh", "--eval", "db.adminCommand('ping')" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis — cache do TITÃ API (BullMQ, sessions)
+  redis:
+    image: redis:7-alpine
+    container_name: titan_redis
+    restart: unless-stopped
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    command: redis-server --appendonly yes
+    healthcheck:
+      test: [ "CMD", "redis-cli", "ping" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+volumes:
+  mongo_data:
+    driver: local
+  redis_data:
+    driver: local

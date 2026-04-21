@@ -25,6 +25,7 @@ import {
     BookOpen,
     ChatCircleDots,
     Calendar,
+    HardDrive,
 } from '@phosphor-icons/react';
 import { useAuth } from '../contexts/AuthContext';
 import './Sidebar.css';
@@ -118,6 +119,7 @@ const Sidebar: React.FC<SidebarProps> = (props) => {
                     { id: '/os', icon: Wrench, label: 'Ordens de Serviço' },
                     { id: '/agenda', icon: Calendar, label: 'Agenda Técnica' },
                     { id: '/rede', icon: Globe, label: 'Gestão de Rede' },
+                    { id: '/equipamentos', icon: HardDrive, label: 'Equipamentos' },
                     { id: '/ocorrencias', icon: WarningCircle, label: 'Ocorrências' },
                 ]
             },
