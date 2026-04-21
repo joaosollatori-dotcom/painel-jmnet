@@ -8,7 +8,7 @@ import './Auth.css';
 const Auth: React.FC = () => {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
-    const [searchParams] = useSearchParams();
+    const [searchParams, setSearchParams] = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [companyName, setCompanyName] = useState('');
@@ -42,10 +42,14 @@ const Auth: React.FC = () => {
                 showToast(`Convite aceito para ${data.tenants?.name}`, 'success');
             } else {
                 showToast('Convite não encontrado ou expirado.', 'error');
+                setSearchParams({});
+                setMode('login');
             }
         } catch (err) {
             console.error('Invalid invite token:', err);
             showToast('Erro ao validar o convite.', 'error');
+            setSearchParams({});
+            setMode('login');
         }
     };
 
@@ -157,6 +161,7 @@ const Auth: React.FC = () => {
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 required
+                                readOnly={!!inviteData}
                             />
                         </div>
 
@@ -174,7 +179,7 @@ const Auth: React.FC = () => {
                             </div>
                         )}
 
-                        {mode === 'signup' && !inviteData && (
+                        {mode === 'signup' && !searchParams.get('invite') && !inviteData && (
                             <div className="titan-field">
                                 <label><Buildings size={18} /> Nome da Organização / ISP</label>
                                 <input
@@ -190,7 +195,7 @@ const Auth: React.FC = () => {
                         <button className="btn-titan-auth" disabled={loading}>
                             {loading ? <Spinner className="animate-spin" /> : (
                                 <>
-                                    {mode === 'login' ? 'ENTRAR NO SISTEMA' : mode === 'signup' ? (inviteData ? 'ACEITAR CONVITE E CRIAR CONTA' : 'FUNDAR ORGANIZAÇÃO & CRIAR CONTA') : 'ENVIAR LINK'}
+                                    {mode === 'login' ? 'ENTRAR NO SISTEMA' : mode === 'signup' ? (inviteData ? 'ACEITAR CONVITE E CRIAR CONTA' : searchParams.get('invite') ? 'VALIDANDO CONVITE...' : 'FUNDAR ORGANIZAÇÃO & CRIAR CONTA') : 'ENVIAR LINK'}
                                     <ArrowRight weight="bold" />
                                 </>
                             )}
