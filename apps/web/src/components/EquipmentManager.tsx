@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import {
     HardDrive, Info, WifiHigh,
     ArrowsClockwise, Power, MagnifyingGlass,
-    CaretRight, Activity, Cpu, Database
+    CaretRight, TrendUp, Cpu, Database
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getGenieDevices, rebootDevice, refreshDevice, getDeviceSignal } from '../services/genieacsService';
@@ -129,7 +129,7 @@ const EquipmentManager: React.FC = () => {
                                 {/* Gauge de Sinal */}
                                 <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '24px', border: '1px solid var(--border)' }}>
                                     <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '20px', opacity: 0.6, fontSize: '0.8rem', fontWeight: 800 }}>
-                                        <Activity size={18} /> STATUS DE SINAL ÓPTICO
+                                        <TrendUp size={18} /> STATUS DE SINAL ÓPTICO
                                     </div>
                                     <div style={{ textAlign: 'center' }}>
                                         <div style={{ fontSize: '3rem', fontWeight: 900, color: signal?.rxPower > -25 ? '#10b981' : '#ef4444' }}>
