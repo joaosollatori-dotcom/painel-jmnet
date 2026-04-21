@@ -1,122 +1,293 @@
-import React from 'react';
-import { CurrencyDollar, ArrowUp, ArrowDown, Receipt, CreditCard, Bank, Calendar, WarningCircle, MagnifyingGlass, Funnel } from '@phosphor-icons/react';
-import { genericFilter } from '../utils/filterUtils';
-import './FinanceManager.css';
+import React, { useState, useEffect } from 'react';
+import {
+    Wallet, TrendingUp, TrendingDown,
+    ArrowsClockwise, Bank, Receipt,
+    Plus, DotsThreeVertical, ChartPieSlice,
+    Eye, EyeSlash, CheckCircle, Clock
+} from '@phosphor-icons/react';
+import { motion, AnimatePresence } from 'framer-motion';
+import PluggyConnect from 'react-pluggy-connect';
+import { getPluggyConnectToken, getFaturasSummary } from '../services/financeiroService';
+import { useToast } from '../contexts/ToastContext';
 
 const FinanceManager: React.FC = () => {
-    const [searchTerm, setSearchTerm] = React.useState('');
-    const invoices = [
-        { id: 1, cliente: 'Assinante Exemplo 1', vencimento: '15/04/2026', valor: 'R$ 109,90', status: 'PAGO' },
-        { id: 2, cliente: 'Assinante Exemplo 2', vencimento: '16/04/2026', valor: 'R$ 159,90', status: 'PENDENTE' },
-        { id: 3, cliente: 'Empresa Alpha', vencimento: '20/04/2026', valor: 'R$ 450,00', status: 'PAGO' },
-        { id: 4, cliente: 'Condomínio Solar', vencimento: '22/04/2026', valor: 'R$ 2.100,00', status: 'ATRASADO' },
-        { id: 5, cliente: 'João Silva', vencimento: '25/04/2026', valor: 'R$ 89,90', status: 'PAGO' },
-    ];
+    const { showToast } = useToast();
+    const [connectToken, setConnectToken] = useState<string | null>(null);
+    const [showWidget, setShowWidget] = useState(false);
+    const [showValues, setShowValues] = useState(true);
+    const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'conciliation'>('overview');
+    const [faturas, setFaturas] = useState<any[]>([]);
 
-    const filteredInvoices = genericFilter(invoices, searchTerm);
+    useEffect(() => {
+        loadData();
+    }, []);
 
-    const stats = [
-        { label: 'MRR (Mensalidade)', value: 'R$ 142.500,00', icon: CurrencyDollar, trend: '+8%', color: '#10b981' },
-        { label: 'Inadimplência', value: '4.2%', icon: WarningCircle, trend: '-0.5%', color: '#ef4444' },
-        { label: 'Recebido (Hoje)', value: 'R$ 12.430,00', icon: Bank, trend: '+15%', color: '#3b82f6' },
-        { label: 'NFSe Emitidas', value: '1.240', icon: Receipt, trend: '+2%', color: 'var(--accent)' },
-    ];
+    const loadData = async () => {
+        try {
+            const data = await getFaturasSummary();
+            setFaturas(data || []);
+        } catch (err) {
+            console.error(err);
+        }
+    };
+
+    const handleConnectBank = async () => {
+        try {
+            showToast('Gerando token de conexão segura...', 'info');
+            const token = await getPluggyConnectToken();
+            setConnectToken(token);
+            setShowWidget(true);
+        } catch (err) {
+            showToast('Erro ao iniciar Open Finance', 'error');
+        }
+    };
 
     return (
-        <div className="finance-container">
-            <header className="finance-header">
-                <h1>Gestão Financeira</h1>
-                <p>Controle de faturas, conciliação PIX e emissão de notas fiscais.</p>
+        <div style={{ padding: '32px', height: '100%', overflowY: 'auto', background: 'var(--bg-deep)' }}>
+            <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '40px' }}>
+                <div>
+                    <h1 style={{ fontSize: '2rem', fontWeight: 900, margin: 0, display: 'flex', alignItems: 'center', gap: '12px' }}>
+                        <Wallet weight="fill" color="var(--accent)" /> Fluxo Financeiro
+                    </h1>
+                    <p style={{ opacity: 0.6, marginTop: '4px' }}>Gestão de recebíveis e conciliação Open Finance</p>
+                </div>
+                <div style={{ display: 'flex', gap: '12px' }}>
+                    <button
+                        onClick={() => setShowValues(!showValues)}
+                        className="wiki-cat-btn"
+                    >
+                        {showValues ? <EyeSlash /> : <Eye />} {showValues ? 'Ocultar' : 'Mostrar'} Valores
+                    </button>
+                    <button
+                        onClick={handleConnectBank}
+                        style={{
+                            background: 'var(--accent)',
+                            color: '#fff',
+                            border: 'none',
+                            padding: '12px 24px',
+                            borderRadius: '14px',
+                            fontWeight: 800,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: '8px',
+                            cursor: 'pointer',
+                            boxShadow: '0 8px 16px rgba(var(--accent-rgb), 0.3)'
+                        }}
+                    >
+                        <Bank weight="bold" /> Conectar Banco
+                    </button>
+                </div>
             </header>
 
-            <div className="stats-grid">
-                {stats.map((s, i) => (
-                    <div key={i} className="stat-card">
-                        <div className="stat-card-header">
-                            <div className="stat-icon" style={{ background: `${s.color}15`, color: s.color }}>
-                                <s.icon size={24} weight="fill" />
+            {/* Widgets de Resumo */}
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
+                {[
+                    { label: 'Saldo Conciliado', value: 'R$ 124.502,30', icon: Bank, color: 'var(--accent)', trend: '+12%' },
+                    { label: 'Recebimentos (Mês)', value: 'R$ 45.200,00', icon: TrendingUp, color: '#10b981', trend: '+5%' },
+                    { label: 'Inadimplência', value: 'R$ 3.410,00', icon: TrendingDown, color: '#ef4444', trend: '-2%' },
+                    { label: 'Aguardando Pagto', value: 'R$ 12.800,00', icon: Clock, color: '#f59e0b', trend: 'stable' },
+                ].map((stat, i) => (
+                    <motion.div
+                        key={i}
+                        initial={{ opacity: 0, y: 20 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        transition={{ delay: i * 0.1 }}
+                        style={{
+                            background: 'var(--bg-surface)',
+                            padding: '24px',
+                            borderRadius: '24px',
+                            border: '1px solid var(--border)',
+                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                        }}
+                    >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                            <div style={{ padding: '10px', borderRadius: '12px', background: `${stat.color}15`, color: stat.color }}>
+                                <stat.icon size={24} weight="fill" />
                             </div>
-                            <span className="stat-trend" style={{ color: s.color, background: `${s.color}10` }}>
-                                {s.trend}
+                            <span style={{
+                                fontSize: '0.75rem',
+                                fontWeight: 800,
+                                color: stat.trend.startsWith('+') ? '#10b981' : stat.trend.startsWith('-') ? '#ef4444' : 'var(--text-secondary)',
+                                background: stat.trend.startsWith('+') ? '#10b98115' : stat.trend.startsWith('-') ? '#ef444415' : '#8881',
+                                padding: '4px 8px',
+                                borderRadius: '8px',
+                                alignSelf: 'flex-start'
+                            }}>
+                                {stat.trend}
                             </span>
                         </div>
-                        <div>
-                            <span className="stat-label">{s.label}</span>
-                            <h2 className="stat-value">{s.value}</h2>
+                        <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6 }}>{stat.label}</div>
+                        <div style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '4px', filter: showValues ? 'none' : 'blur(8px)' }}>
+                            {stat.value}
                         </div>
-                    </div>
+                    </motion.div>
                 ))}
             </div>
 
-            <div className="search-filter-row">
-                <div className="search-input-wrapper">
-                    <MagnifyingGlass size={20} className="search-icon" />
-                    <input
-                        type="text"
-                        placeholder="Buscar em faturas, clientes, valores ou status..."
-                        value={searchTerm}
-                        onChange={(e) => setSearchTerm(e.target.value)}
-                        className="search-input"
-                    />
-                </div>
-                <button className="flex-center filter-btn">
-                    <Funnel size={20} />
-                </button>
-            </div>
-
-            <div className="finance-main-grid">
-                <div className="finance-panel">
-                    <div className="panel-header">
-                        <h3 className="panel-title">Últimas Faturas</h3>
-                        <button className="btn-view-all">Ver tudo</button>
+            {/* Conteúdo Principal */}
+            <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '32px' }}>
+                <div style={{ background: 'var(--bg-surface)', borderRadius: '28px', border: '1px solid var(--border)', overflow: 'hidden' }}>
+                    <div style={{ padding: '24px', borderBottom: '1px solid var(--border)', display: 'flex', gap: '24px' }}>
+                        <button
+                            onClick={() => setActiveTab('overview')}
+                            style={{
+                                background: 'none', border: 'none', padding: '8px 0',
+                                borderBottom: activeTab === 'overview' ? '3px solid var(--accent)' : '3px solid transparent',
+                                fontWeight: 800, color: activeTab === 'overview' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Últimas Transações
+                        </button>
+                        <button
+                            onClick={() => setActiveTab('invoices')}
+                            style={{
+                                background: 'none', border: 'none', padding: '8px 0',
+                                borderBottom: activeTab === 'invoices' ? '3px solid var(--accent)' : '3px solid transparent',
+                                fontWeight: 800, color: activeTab === 'invoices' ? 'var(--text-primary)' : 'var(--text-secondary)',
+                                cursor: 'pointer'
+                            }}
+                        >
+                            Faturas Emitidas
+                        </button>
                     </div>
-                    <table className="finance-table">
-                        <thead>
-                            <tr>
-                                <th>CLIENTE</th>
-                                <th>VENCIMENTO</th>
-                                <th>VALOR</th>
-                                <th>STATUS</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filteredInvoices.map(inv => (
-                                <tr key={inv.id}>
-                                    <td>{inv.cliente}</td>
-                                    <td>{inv.vencimento}</td>
-                                    <td>{inv.valor}</td>
-                                    <td>
-                                        <span className="status-badge" style={{
-                                            background: inv.status === 'PAGO' ? '#10b98120' : inv.status === 'ATRASADO' ? '#ef444420' : '#f59e0b20',
-                                            color: inv.status === 'PAGO' ? '#10b981' : inv.status === 'ATRASADO' ? '#ef4444' : '#f59e0b'
-                                        }}>
-                                            {inv.status}
-                                        </span>
-                                    </td>
-                                </tr>
+
+                    <div style={{ padding: '24px' }}>
+                        {activeTab === 'overview' ? (
+                            <table style={{ width: '100%', borderCollapse: 'collapse' }}>
+                                <thead>
+                                    <tr style={{ textAlign: 'left', opacity: 0.4, fontSize: '0.75rem', fontWeight: 800 }}>
+                                        <th style={{ padding: '12px' }}>DATA</th>
+                                        <th style={{ padding: '12px' }}>DESCRIÇÃO</th>
+                                        <th style={{ padding: '12px' }}>CATEGORIA</th>
+                                        <th style={{ padding: '12px', textAlign: 'right' }}>VALOR</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {[
+                                        { date: 'Hoje, 14:20', desc: 'Mensalidade - João Silva', cat: 'Internet', val: '+ R$ 99,90', type: 'in' },
+                                        { date: 'Hoje, 10:05', desc: 'Amazon Web Services', cat: 'Infra', val: '- R$ 1.250,00', type: 'out' },
+                                        { date: 'Ontem', desc: 'Instalação - Maria Souza', cat: 'Serviço', val: '+ R$ 150,00', type: 'in' },
+                                        { date: 'Ontem', desc: 'Equipe Técnica - Combustível', cat: 'Operação', val: '- R$ 340,00', type: 'out' },
+                                        { date: '18 Abr', desc: 'Mensalidade - Pedro Alves', cat: 'Internet', val: '+ R$ 99,90', type: 'in' },
+                                    ].map((tx, i) => (
+                                        <tr key={i} style={{ borderBottom: '1px solid var(--border-light)' }}>
+                                            <td style={{ padding: '16px 12px', fontSize: '0.85rem', fontWeight: 600 }}>{tx.date}</td>
+                                            <td style={{ padding: '16px 12px', fontWeight: 800 }}>{tx.desc}</td>
+                                            <td style={{ padding: '16px 12px' }}>
+                                                <span style={{ fontSize: '0.7rem', fontWeight: 800, background: 'var(--bg-deep)', padding: '4px 8px', borderRadius: '6px' }}>
+                                                    {tx.cat.toUpperCase()}
+                                                </span>
+                                            </td>
+                                            <td style={{
+                                                padding: '16px 12px',
+                                                textAlign: 'right',
+                                                fontWeight: 900,
+                                                color: tx.type === 'in' ? '#10b981' : '#ef4444',
+                                                filter: showValues ? 'none' : 'blur(8px)'
+                                            }}>
+                                                {tx.val}
+                                            </td>
+                                        </tr>
+                                    ))}
+                                </tbody>
+                            </table>
+                        ) : (
+                            <div style={{ textAlign: 'center', padding: '40px', opacity: 0.5 }}>
+                                <Receipt size={48} weight="light" />
+                                <p>Nenhuma fatura encontrada no período selecionado</p>
+                            </div>
+                        )}
+                    </div>
+                </div>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '32px' }}>
+                    {/* Gráfico de Pizza / Categorias */}
+                    <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '28px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 20px 0', fontSize: '1rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <ChartPieSlice weight="fill" color="var(--accent)" /> Gastos por Categoria
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                            {[
+                                { name: 'Infraestrutura', val: '45%', color: 'var(--accent)' },
+                                { name: 'Marketing', val: '25%', color: '#8b5cf6' },
+                                { name: 'Equipe', val: '20%', color: '#3b82f6' },
+                                { name: 'Outros', val: '10%', color: '#94a3b8' },
+                            ].map((cat, i) => (
+                                <div key={i}>
+                                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: 800, marginBottom: '6px' }}>
+                                        <span>{cat.name}</span>
+                                        <span>{cat.val}</span>
+                                    </div>
+                                    <div style={{ height: '8px', background: 'var(--bg-deep)', borderRadius: '4px', overflow: 'hidden' }}>
+                                        <motion.div initial={{ width: 0 }} animate={{ width: cat.val }} style={{ height: '100%', background: cat.color }} />
+                                    </div>
+                                </div>
                             ))}
-                        </tbody>
-                    </table>
-                </div>
+                        </div>
+                    </div>
 
-                <div className="finance-panel">
-                    <h3 className="panel-title mb-24">Ferramentas Rápidas</h3>
-                    <div className="quick-tools">
-                        <button className="tool-btn">
-                            <CreditCard size={20} color="var(--accent)" />
-                            <span>Gerar Boleto Avulso</span>
-                        </button>
-                        <button className="tool-btn">
-                            <Calendar size={20} color="var(--accent)" />
-                            <span>Prorrogar Vencimentos</span>
-                        </button>
-                        <button className="tool-btn">
-                            <Receipt size={20} color="var(--accent)" />
-                            <span>Importar Arquivo Remessa</span>
-                        </button>
+                    {/* Bancos Conectados */}
+                    <div style={{ background: 'var(--bg-surface)', padding: '24px', borderRadius: '28px', border: '1px solid var(--border)' }}>
+                        <h3 style={{ margin: '0 0 20px 0', fontSize: '1rem', fontWeight: 900, display: 'flex', alignItems: 'center', gap: '8px' }}>
+                            <Bank weight="fill" color="var(--accent)" /> Contas Conectadas
+                        </h3>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <div style={{ padding: '16px', background: 'var(--bg-deep)', borderRadius: '16px', display: 'flex', alignItems: 'center', gap: '12px' }}>
+                                <div style={{ width: '40px', height: '40px', borderRadius: '10px', background: '#ec6b1d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#fff', fontWeight: 900 }}>IT</div>
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ fontSize: '0.9rem', fontWeight: 800 }}>Itaú Unibanco</div>
+                                    <div style={{ fontSize: '0.7rem', opacity: 0.6 }}>Atualizado há 10 min</div>
+                                </div>
+                                <CheckCircle weight="fill" color="#10b981" />
+                            </div>
+                            <button
+                                onClick={handleConnectBank}
+                                style={{
+                                    padding: '16px', border: '2px dashed var(--border)', background: 'none',
+                                    borderRadius: '16px', color: 'var(--text-secondary)', fontWeight: 800,
+                                    cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px'
+                                }}
+                            >
+                                <Plus weight="bold" /> Adicionar Conta
+                            </button>
+                        </div>
                     </div>
                 </div>
             </div>
+
+            {/* Widget Pluggy Connect */}
+            <AnimatePresence>
+                {showWidget && connectToken && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        style={{
+                            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+                            background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex',
+                            alignItems: 'center', justifyContent: 'center'
+                        }}
+                    >
+                        <div style={{ width: '100%', maxWidth: '400px', background: '#fff', borderRadius: '24px', overflow: 'hidden' }}>
+                            <PluggyConnect
+                                updateItem={null}
+                                connectToken={connectToken}
+                                onSuccess={(item: any) => {
+                                    showToast('Banco conectado com sucesso!', 'success');
+                                    setShowWidget(false);
+                                    console.log('Open Finance Success:', item);
+                                }}
+                                onError={(error: any) => {
+                                    showToast('Falha na conexão bancária', 'error');
+                                    setShowWidget(false);
+                                    console.error('Open Finance Error:', error);
+                                }}
+                            />
+                        </div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };
