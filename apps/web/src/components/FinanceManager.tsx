@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import {
-    Wallet, TrendingUp, TrendingDown,
+    Wallet, TrendUp, TrendDown,
     ArrowsClockwise, Bank, Receipt,
     Plus, DotsThreeVertical, ChartPieSlice,
     Eye, EyeSlash, CheckCircle, Clock
@@ -83,8 +83,8 @@ const FinanceManager: React.FC = () => {
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '24px', marginBottom: '40px' }}>
                 {[
                     { label: 'Saldo Conciliado', value: 'R$ 124.502,30', icon: Bank, color: 'var(--accent)', trend: '+12%' },
-                    { label: 'Recebimentos (Mês)', value: 'R$ 45.200,00', icon: TrendingUp, color: '#10b981', trend: '+5%' },
-                    { label: 'Inadimplência', value: 'R$ 3.410,00', icon: TrendingDown, color: '#ef4444', trend: '-2%' },
+                    { label: 'Recebimentos (Mês)', value: 'R$ 45.200,00', icon: TrendUp, color: '#10b981', trend: '+5%' },
+                    { label: 'Inadimplência', value: 'R$ 3.410,00', icon: TrendDown, color: '#ef4444', trend: '-2%' },
                     { label: 'Aguardando Pagto', value: 'R$ 12.800,00', icon: Clock, color: '#f59e0b', trend: 'stable' },
                 ].map((stat, i) => (
                     <motion.div
