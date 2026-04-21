@@ -20,6 +20,13 @@ const EquipmentManager: React.FC = () => {
         loadDevices();
     }, []);
 
+    const renderValue = (val: any) => {
+        if (!val) return 'N/A';
+        if (typeof val === 'object' && val._value !== undefined) return val._value;
+        if (typeof val === 'object') return 'N/A';
+        return val;
+    };
+
     const loadDevices = async () => {
         try {
             setLoading(true);
@@ -97,7 +104,7 @@ const EquipmentManager: React.FC = () => {
                                 <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981' }}></span>
                             </div>
                             <div style={{ fontWeight: 800, fontSize: '0.95rem' }}>
-                                {device.InternetGatewayDevice?.DeviceInfo?.Manufacturer || 'CPE'} - {device.InternetGatewayDevice?.DeviceInfo?.ModelName || 'GenieSim'}
+                                {renderValue(device.InternetGatewayDevice?.DeviceInfo?.Manufacturer)} - {renderValue(device.InternetGatewayDevice?.DeviceInfo?.ModelName)}
                             </div>
                         </motion.div>
                     ))}
@@ -116,8 +123,8 @@ const EquipmentManager: React.FC = () => {
                         <motion.div key={selectedId} initial={{ y: 20, opacity: 0 }} animate={{ y: 0, opacity: 1 }} style={{ maxWidth: '900px', margin: '0 auto' }}>
                             <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '32px' }}>
                                 <div>
-                                    <h1 style={{ margin: 0 }}>{selectedDevice.InternetGatewayDevice?.DeviceInfo?.ModelName}</h1>
-                                    <p style={{ opacity: 0.6 }}>Serial: {selectedDevice.InternetGatewayDevice?.DeviceInfo?.SerialNumber || 'N/A'}</p>
+                                    <h1 style={{ margin: 0 }}>{renderValue(selectedDevice.InternetGatewayDevice?.DeviceInfo?.ModelName)}</h1>
+                                    <p style={{ opacity: 0.6 }}>Serial: {renderValue(selectedDevice.InternetGatewayDevice?.DeviceInfo?.SerialNumber)}</p>
                                 </div>
                                 <div style={{ display: 'flex', gap: '12px' }}>
                                     <button className="wiki-cat-btn" onClick={() => handleAction('refresh')}><ArrowsClockwise /> Forçar Refresh</button>
@@ -152,7 +159,7 @@ const EquipmentManager: React.FC = () => {
                                     <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span style={{ opacity: 0.5 }}>IP WAN</span>
-                                            <span style={{ fontWeight: 700 }}>{selectedDevice.InternetGatewayDevice?.WANDevice?.['1']?.WANConnectionDevice?.['1']?.WANIPConnection?.['1']?.ExternalIPAddress || 'Dinâmico'}</span>
+                                            <span style={{ fontWeight: 700 }}>{renderValue(selectedDevice.InternetGatewayDevice?.WANDevice?.['1']?.WANConnectionDevice?.['1']?.WANIPConnection?.['1']?.ExternalIPAddress) || 'Dinâmico'}</span>
                                         </div>
                                         <div style={{ display: 'flex', justifyContent: 'space-between' }}>
                                             <span style={{ opacity: 0.5 }}>Uptime</span>

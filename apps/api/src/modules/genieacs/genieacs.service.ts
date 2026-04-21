@@ -68,13 +68,18 @@ export class GenieACSService {
         if (!device) return null;
 
         // Mapeamento de sinais (varia por fabricante, ex: Huawei)
-        // Tenta caminhos comuns de sinal óptico
-        const rx = device.InternetGatewayDevice?.X_PON_InterfaceConfig?.OpticalInfo?.RxPower ||
-            device.Device?.Optical?.Interface?.['1']?.Stats?.OpticalSignalLevel ||
-            -20; // Mock se não encontrar no simulador padrão
+        const getVal = (obj: any) => {
+            if (!obj) return null;
+            return typeof obj === 'object' && obj._value !== undefined ? obj._value : obj;
+        };
+
+        const rxRaw = device.InternetGatewayDevice?.X_PON_InterfaceConfig?.OpticalInfo?.RxPower ||
+            device.Device?.Optical?.Interface?.['1']?.Stats?.OpticalSignalLevel;
+
+        const rx = getVal(rxRaw);
 
         return {
-            rxPower: parseFloat(rx),
+            rxPower: rx ? parseFloat(rx) : -20, // -20 é o fallback se não encontrar
             online: (new Date().getTime() - new Date(device._lastInform).getTime()) < 600000 // 10 min
         };
     }
