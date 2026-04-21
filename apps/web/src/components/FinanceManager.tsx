@@ -5,15 +5,13 @@ import {
     Plus, DotsThreeVertical, ChartPieSlice,
     Eye, EyeSlash, CheckCircle, Clock
 } from '@phosphor-icons/react';
-import { motion, AnimatePresence } from 'framer-motion';
-import PluggyConnect from 'react-pluggy-connect';
+import { motion } from 'framer-motion';
+// Pluggy Connect é carregado via CDN no index.html (window.PluggyConnect)
 import { getPluggyConnectToken, getFaturasSummary } from '../services/financeiroService';
 import { useToast } from '../contexts/ToastContext';
 
 const FinanceManager: React.FC = () => {
     const { showToast } = useToast();
-    const [connectToken, setConnectToken] = useState<string | null>(null);
-    const [showWidget, setShowWidget] = useState(false);
     const [showValues, setShowValues] = useState(true);
     const [activeTab, setActiveTab] = useState<'overview' | 'invoices' | 'conciliation'>('overview');
     const [faturas, setFaturas] = useState<any[]>([]);
@@ -35,8 +33,24 @@ const FinanceManager: React.FC = () => {
         try {
             showToast('Gerando token de conexão segura...', 'info');
             const token = await getPluggyConnectToken();
-            setConnectToken(token);
-            setShowWidget(true);
+            const PluggyConnect = (window as any).PluggyConnect;
+            if (!PluggyConnect) {
+                showToast('SDK do Pluggy não carregado', 'error');
+                return;
+            }
+            const pluggyConnect = new PluggyConnect({
+                connectToken: token,
+                includeSandbox: true,
+                onSuccess: (itemData: any) => {
+                    showToast('Banco conectado com sucesso!', 'success');
+                    console.log('Open Finance Success:', itemData);
+                },
+                onError: (error: any) => {
+                    showToast('Falha na conexão bancária', 'error');
+                    console.error('Open Finance Error:', error);
+                }
+            });
+            pluggyConnect.init();
         } catch (err) {
             showToast('Erro ao iniciar Open Finance', 'error');
         }
@@ -256,38 +270,7 @@ const FinanceManager: React.FC = () => {
                 </div>
             </div>
 
-            {/* Widget Pluggy Connect */}
-            <AnimatePresence>
-                {showWidget && connectToken && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        style={{
-                            position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
-                            background: 'rgba(0,0,0,0.8)', zIndex: 9999, display: 'flex',
-                            alignItems: 'center', justifyContent: 'center'
-                        }}
-                    >
-                        <div style={{ width: '100%', maxWidth: '400px', background: '#fff', borderRadius: '24px', overflow: 'hidden' }}>
-                            <PluggyConnect
-                                updateItem={null}
-                                connectToken={connectToken}
-                                onSuccess={(item: any) => {
-                                    showToast('Banco conectado com sucesso!', 'success');
-                                    setShowWidget(false);
-                                    console.log('Open Finance Success:', item);
-                                }}
-                                onError={(error: any) => {
-                                    showToast('Falha na conexão bancária', 'error');
-                                    setShowWidget(false);
-                                    console.error('Open Finance Error:', error);
-                                }}
-                            />
-                        </div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+            {/* Widget Pluggy Connect é lançado imperativamente via window.PluggyConnect.init() */}
         </div>
     );
 };
