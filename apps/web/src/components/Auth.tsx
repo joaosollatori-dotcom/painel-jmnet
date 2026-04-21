@@ -47,17 +47,52 @@ const Auth: React.FC = () => {
         }
     };
 
+    const claimInvite = async (userId: string) => {
+        if (!inviteData || !searchParams.get('invite')) return;
+
+        try {
+            // 1. Atualizar o Perfil do Usuário com Tenant e Role
+            const { error: profileError } = await supabase
+                .from('profiles')
+                .update({
+                    tenant_id: inviteData.tenant_id,
+                    role: inviteData.role
+                })
+                .eq('id', userId);
+
+            if (profileError) throw profileError;
+
+            // 2. Marcar convite como utilizado
+            const { error: inviteError } = await supabase
+                .from('invitations')
+                .update({ used_at: new Date().toISOString() })
+                .eq('invite_token', searchParams.get('invite'));
+
+            if (inviteError) throw inviteError;
+
+            showToast(`Vínculo com ${inviteData.company_name} estabelecido!`, 'success');
+        } catch (err) {
+            console.error('Error claiming invite:', err);
+            showToast('Falha ao vincular convite à sua conta.', 'error');
+        }
+    };
+
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
 
         try {
             if (mode === 'login') {
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
+
+                if (data.user && inviteData) {
+                    await claimInvite(data.user.id);
+                }
+
                 showToast('Bem-vindo ao TITÃ ISP!', 'success');
             } else if (mode === 'signup') {
-                const { error } = await supabase.auth.signUp({
+                const { data, error } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -70,7 +105,17 @@ const Auth: React.FC = () => {
                     }
                 });
                 if (error) throw error;
-                showToast('Verifique seu e-mail para confirmar a conta e a organização!', 'success');
+
+                if (data.user && inviteData) {
+                    // Para signup, o trigger de banco deve cuidar disso, 
+                    // mas marcar o convite como usado é prudente.
+                    await supabase
+                        .from('invitations')
+                        .update({ used_at: new Date().toISOString() })
+                        .eq('invite_token', searchParams.get('invite'));
+                }
+
+                showToast('Verifique seu e-mail para confirmar a conta!', 'success');
             } else {
                 const { error } = await supabase.auth.resetPasswordForEmail(email);
                 if (error) throw error;

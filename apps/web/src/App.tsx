@@ -15,6 +15,7 @@ import WikiManager from './components/WikiManager';
 import OSAgenda from './components/OSAgenda';
 import EquipmentManager from './components/EquipmentManager';
 import InternalChat from './components/InternalChat';
+import DashboardManager from './components/DashboardManager';
 import { useToast } from './contexts/ToastContext';
 import { useAuth } from './contexts/AuthContext';
 import Auth from './components/Auth';
@@ -153,7 +154,7 @@ const App: React.FC = () => {
       />
       <main className="content">
         <Routes>
-          <Route path="/" element={<Navigate to="/atendimento" />} />
+          <Route path="/" element={<Navigate to="/dashboard" />} />
           <Route path="/atendimento" element={<ChatPage />} />
           <Route path="/agentes" element={<div className="loading-state"><h3>Robôs Titã AI</h3><p>Módulo de inteligência em processamento...</p></div>} />
           <Route path="/crm" element={<LeadsManager />} />
@@ -162,7 +163,7 @@ const App: React.FC = () => {
           <Route path="/kanban" element={<SalesPipeline />} />
           <Route path="/financeiro" element={<FinanceManager />} />
           <Route path="/relatorios" element={<div className="loading-state"><h3>Business Intelligence</h3><p>Processando dados analíticos...</p></div>} />
-          <Route path="/dashboard" element={<div className="loading-state"><h3>Painel Executivo</h3><p>Carregando indicadores...</p></div>} />
+          <Route path="/dashboard" element={<DashboardManager />} />
           <Route path="/os" element={<OSManager />} />
           <Route path="/os/:osId" element={<OSManager />} />
           <Route path="/rede" element={<NetworkManager />} />

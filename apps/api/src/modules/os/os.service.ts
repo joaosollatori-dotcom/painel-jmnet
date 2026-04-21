@@ -22,7 +22,7 @@ export class OSService {
                     }
                 },
                 tecnico: {
-                    select: { id: true, name: true }
+                    select: { id: true, email: true }
                 }
             }
         });
@@ -37,7 +37,7 @@ export class OSService {
                         enderecos: true
                     }
                 },
-                tecnico: { select: { name: true } }
+                tecnico: { select: { email: true } }
             },
             orderBy: { dataAgendamento: 'asc' }
         });
@@ -67,7 +67,7 @@ export class OSService {
             where: { role: 'TECNICO' },
             select: {
                 id: true,
-                name: true,
+                email: true,
                 assignedOS: {
                     where: { status: { in: ['ABERTA', 'EM_EXECUCAO'] } },
                     include: {
