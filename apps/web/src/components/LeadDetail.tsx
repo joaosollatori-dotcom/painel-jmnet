@@ -13,7 +13,8 @@ import {
     ArrowsClockwise, ShareNetwork, EnvelopeSimple,
     CheckSquareOffset, Square, ListChecks, Kanban,
     NavigationArrow, PhoneCall, ArrowSquareOut, Prohibit,
-    ArrowsCounterClockwise, Money
+    ArrowsCounterClockwise, Money, WifiHigh, Tag, LinkSimple,
+    FloppyDisk, Printer, Signature, CurrencyCircleDollar
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -23,6 +24,12 @@ import { Lead, LeadHistory, updateLead, Appointment, getAppointments, getLeadHis
 import { getSystemSettings, SystemSetting } from '../services/systemSettingsService';
 import { dispatchCall, dispatchWhatsApp, dispatchNote, logInteraction } from '../services/actionService';
 import { useToast } from '../contexts/ToastContext';
+import {
+    Contrato, ContratoFatura,
+    getContratByLeadCpf, provisionarContrato,
+    updateContrato, getFaturasDoContrato, vincularONU
+} from '../services/contratoService';
+import { getGenieDevices, GenieDevice } from '../services/genieacsService';
 
 interface LeadDetailProps {
     lead: Lead;
@@ -37,7 +44,12 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
 
     const [localLead, setLocalLead] = useState<Lead | null>(propLead || null);
     const [loading, setLoading] = useState(!propLead);
-    const [activeTab, setActiveTab] = useState<'timeline' | 'dados' | 'qualificacao' | 'viabilidade' | 'proposta' | 'agendamento'>('timeline');
+    const [activeTab, setActiveTab] = useState<'timeline' | 'dados' | 'qualificacao' | 'viabilidade' | 'proposta' | 'contratos'>('timeline');
+    const [contrato, setContrato] = useState<Contrato | null>(null);
+    const [contratoForm, setContratoForm] = useState<Partial<Contrato>>({});
+    const [faturas, setFaturas] = useState<ContratoFatura[]>([]);
+    const [loadingContrato, setLoadingContrato] = useState(false);
+    const [showOnuModal, setShowOnuModal] = useState(false);
 
     useEffect(() => {
         if (!propLead && paramLeadId) {
@@ -71,11 +83,14 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
     const [systemSettings, setSystemSettings] = useState<SystemSetting[]>([]);
 
     useEffect(() => {
-        setLocalLead(lead);
-        loadLeadContext();
+        if (lead) {
+            setLocalLead(lead);
+            loadLeadContext();
+        }
     }, [lead]);
 
     const loadLeadContext = async () => {
+        if (!lead) return;
         const [appts, hist, settings] = await Promise.all([
             getAppointments(),
             getLeadHistory(lead.id),
@@ -84,6 +99,67 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
         setRelatedAppts(appts.filter(a => a.leadId === lead.id));
         setHistoryLogs(hist);
         setSystemSettings(settings);
+    };
+
+    const loadContrato = async () => {
+        if (!localLead?.cpfCnpj) return;
+        setLoadingContrato(true);
+        try {
+            const c = await getContratByLeadCpf(localLead.cpfCnpj);
+            setContrato(c);
+            if (c) {
+                setContratoForm(c);
+                const fs = await getFaturasDoContrato(c.id);
+                setFaturas(fs);
+            }
+        } finally {
+            setLoadingContrato(false);
+        }
+    };
+
+    useEffect(() => {
+        if (activeTab === 'contratos') loadContrato();
+    }, [activeTab]);
+
+    const handleProvisionarContrato = async () => {
+        if (!localLead?.cpfCnpj) { showToast('CPF/CNPJ obrigatório para gerar contrato!', 'warning'); return; }
+        try {
+            const c = await provisionarContrato({
+                id: localLead.id,
+                nomeCompleto: localLead.nomeCompleto,
+                cpfCnpj: localLead.cpfCnpj,
+                planoSelecionado: localLead.interessePlano,
+                valorPlano: localLead.valorPlano,
+            });
+            setContrato(c);
+            setContratoForm(c);
+            showToast('Contrato provisionado no Supabase!', 'success');
+        } catch (err) {
+            showToast('Erro ao provisionar contrato.', 'error');
+        }
+    };
+
+    const handleSalvarContrato = async () => {
+        if (!contrato) return;
+        try {
+            await updateContrato(contrato.id, contratoForm);
+            showToast('Contrato salvo!', 'success');
+            loadContrato();
+        } catch (err) {
+            showToast('Erro ao salvar contrato.', 'error');
+        }
+    };
+
+    const handleVincularONU = async (serial: string, mac?: string) => {
+        if (!contrato) return;
+        try {
+            await vincularONU(contrato.id, serial, mac);
+            setContratoForm(f => ({ ...f, serialONU: serial, macONU: mac }));
+            setShowOnuModal(false);
+            showToast(`ONU ${serial} vinculada ao contrato!`, 'success');
+        } catch (err) {
+            showToast('Erro ao vincular ONU.', 'error');
+        }
     };
 
     const handleFieldUpdate = async (field: keyof Lead, value: any) => {
@@ -392,6 +468,256 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
         </div>
     );
 
+    const renderContratoTab = () => {
+        const statusColor: Record<string, string> = {
+            ATIVO: '#22c55e', SUSPENSO: '#f59e0b', CANCELADO: '#ef4444', PENDENTE: '#64748b'
+        };
+        return (
+            <div className="tab-pane-contrato ic-sidebar-scroll">
+                {loadingContrato ? (
+                    <div className="empty-titan"><ArrowsClockwise size={40} className="spin-titan" /><h4>Consultando Supabase...</h4></div>
+                ) : !contrato ? (
+                    <div className="contrato-empty-state">
+                        <WifiHigh size={64} weight="duotone" style={{ color: '#3b82f6', opacity: 0.5 }} />
+                        <h3>Nenhum Contrato Ativo</h3>
+                        <p>Este lead ainda não possui um contrato de serviço provisionado no sistema.</p>
+                        {localLead?.cpfCnpj ? (
+                            <button className="btn-titan-primary" onClick={handleProvisionarContrato}>
+                                <Plus weight="bold" /> PROVISIONAR CONTRATO
+                            </button>
+                        ) : (
+                            <p className="warn-text"><Warning weight="fill" /> Cadastre o CPF/CNPJ do lead na aba Dados primeiro.</p>
+                        )}
+                    </div>
+                ) : (
+                    <div>
+                        {/* Cabeçalho do Contrato */}
+                        <div className="contrato-header-bar">
+                            <div>
+                                <h2>{contrato.nome}</h2>
+                                <span className="cpf-label">{contrato.cpfCnpj}</span>
+                            </div>
+                            <div className="contrato-badges">
+                                <span className="status-badge-titan" style={{ background: statusColor[contrato.status] || '#64748b' }}>
+                                    {contrato.status}
+                                </span>
+                                {contrato.tags?.map(t => (
+                                    <span key={t} className="tag-badge"><Tag size={11} /> {t}</span>
+                                ))}
+                            </div>
+                            <div className="contrato-header-actions">
+                                <button className="btn-titan-sm" onClick={() => showToast('Geração de PDF em breve!', 'info')}><Printer size={16} /> IMPRIMIR</button>
+                                <button className="btn-titan-sm" onClick={() => showToast('Assinatura Eletrônica em breve!', 'info')}><Signature size={16} /> ASSINAR</button>
+                                <button className="btn-titan-primary" onClick={handleSalvarContrato}><FloppyDisk size={16} /> SALVAR</button>
+                            </div>
+                        </div>
+
+                        {/* Status do Contrato */}
+                        <div className="titan-form-section">
+                            <h3><FileText size={18} /> Dados do Contrato</h3>
+                            <div className="titan-grid">
+                                <div className="titan-field">
+                                    <label>Status do Contrato</label>
+                                    <select className="titan-select" value={contratoForm.status || 'ATIVO'}
+                                        onChange={e => setContratoForm(f => ({ ...f, status: e.target.value as any }))}>
+                                        <option value="ATIVO">ATIVO</option>
+                                        <option value="SUSPENSO">SUSPENSO</option>
+                                        <option value="CANCELADO">CANCELADO</option>
+                                        <option value="PENDENTE">PENDENTE</option>
+                                    </select>
+                                </div>
+                                <div className="titan-field">
+                                    <label>Data de Início</label>
+                                    <input className="titan-input" type="date"
+                                        value={contratoForm.dataInicio?.slice(0, 10) || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, dataInicio: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Dia de Vencimento Fatura</label>
+                                    <input className="titan-input" type="number" min={1} max={31}
+                                        value={contratoForm.dataVencimentoFatura || 10}
+                                        onChange={e => setContratoForm(f => ({ ...f, dataVencimentoFatura: Number(e.target.value) }))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Serviço de Internet - inspirado no SGP TSMX */}
+                        <div className="titan-form-section section-dark">
+                            <h3><WifiHigh size={18} /> Serviço de Internet</h3>
+                            <div className="titan-grid">
+                                <div className="titan-field">
+                                    <label>Plano de Internet</label>
+                                    <input className="titan-input" placeholder="Ex: 200 MB + TV Aberta"
+                                        value={contratoForm.planoInternet || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, planoInternet: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Valor Mensal (R$)</label>
+                                    <input className="titan-input" type="number"
+                                        value={contratoForm.valorMensal || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, valorMensal: Number(e.target.value) }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Download (Mb)</label>
+                                    <input className="titan-input" type="number"
+                                        value={contratoForm.velocidadeDown || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, velocidadeDown: Number(e.target.value) }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Upload (Mb)</label>
+                                    <input className="titan-input" type="number"
+                                        value={contratoForm.velocidadeUp || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, velocidadeUp: Number(e.target.value) }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Tipo de Conexão</label>
+                                    <select className="titan-select" value={contratoForm.tipoConexao || 'FIBRA'}
+                                        onChange={e => setContratoForm(f => ({ ...f, tipoConexao: e.target.value as any }))}>
+                                        <option value="FIBRA">FIBRA</option>
+                                        <option value="RADIO">RÁDIO</option>
+                                        <option value="CABO">CABO</option>
+                                        <option value="SATELITE">SATÉLITE</option>
+                                    </select>
+                                </div>
+                                <div className="titan-field">
+                                    <label>Tipo PPP / Autenticação</label>
+                                    <select className="titan-select" value={contratoForm.tipoPPP || 'PPPoE'}
+                                        onChange={e => setContratoForm(f => ({ ...f, tipoPPP: e.target.value as any }))}>
+                                        <option value="PPPoE">PPPoE</option>
+                                        <option value="DHCP">DHCP</option>
+                                        <option value="IP_FIXO">IP Fixo</option>
+                                    </select>
+                                </div>
+                                <div className="titan-field">
+                                    <label>POP / PoP</label>
+                                    <input className="titan-input" placeholder="Ex: ITB-PBV-BA"
+                                        value={contratoForm.pop || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, pop: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Dados Técnicos de Acesso */}
+                        <div className="titan-form-section">
+                            <h3><HardDrives size={18} /> Dados Técnicos da Rede</h3>
+                            <div className="titan-grid">
+                                <div className="titan-field">
+                                    <label>Login PPPoE</label>
+                                    <input className="titan-input" placeholder="login@isp"
+                                        value={contratoForm.loginPPP || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, loginPPP: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Senha PPPoE</label>
+                                    <input className="titan-input" type="text" placeholder="senha_do_cliente"
+                                        value={contratoForm.senhaPPP || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, senhaPPP: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>CTO</label>
+                                    <input className="titan-input" placeholder="Ex: CA_046"
+                                        value={contratoForm.cto || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, cto: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Porta na CTO</label>
+                                    <input className="titan-input" type="number" min={1}
+                                        value={contratoForm.portaCto || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, portaCto: Number(e.target.value) }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>Endereço IP</label>
+                                    <input className="titan-input" placeholder="0.0.0.0"
+                                        value={contratoForm.enderecoIP || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, enderecoIP: e.target.value }))}
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label>VLAN</label>
+                                    <input className="titan-input" placeholder="Ex: 100"
+                                        value={contratoForm.vlan || ''}
+                                        onChange={e => setContratoForm(f => ({ ...f, vlan: e.target.value }))}
+                                    />
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* ONU/CPE Vinculada - GenieACS */}
+                        <div className="titan-form-section section-dark">
+                            <h3><DeviceMobile size={18} /> ONU / Equipamento (GenieACS)</h3>
+                            <div className="onu-link-box">
+                                {contratoForm.serialONU ? (
+                                    <div className="onu-linked">
+                                        <div className="onu-icon-circle"><WifiHigh size={28} weight="fill" /></div>
+                                        <div>
+                                            <strong>Serial: {contratoForm.serialONU}</strong>
+                                            {contratoForm.macONU && <span> | MAC: {contratoForm.macONU}</span>}
+                                        </div>
+                                        <button className="btn-titan-sm" onClick={() => setShowOnuModal(true)}>
+                                            <ArrowsClockwise size={14} /> TROCAR
+                                        </button>
+                                    </div>
+                                ) : (
+                                    <div className="onu-unlinked">
+                                        <p>Nenhum equipamento vinculado. Vincule a ONU do GenieACS para monitoramento em tempo real.</p>
+                                        <button className="btn-titan-primary" onClick={() => setShowOnuModal(true)}>
+                                            <LinkSimple size={16} /> VINCULAR ONU
+                                        </button>
+                                    </div>
+                                )}
+                            </div>
+                        </div>
+
+                        {/* Histórico de Faturas */}
+                        <div className="titan-form-section">
+                            <h3><CurrencyCircleDollar size={18} /> Histórico de Faturas</h3>
+                            {faturas.length === 0 ? (
+                                <div className="empty-titan" style={{ padding: '20px' }}>
+                                    <Receipt size={36} weight="duotone" />
+                                    <p>Nenhuma fatura gerada.</p>
+                                </div>
+                            ) : (
+                                <div className="faturas-table">
+                                    <div className="faturas-header">
+                                        <span>VENCIMENTO</span><span>VALOR</span><span>STATUS</span>
+                                    </div>
+                                    {faturas.map(f => (
+                                        <div key={f.id} className={`fatura-row status-${f.status.toLowerCase()}`}>
+                                            <span>{new Date(f.vencimento).toLocaleDateString('pt-BR')}</span>
+                                            <span>R$ {f.valor.toFixed(2)}</span>
+                                            <span className={`fatura-badge ${f.status.toLowerCase()}`}>{f.status}</span>
+                                        </div>
+                                    ))}
+                                </div>
+                            )}
+                        </div>
+                    </div>
+                )}
+
+                {/* Modal de Vinculação de ONU */}
+                <AnimatePresence>
+                    {showOnuModal && (
+                        <OuuModal
+                            onClose={() => setShowOnuModal(false)}
+                            onSelect={handleVincularONU}
+                        />
+                    )}
+                </AnimatePresence>
+            </div>
+        );
+    };
+
     return (
         <AnimatePresence>
             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="lead-detail-titan">
@@ -404,6 +730,9 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
                             <button className={activeTab === 'qualificacao' ? 'active' : ''} onClick={() => setActiveTab('qualificacao')}><IdentificationBadge size={16} /> Qualificação</button>
                             <button className={activeTab === 'viabilidade' ? 'active' : ''} onClick={() => setActiveTab('viabilidade')}><HardDrives size={16} /> Viabilidade</button>
                             <button className={activeTab === 'proposta' ? 'active' : ''} onClick={() => setActiveTab('proposta')}><Receipt size={16} /> Proposta</button>
+                            <button className={activeTab === 'contratos' ? 'active' : ''} onClick={() => setActiveTab('contratos')} style={activeTab === 'contratos' ? {} : { borderColor: '#22c55e33' }}>
+                                <WifiHigh size={16} /> Contrato
+                            </button>
                         </nav>
                         <div className="tab-viewport">
                             {activeTab === 'timeline' && renderTimeline()}
@@ -411,6 +740,7 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
                             {activeTab === 'qualificacao' && renderQualificacaoTab()}
                             {activeTab === 'viabilidade' && renderViabilityTab()}
                             {activeTab === 'proposta' && renderPropostaTab()}
+                            {activeTab === 'contratos' && renderContratoTab()}
                         </div>
                     </main>
                     <aside className="sidebar-titan">
@@ -441,4 +771,91 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
     );
 };
 
+// ─── Sub-componente: Modal de Seleção de ONU do GenieACS ───────────────────
+const OuuModal: React.FC<{
+    onClose: () => void;
+    onSelect: (serial: string, mac?: string) => void;
+}> = ({ onClose, onSelect }) => {
+    const [devices, setDevices] = useState<GenieDevice[]>([]);
+    const [loading, setLoading] = useState(true);
+    const [manualSerial, setManualSerial] = useState('');
+    const [manualMac, setManualMac] = useState('');
+    const [apiError, setApiError] = useState(false);
+
+    useEffect(() => {
+        getGenieDevices()
+            .then(d => { setDevices(d || []); setLoading(false); })
+            .catch(() => { setApiError(true); setLoading(false); });
+    }, []);
+
+    return (
+        <motion.div
+            className="permissions-modal-overlay"
+            initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}
+        >
+            <motion.div
+                className="permissions-modal"
+                initial={{ scale: 0.9 }} animate={{ scale: 1 }} exit={{ scale: 0.9 }}
+            >
+                <header>
+                    <div>
+                        <h3><WifiHigh size={20} /> Vincular ONU / CPE (GenieACS)</h3>
+                        <p>Selecione o dispositivo cadastrado ou informe o serial manualmente</p>
+                    </div>
+                    <button className="close-modal" onClick={onClose}>×</button>
+                </header>
+
+                {/* Lista de dispositivos do GenieACS */}
+                {loading ? (
+                    <div className="empty-titan" style={{ padding: '20px' }}><ArrowsClockwise size={32} className="spin-titan" /></div>
+                ) : apiError || devices.length === 0 ? (
+                    <div className="onu-api-warn">
+                        <Warning size={22} weight="fill" style={{ color: '#f59e0b' }} />
+                        <span>{apiError ? 'API local (porta 3001) offline. Use o modo manual abaixo.' : 'Nenhum dispositivo registrado no GenieACS.'}</span>
+                    </div>
+                ) : (
+                    <div className="device-list">
+                        {devices.map(d => (
+                            <button key={d._id} className="device-row-btn" onClick={() => onSelect(d._id)}>
+                                <DeviceMobile size={20} weight="duotone" />
+                                <div>
+                                    <strong>{d._id}</strong>
+                                    <span>{d.InternetGatewayDevice?.DeviceInfo?.Manufacturer} {d.InternetGatewayDevice?.DeviceInfo?.ModelName}</span>
+                                </div>
+                                <CheckCircle size={18} weight="fill" style={{ color: '#22c55e', marginLeft: 'auto' }} />
+                            </button>
+                        ))}
+                    </div>
+                )}
+
+                {/* Entrada manual */}
+                <div className="titan-form-section" style={{ marginTop: '16px' }}>
+                    <h3 style={{ fontSize: '0.85rem' }}>Cadastro Manual</h3>
+                    <div className="titan-grid">
+                        <div className="titan-field">
+                            <label>Serial ONU</label>
+                            <input className="titan-input" placeholder="Ex: ZXHN-XXXXXXXXXX" value={manualSerial} onChange={e => setManualSerial(e.target.value)} />
+                        </div>
+                        <div className="titan-field">
+                            <label>MAC (opcional)</label>
+                            <input className="titan-input" placeholder="AA:BB:CC:DD:EE:FF" value={manualMac} onChange={e => setManualMac(e.target.value)} />
+                        </div>
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button className="btn-titan-secondary" onClick={onClose}>CANCELAR</button>
+                    <button
+                        className="btn-titan-primary"
+                        disabled={!manualSerial}
+                        onClick={() => onSelect(manualSerial, manualMac || undefined)}
+                    >
+                        <LinkSimple size={16} /> VINCULAR MANUAL
+                    </button>
+                </div>
+            </motion.div>
+        </motion.div>
+    );
+};
+
 export default LeadDetail;
+

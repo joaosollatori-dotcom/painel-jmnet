@@ -4,7 +4,7 @@
     "version": "0.1.0",
     "type": "module",
     "scripts": {
-        "dev": "fastify start -l info -P src/server.ts -w",
+        "dev": "npx tsx watch src/server.ts",
         "build": "prisma generate && tsc",
         "start": "node dist/server.js",
         "lint": "biome check src",
