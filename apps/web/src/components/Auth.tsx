@@ -29,7 +29,7 @@ const Auth: React.FC = () => {
                 .from('invitations')
                 .select('*, tenants(name)')
                 .eq('invite_token', token)
-                .single();
+                .maybeSingle();
 
             if (error) throw error;
             if (data) {
@@ -40,10 +40,12 @@ const Auth: React.FC = () => {
                 });
                 setEmail(data.email);
                 showToast(`Convite aceito para ${data.tenants?.name}`, 'success');
+            } else {
+                showToast('Convite não encontrado ou expirado.', 'error');
             }
         } catch (err) {
             console.error('Invalid invite token:', err);
-            showToast('Convite inválido ou expirado.', 'error');
+            showToast('Erro ao validar o convite.', 'error');
         }
     };
 
