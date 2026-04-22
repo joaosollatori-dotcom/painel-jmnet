@@ -114,7 +114,7 @@ model User {
   phone_change_sent_at       DateTime?              @db.Timestamptz(6)
   confirmed_at               DateTime?              @default(dbgenerated("LEAST(email_confirmed_at, phone_confirmed_at)")) @db.Timestamptz(6)
   email_change               String?                @default("") @db.VarChar(255)
-  password_hash              String?                @default("") @db.VarChar(255)
+  encrypted_password         String?                @default("") @db.VarChar(255)
   reauthentication_token     String?                @default("") @db.VarChar(255)
   reauthentication_sent_at   DateTime?              @db.Timestamptz(6)
   is_sso_user                Boolean                @default(false)

@@ -11,7 +11,7 @@ export async function invitationRoutes(fastify: FastifyInstance) {
             try {
                 const invite = await fastify.prisma.invitations.findUnique({
                     where: { invite_token: token },
-                    include: { tenants: true, User: true }
+                    include: { tenants: true }
                 });
 
                 if (!invite) {
@@ -79,9 +79,9 @@ export async function invitationRoutes(fastify: FastifyInstance) {
                 });
 
                 return reply.send({ success: true, newInvite });
-            } catch (error: any) {
+            } catch (error) {
                 fastify.log.error(error);
-                return reply.status(500).send({ error: "Erro ao resetar convite", details: error.message, stack: error.stack });
+                return reply.status(500).send({ error: "Erro ao resetar convite" });
             }
         }
     );
