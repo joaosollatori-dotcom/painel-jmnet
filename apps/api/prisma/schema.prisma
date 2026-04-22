@@ -33,6 +33,7 @@ model Lead {
   vendedorId         String?       @db.Uuid
   tipoCliente        String?       @default("RESIDENCIAL")
   statusProposta     String?       @default("PENDENTE")
+  dataAceite         DateTime?     @db.Timestamptz(6)
   createdAt          DateTime      @default(now()) @db.Timestamptz(6)
   updatedAt          DateTime      @default(now()) @updatedAt @db.Timestamptz(6)
   tenant_id          String?       @db.Uuid
@@ -261,10 +262,12 @@ model Profile {
 }
 
 model User {
-  id        String     @id @db.Uuid
-  email     String?
-  auditLogs AuditLog[]
-  orders    OrdemServico[]
+  id                  String     @id @db.Uuid
+  email               String?
+  role                String?
+  raw_user_meta_data  Json?
+  auditLogs           AuditLog[]
+  assignedOS          OrdemServico[]
 }
 
 model Tenant {
@@ -306,6 +309,8 @@ model ContratoAssinatura {
   assinanteId    String?   @db.Uuid
   status         String    @default("PENDENTE")
   token          String    @unique
+  dataAssinatura DateTime? @db.Timestamptz(6)
+  ipAssinatura   String?
   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
   Lead           Lead?     @relation(fields: [leadId], references: [id])
   Assinante      Assinante? @relation(fields: [assinanteId], references: [id])
