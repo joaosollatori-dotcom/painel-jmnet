@@ -15,7 +15,8 @@ import {
     CheckSquareOffset, Square, ListChecks, Kanban,
     NavigationArrow, PhoneCall, ArrowSquareOut, Prohibit,
     ArrowsCounterClockwise, Money, WifiHigh, Tag, LinkSimple,
-    FloppyDisk, Printer, Signature, CurrencyCircleDollar
+    FloppyDisk, Printer, Signature, CurrencyCircleDollar,
+    PaperPlaneTilt, PenNib, Scroll
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { MapContainer, TileLayer, Marker, Popup } from 'react-leaflet';
@@ -859,15 +860,34 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
 
                                 <div className="crm-card">
                                     <div className="crm-card-header">
-                                        <h3>Documentos</h3>
-                                        <button className="crm-btn-link">Upload</button>
+                                        <h3>Documentos & Contratos</h3>
+                                        <button className="crm-btn-link">Ver todos</button>
                                     </div>
                                     <div className="crm-card-body documents-list">
-                                        <div className="doc-item">
-                                            <FileText size={16} />
-                                            <span>Contrato_Prestacao.pdf</span>
-                                            <button className="btn-icon"><ArrowsClockwise size={14} /></button>
-                                        </div>
+                                        {contrato ? (
+                                            <div className="contract-management-box">
+                                                <div className="doc-item highlight">
+                                                    <Scroll size={20} weight="duotone" />
+                                                    <div className="doc-item-info">
+                                                        <span>Contrato de Adesão SCM</span>
+                                                        <small>Status: {contrato.status}</small>
+                                                    </div>
+                                                </div>
+                                                <button className="btn-titan-sm w-full mt-2" onClick={handleSendSignatureEmail}>
+                                                    <PenNib size={16} /> ENVIAR P/ ASSINATURA DIGITAL
+                                                </button>
+                                            </div>
+                                        ) : (
+                                            <div className="empty-docs-state">
+                                                <p>Nenhum contrato ativo.</p>
+                                                <button className="btn-titan-sm w-full" onClick={() => setActiveTab('contratos')}>
+                                                    Gerar Agora
+                                                </button>
+                                            </div>
+                                        )}
+
+                                        <div className="divider" style={{ margin: '15px 0', borderTop: '1px solid var(--titan-border)' }} />
+
                                         <div className="doc-item">
                                             <IdentificationCard size={16} />
                                             <span>Documento_Identificacao.jpg</span>

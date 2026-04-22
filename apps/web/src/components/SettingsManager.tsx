@@ -9,6 +9,8 @@ import { generateRemoteAccessKey, getAllowedIPs, addAllowedIP, removeAllowedIP, 
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
+import { AdminAuditLogs } from './AdminAuditLogs';
+import { AdminBrandingSettings } from './AdminBrandingSettings';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
@@ -29,7 +31,8 @@ const SettingsManager: React.FC = () => {
         'os/tipos': 'OS_TYPE',
         'suporte/ocorrencias': 'OCCURRENCE_TYPE',
         'equipe': 'USERS',
-        'seguranca': 'SECURITY'
+        'seguranca': 'SECURITY',
+        'contratos': 'CONTRACTS'
     };
 
     const activeTab = routeToTab[`${section}/${subsection}`] || routeToTab[section || ''] || 'LOSS_REASON';
@@ -171,9 +174,14 @@ const SettingsManager: React.FC = () => {
                         <Users size={18} /> Equipe e Permissões
                     </button>
                     {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
-                        <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => navigate('/ajustes/seguranca')}>
-                            <ShieldCheck size={18} /> Auditoria e Segurança
-                        </button>
+                        <>
+                            <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => navigate('/ajustes/seguranca')}>
+                                <ShieldCheck size={18} /> Auditoria e Segurança
+                            </button>
+                            <button className={`sett-tab ${activeTab === 'CONTRACTS' ? 'active' : ''}`} onClick={() => navigate('/ajustes/contratos')}>
+                                <Scroll size={18} /> Personalização & Contratos
+                            </button>
+                        </>
                     )}
                 </aside>
 
@@ -188,14 +196,16 @@ const SettingsManager: React.FC = () => {
                                     {activeTab === 'OCCURRENCE_TYPE' && 'Tipificação de Ocorrências (Suporte)'}
                                     {activeTab === 'USERS' && 'Controle de Acessos e Níveis (SaaS)'}
                                     {activeTab === 'SECURITY' && 'Segurança Avançada e Auditoria Global'}
+                                    {activeTab === 'CONTRACTS' && 'Branding e Automação de Contratos'}
                                 </h2>
                                 <span>
                                     {activeTab === 'USERS' && 'Configure quem pode acessar o TITÃ e quais ações podem executar.'}
                                     {activeTab === 'SECURITY' && 'Histórico completo de ações, chaves remotas e IPs permitidos.'}
-                                    {activeTab !== 'USERS' && activeTab !== 'SECURITY' && 'Altere, ative ou adicione novas opções que refletirão globalmente no sistema.'}
+                                    {activeTab === 'CONTRACTS' && 'Ajuste a identidade da sua empresa, cores de e-mail e templates de contrato.'}
+                                    {activeTab !== 'USERS' && activeTab !== 'SECURITY' && activeTab !== 'CONTRACTS' && 'Altere, ative ou adicione novas opções que refletirão globalmente no sistema.'}
                                 </span>
                             </div>
-                            {activeTab !== 'USERS' && activeTab !== 'SECURITY' && (
+                            {activeTab !== 'USERS' && activeTab !== 'SECURITY' && activeTab !== 'CONTRACTS' && (
                                 <button className="btn-titan-primary" onClick={() => setEditingItem({ label: '', value: '', isActive: true })}>
                                     <Plus weight="bold" /> NOVO ITEM
                                 </button>
@@ -303,28 +313,10 @@ const SettingsManager: React.FC = () => {
                                             </div>
                                         </div>
                                     </div>
-                                    <div className="audit-logs-section">
-                                        <h3><Scroll size={20} /> Log de Auditoria Global (Tempo Real)</h3>
-                                        <div className="audit-feed ic-sidebar-scroll">
-                                            <div className="audit-header-row">
-                                                <span>AÇÃO</span>
-                                                <span>USUÁRIO</span>
-                                                <span>MÓDULO</span>
-                                                <span>SISTEMA</span>
-                                                <span>DATA</span>
-                                            </div>
-                                            {auditLogs.map(log => (
-                                                <div key={log.id} className="audit-row">
-                                                    <span className="audit-action">{log.action}</span>
-                                                    <span className="audit-user">{(log as any).profiles?.full_name || 'Desconhecido'}</span>
-                                                    <span className="audit-res">{log.resource}</span>
-                                                    <span className="audit-tenant">{(log as any).tenants?.name || 'Sistema'}</span>
-                                                    <span className="audit-date">{new Date(log.createdAt).toLocaleString()}</span>
-                                                </div>
-                                            ))}
-                                        </div>
-                                    </div>
+                                    <AdminAuditLogs />
                                 </div>
+                            ) : activeTab === 'CONTRACTS' ? (
+                                <AdminBrandingSettings />
                             ) : currentSettingsList.length === 0 ? (
                                 <div className="sett-empty">Nenhum item configurado nesta categoria.</div>
                             ) : (
@@ -347,119 +339,119 @@ const SettingsManager: React.FC = () => {
                                 ))
                             )}
                         </div>
-
-                        {/* Advanced Role/Permissions Modal (Zoho Style) */}
-                        <AnimatePresence>
-                            {editingUser && (
-                                <motion.div
-                                    className="permissions-modal-overlay"
-                                    initial={{ opacity: 0 }}
-                                    animate={{ opacity: 1 }}
-                                    exit={{ opacity: 0 }}
-                                >
-                                    <motion.div
-                                        className="permissions-modal"
-                                        initial={{ scale: 0.9, opacity: 0 }}
-                                        animate={{ scale: 1, opacity: 1 }}
-                                        exit={{ scale: 0.9, opacity: 0 }}
-                                    >
-                                        <header>
-                                            <div>
-                                                <h3>Ajustar Perfil: {editingUser.fullName}</h3>
-                                                <p>Nível de acesso Zoho-Style (Granular)</p>
-                                            </div>
-                                            <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
-                                        </header>
-
-                                        <div className="role-selector-box">
-                                            <label>Nível Hierárquico</label>
-                                            <div className="role-options">
-                                                {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
-                                                    <button
-                                                        key={r}
-                                                        className={`role-opt ${editingUser.role === r ? 'selected' : ''}`}
-                                                        onClick={() => setEditingUser({ ...editingUser, role: r as UserRole })}
-                                                    >
-                                                        {r}
-                                                    </button>
-                                                ))}
-                                            </div>
-                                        </div>
-
-                                        <div className="permissions-matrix">
-                                            <div className="matrix-row header">
-                                                <div className="resource-col">Módulo</div>
-                                                <div>Ver</div>
-                                                <div>Criar</div>
-                                                <div>Editar</div>
-                                                <div>Apagar</div>
-                                            </div>
-                                            {['Leads', 'Vendas', 'OS', 'Financeiro', 'Rede'].map(mod => (
-                                                <div key={mod} className="matrix-row">
-                                                    <div className="resource-col">{mod}</div>
-                                                    <div><input type="checkbox" defaultChecked /></div>
-                                                    <div><input type="checkbox" defaultChecked /></div>
-                                                    <div><input type="checkbox" defaultChecked /></div>
-                                                    <div><input type="checkbox" /></div>
-                                                </div>
-                                            ))}
-                                        </div>
-
-                                        <div className="modal-footer">
-                                            <button className="btn-titan-secondary" onClick={() => setEditingUser(null)}>CANCELAR</button>
-                                            <button className="btn-titan-primary">ATUALIZAR ACESSOS</button>
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
-
-                        {/* Invitation Modal */}
-                        <AnimatePresence>
-                            {showInviteModal && (
-                                <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                                    <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                                        <header>
-                                            <div>
-                                                <h3>Convidar Novo Membro</h3>
-                                                <p>Gere um link de onboarding seguro para sua organização.</p>
-                                            </div>
-                                            <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
-                                        </header>
-                                        <div className="invite-form-box">
-                                            <div className="titan-field">
-                                                <label>E-mail do Convidado</label>
-                                                <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                                            </div>
-                                            <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
-                                                <label>Nível Hierárquico Inicial</label>
-                                                <div className="role-options">
-                                                    {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
-                                                        <button key={r} className={`role-opt ${inviteRole === r ? 'selected' : ''}`} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                            {generatedLink && (
-                                                <div className="generated-link-area">
-                                                    <label>Link de Convite Gerado (Uso Único):</label>
-                                                    <div className="link-box">
-                                                        <code>{generatedLink}</code>
-                                                        <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
-                                                    </div>
-                                                </div>
-                                            )}
-                                        </div>
-                                        <div className="modal-footer">
-                                            <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
-                                            {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
-                                        </div>
-                                    </motion.div>
-                                </motion.div>
-                            )}
-                        </AnimatePresence>
                     </div>
                 </main>
             </div>
+
+            {/* Advanced Role/Permissions Modal (Zoho Style) */}
+            <AnimatePresence>
+                {editingUser && (
+                    <motion.div
+                        className="permissions-modal-overlay"
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <motion.div
+                            className="permissions-modal"
+                            initial={{ scale: 0.9, opacity: 0 }}
+                            animate={{ scale: 1, opacity: 1 }}
+                            exit={{ scale: 0.9, opacity: 0 }}
+                        >
+                            <header>
+                                <div>
+                                    <h3>Ajustar Perfil: {editingUser.fullName}</h3>
+                                    <p>Nível de acesso Zoho-Style (Granular)</p>
+                                </div>
+                                <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
+                            </header>
+
+                            <div className="role-selector-box">
+                                <label>Nível Hierárquico</label>
+                                <div className="role-options">
+                                    {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
+                                        <button
+                                            key={r}
+                                            className={`role-opt ${editingUser.role === r ? 'selected' : ''}`}
+                                            onClick={() => setEditingUser({ ...editingUser, role: r as UserRole })}
+                                        >
+                                            {r}
+                                        </button>
+                                    ))}
+                                </div>
+                            </div>
+
+                            <div className="permissions-matrix">
+                                <div className="matrix-row header">
+                                    <div className="resource-col">Módulo</div>
+                                    <div>Ver</div>
+                                    <div>Criar</div>
+                                    <div>Editar</div>
+                                    <div>Apagar</div>
+                                </div>
+                                {['Leads', 'Vendas', 'OS', 'Financeiro', 'Rede'].map(mod => (
+                                    <div key={mod} className="matrix-row">
+                                        <div className="resource-col">{mod}</div>
+                                        <div><input type="checkbox" defaultChecked /></div>
+                                        <div><input type="checkbox" defaultChecked /></div>
+                                        <div><input type="checkbox" defaultChecked /></div>
+                                        <div><input type="checkbox" /></div>
+                                    </div>
+                                ))}
+                            </div>
+
+                            <div className="modal-footer">
+                                <button className="btn-titan-secondary" onClick={() => setEditingUser(null)}>CANCELAR</button>
+                                <button className="btn-titan-primary">ATUALIZAR ACESSOS</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Invitation Modal */}
+            <AnimatePresence>
+                {showInviteModal && (
+                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                            <header>
+                                <div>
+                                    <h3>Convidar Novo Membro</h3>
+                                    <p>Gere um link de onboarding seguro para sua organização.</p>
+                                </div>
+                                <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
+                            </header>
+                            <div className="invite-form-box">
+                                <div className="titan-field">
+                                    <label>E-mail do Convidado</label>
+                                    <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+                                </div>
+                                <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
+                                    <label>Nível Hierárquico Inicial</label>
+                                    <div className="role-options">
+                                        {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
+                                            <button key={r} className={`role-opt ${inviteRole === r ? 'selected' : ''}`} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {generatedLink && (
+                                    <div className="generated-link-area">
+                                        <label>Link de Convite Gerado (Uso Único):</label>
+                                        <div className="link-box">
+                                            <code>{generatedLink}</code>
+                                            <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
+                                {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

@@ -1,4 +1,5 @@
 import type { PrismaClient } from "@prisma/client";
+import { cerebrasService } from "../../services/cerebras.service.js";
 
 export class WhatsappService {
 	private accessToken: string;
@@ -85,6 +86,33 @@ export class WhatsappService {
 					last_message_at: new Date(),
 				},
 			});
+
+			// [V2.05.29] Trigger AI Summary & Occurrence Creation
+			const protocol = `OC-${new Date().getFullYear()}${Math.floor(1000 + Math.random() * 9000)}`;
+
+			cerebrasService.summarizeChatOpening([{ role: 'user', content: text }])
+				.then(async (summary) => {
+					const occurrence = await this.prisma.customer_occurrences.create({
+						data: {
+							protocol,
+							customer_name: contactName,
+							subject: "Novo Atendimento WhatsApp",
+							description: summary,
+							status: "Aberta",
+							tenant_id: conversation?.tenant_id
+						}
+					});
+
+					// Update conversation with occurrence link
+					await this.prisma.conversation.update({
+						where: { id: conversation?.id },
+						data: { occurrence_id: occurrence.id }
+					});
+
+					console.log(`[AI] Ocorrência ${protocol} criada com sucesso para ${contactName}`);
+				})
+				.catch(err => console.error('[AI Error] Falha ao criar ocorrência automática:', err));
+
 		} else {
 			await this.prisma.conversation.update({
 				where: { id: conversation.id },

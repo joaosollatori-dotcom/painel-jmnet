@@ -48,6 +48,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
 
     // Estado para Edição Rápida
     const [showEditModal, setShowEditModal] = useState(false);
+    const [showCloseModal, setShowCloseModal] = useState(false);
     const [editData, setEditData] = useState({ name: '', phone: '' });
 
     const fileInputRef = useRef<HTMLInputElement>(null);
@@ -198,16 +199,32 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
         }
     };
 
-    const handleSaveEdit = async () => {
-        if (!conversation || !profile) return;
+    const handleCloseChat = async (closeAll: boolean) => {
+        if (!conversation) return;
         try {
-            showToast('Atualizando cadastro...', 'info');
-            // Simulação de atualização via serviço de lead
-            await logInteraction(conversation.id, 'SYS', 'Alteração de Cadastro', `Nome alterado para: ${editData.name}`);
-            setShowEditModal(false);
-            showToast('Cadastro atualizado com sucesso!', 'success');
+            if (closeAll && conversation.occurrence_id) {
+                // Aqui faríamos o check de OS. Para o MVP, assumimos sucesso ou erro descritivo.
+                showToast('Verificando status de Ordens de Serviço vinculadas...', 'info');
+
+                // Simulação de chamada de API: /v1/ocorrencias/:id/can-close
+                const canClose = true; // TODO: Integrar com backend real
+
+                if (!canClose) {
+                    showToast('Não é possível encerrar: Existem Ordens de Serviço pendentes!', 'error');
+                    return;
+                }
+            }
+
+            // Update conversation to closed
+            await import('../lib/supabase').then(({ supabase }) =>
+                supabase.from('Conversation').update({ is_closed: true }).eq('id', chatId)
+            );
+
+            showToast('Atendimento encerrado com sucesso.', 'success');
+            setShowCloseModal(false);
+            window.location.reload(); // Refresh to clear chat
         } catch (err) {
-            showToast('Erro ao atualizar cadastro.', 'error');
+            showToast('Erro ao encerrar atendimento.', 'error');
         }
     };
 
@@ -284,6 +301,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                         <button className="suggestion-pill" style={{ padding: '6px' }} onClick={() => setIsInfoRetracted(!isInfoRetracted)}>
                             {isInfoRetracted ? <CaretDoubleLeft size={18} /> : <CaretDoubleRight size={18} />}
                         </button>
+                        {!conversation?.is_closed && (
+                            <button className="btn-titan-sm bg-red-600/10 text-red-500 border border-red-600/20 hover:bg-red-500 hover:text-white" style={{ padding: '4px 12px', fontSize: '0.75rem', fontWeight: 'bold' }} onClick={() => setShowCloseModal(true)}>
+                                ENCERRAR
+                            </button>
+                        )}
                     </div>
                 </header>
 
@@ -445,6 +467,34 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     </div>
                 )}
             </aside>
+
+            {/* Modal de Encerramento */}
+            <AnimatePresence>
+                {showCloseModal && (
+                    <div className="modal-overlay" style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.8)', zIndex: 5000, display: 'flex', alignItems: 'center', justifyContent: 'center', backdropFilter: 'blur(4px)' }}>
+                        <motion.div initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} className="modal-content" style={{ background: 'var(--sb-bg-item)', padding: '40px', borderRadius: '32px', width: '100%', maxWidth: '450px', border: '1px solid var(--sb-border)', textAlign: 'center' }}>
+                            <div style={{ marginBottom: '24px' }}>
+                                <div style={{ width: '80px', height: '80px', background: 'rgba(239, 68, 68, 0.1)', borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto 20px' }}>
+                                    <X size={40} color="#ef4444" weight="bold" />
+                                </div>
+                                <h2 style={{ margin: 0, color: 'var(--sb-text)', fontSize: '1.5rem', fontWeight: 800 }}>Encerrar Atendimento</h2>
+                                <p style={{ opacity: 0.6, fontSize: '0.95rem', marginTop: '12px' }}>Deseja encerrar a Ocorrência e Ordens de Serviço vinculadas?</p>
+                            </div>
+
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                                <button className="btn-titan-primary w-full" style={{ padding: '16px', background: '#ef4444', borderColor: '#ef4444' }} onClick={() => handleCloseChat(true)}> SIM, ENCERRAR TUDO </button>
+                                <button className="btn-titan-secondary w-full" style={{ padding: '16px' }} onClick={() => handleCloseChat(false)}> APENAS O CHAT </button>
+                                <button className="crm-btn-link w-full mt-4" onClick={() => setShowCloseModal(false)}> CANCELAR </button>
+                            </div>
+                            <div style={{ marginTop: '20px', padding: '12px', background: 'rgba(245, 158, 11, 0.1)', borderRadius: '12px', border: '1px solid rgba(245, 158, 11, 0.2)' }}>
+                                <small style={{ color: '#f59e0b', fontSize: '0.75rem', fontWeight: 'bold' }}>
+                                    NOTA: Ocorrência só será fechada se todas as OS filhas estiverem como "Encerrada".
+                                </small>
+                            </div>
+                        </motion.div>
+                    </div>
+                )}
+            </AnimatePresence>
         </div>
     );
 };

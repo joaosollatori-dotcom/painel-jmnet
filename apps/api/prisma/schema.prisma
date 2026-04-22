@@ -319,6 +319,7 @@ model Conversation {
   updated_at      DateTime?      @default(now()) @updatedAt @db.Timestamptz(6)
   contact_email   String?
   tenant_id       String?        @db.Uuid
+  occurrence_id   String?        @db.Uuid
   tenants         Tenant?        @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
   messages        Message[]
   ordens_servico  OrdemServico[]
@@ -1021,8 +1022,38 @@ model Tenant {
   system_settings    system_settings[]
   Assinante          Assinante[]
   ordens_servico     OrdemServico[]
+  settings           TenantSettings?
 
   @@map("tenants")
+  @@schema("public")
+}
+
+model TenantSettings {
+  id                    String  @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenantId              String  @unique @db.Uuid
+  tenant                Tenant  @relation(fields: [tenantId], references: [id])
+  logoUrl               String?
+  emailPrimaryColor     String? @default("#3b82f6")
+  emailTemplateContrato String? @db.Text
+  emailFooter           String? @db.Text
+  smtpConfig            Json?   @db.JsonB
+
+  @@schema("public")
+}
+
+model ContratoAssinatura {
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  leadId         String?   @db.Uuid
+  assinanteId    String?   @db.Uuid
+  status         String    @default("PENDENTE")
+  token          String    @unique
+  ipAssinatura   String?
+  userAgent      String?
+  dataAssinatura DateTime? @db.Timestamptz(6)
+  documentoUrl   String?
+  createdAt      DateTime  @default(now()) @db.Timestamptz(6)
+  updatedAt      DateTime  @updatedAt @db.Timestamptz(6)
+
   @@schema("public")
 }
 

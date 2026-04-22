@@ -26,73 +26,121 @@ interface WikiArticle {
 const WIKI_ARTICLES: WikiArticle[] = [
     {
         id: '1',
-        category: 'Atendimento',
-        title: 'Central de Chat: Ações Rápidas e Bi-lateralidade',
-        icon: Lightning,
-        tags: ['atendimento', 'produtividade', 'chat'],
+        category: 'Operação',
+        title: 'Como Adicionar um Novo Lead manually',
+        icon: Users,
+        tags: ['crm', 'lead', 'vendas'],
         content: `
-            # Guia de Operações de Alta Performance no Atendimento
+            # Guia Passo-a-Passo: Adicionar Novo Lead
             
-            O módulo de Atendimento do TITÃ | ISP foi projetado para transformar conversas em ações operacionais imediatas. Através do **Command Center de Ações Rápidas**, o atendente pode interagir com o CRM e o setor técnico sem sair da janela de chat.
+            Este é o ponto de partida para qualquer venda no TITÃ. Siga estes passos para garantir a integridade dos dados:
             
-            ### 1. Abertura de Ocorrências em Tempo Real
-            Ao identificar um problema recorrente ou uma reclamação formal, utilize o botão **"Ocorrência"**.
-            - **Ação:** O sistema captura automaticamente os dados do contato e gera um protocolo exclusivo.
-            - **Resultado:** Um novo registro é criado na tabela de Ocorrências, disparando notificações para os gestores e garantindo que o SLA de resposta seja iniciado.
+            ### Passo 1: Acesso ao CRM
+            No menu lateral, clique em **"Leads/CRM"**. No canto superior direito, localize o botão **"NOVO LEAD"**.
             
-            ### 2. Geração de Ordens de Serviço (OS)
-            Para problemas que exigem visita técnica ou manutenção física:
-            - **Ação:** Clique em **"Nova OS"**. O sistema pré-preenche os dados de endereço e contato.
-            - **Resultado:** A OS é enviada ao módulo técnico, agendando a demanda conforme a prioridade selecionada (Urgente, Alta ou Normal).
+            ### Passo 2: Preenchimento de Dados Básicos
+            - **Nome Completo:** Crucial para o contrato posterior.
+            - **WhatsApp:** Use o formato DDI + DDD + Numero (ex: 5511999999999).
+            - **CPF/CNPJ:** Necessário para consulta de crédito automática via Pluggy.
             
-            ### 3. Edição Rápida de Cadastro
-            Mantenha a base de dados atualizada sem fricção:
-            - **Ação:** Use a função **"Cadastro"** para abrir o modal de edição rápida.
-            - **Resultado:** Informações de Nome e Telefone são sincronizadas instantaneamente no CRM e no Lead Manager, evitando dados obsoletos.
+            ### Passo 3: Localização e Viabilidade
+            - Insira o CEP para que o sistema geolocalize o lead no mapa.
+            - O sistema mostrará a distância para a **CTO** (Caixa de Atendimento) mais próxima.
+            
+            ### Passo 4: Qualificação
+            Defina o interesse (Plano) e o canal de entrada (Google, Facebook, Ativo). Clique em **"SALVAR"**.
+            
+            **Dica:** Leads com endereço verificado ganham prioridade no pipeline comercial.
         `
     },
     {
         id: '2',
-        category: 'Técnico',
-        title: 'Monitoramento e Verificação de Sinal (dBm)',
-        icon: DeviceMobile,
-        tags: ['técnico', 'sinal', 'monitoramento'],
+        category: 'Inteligência',
+        title: 'Como funciona o Cerebras AI no Atendimento',
+        icon: Lightning,
+        tags: ['ai', 'atendimento', 'cerebras'],
         content: `
-            # Diagnóstico Técnico Bi-lateral
+            # Automação de Resumo: Cerebras AI
             
-            A função de **Verificação de Sinal** permite um diagnóstico preliminar da conexão do cliente diretamente pela interface de atendimento, reduzindo a necessidade de transferência para o suporte nível 2.
+            O TITÃ utiliza a infraestrutura de ponta do **Cerebras AI** para garantir que nenhum detalhe do atendimento seja perdido, mesmo em dias de alta demanda.
             
-            ### Como realizar a verificação:
-            1. **Identificação:** Dentro de uma conversa ativa, localize o painel de Ações Rápidas na barra lateral direita.
-            2. **Execução:** Clique em **"Ver. Sinal"**. O TITÃ realiza uma consulta assíncrona aos concentradores e equipamentos de rede.
-            3. **Leitura de Resultados:** 
-               - **Sinal Verde (-16 a -25 dBm):** Conexão excelente de fibra.
-               - **Sinal Amarelo (-26 a -28 dBm):** Atenção, possível dobra de fibra ou conector sujo.
-               - **Sinal Vermelho (Acima de -28 dBm):** Crítico, recomendável abertura de OS para limpeza.
+            ### O Ciclo de Vida da Inteligência:
+            1. **Captura Inicial:** Quando um novo cliente manda mensagem no WhatsApp, o sistema aguarda as primeiras interações.
+            2. **Processamento:** O TITÃ envia o contexto para o cluster Cerebras, que processa a linguagem natural em milissegundos.
+            3. **Resumo Executivo:** Um resumo de até 150 caracteres é gerado e fixado no topo do chat.
+            4. **Ocorrência Automática:** Simultaneamente, o sistema abre uma **Ocorrência** com o status "Aberta", usando o resumo como descrição inicial.
             
-            **Vantagem Operacional:** Essa ação é registrada nos logs de auditoria, permitindo que o técnico de campo saiba que um teste já foi realizado antes da visita.
+            **Benefício:** Isso economiza até 3 minutos por atendimento, pois o operador já inicia sabendo exatamente o que o cliente deseja.
         `
     },
     {
         id: '3',
-        category: 'Configurações',
-        title: 'Segurança e Governança Multi-tenant',
-        icon: ShieldCheck,
-        tags: ['segurança', 'admin', 'tenant'],
+        category: 'Contratos',
+        title: 'Ciclo de Assinatura Digital por E-mail',
+        icon: Scroll,
+        tags: ['contrato', 'assinatura', 'juridico'],
         content: `
-            # Isolamento de Dados e Conformidade SaaS
+            # Gestão de Contratos e Assinatura Digital
             
-            O TITÃ | ISP opera sob uma arquitetura rigorosa de **Multi-tenancy**, garantindo que as operações de um provedor sejam invisíveis e inacessíveis para outros.
+            Esqueça papel e caneta. O TITÃ gerencia o ciclo jurídico completo de forma digital e auditável.
             
-            ### Mecanismos de Proteção:
-            - **Tenant Isolation:** Cada registro de Lead, OS ou Mensagem possui um ` + "`tenant_id`" + ` imutável vinculado ao perfil do usuário logado.
-            - **RLS (Row Level Security):** O banco de dados Supabase aplica filtros automáticos em nível de linha. Mesmo que uma consulta tente burlar o sistema, o Postgres bloqueia qualquer dado que não pertença ao tenant do usuário.
+            ### 1. Geração do Contrato
+            No perfil do Lead, vá na aba **"Contratos"**. Selecione o modelo desejado e clique em **"Gerar"**. O sistema usará os placeholders (Nome, CPF, Valor) para montar o documento.
             
-            ### Resultantes de Auditoria:
-            Todas as ações rápidas executadas no chat (Abertura de OS, Troca de Status, Verificação de Sinal) geram um **Audit Log** automático contendo:
-            1. Identificação do Atendente (Actor ID)
-            2. Timestamp da operação.
-            3. Objeto alterado e Tenant afetado.
+            ### 2. Envio para Assinatura
+            Clique no botão **"ENVIAR P/ ASSINATURA DIGITAL"**. O cliente receberá um e-mail personalizado com as cores e logo da sua empresa (configurado em Ajustes > Branding).
+            
+            ### 3. Captura Forense
+            Quando o cliente clica no link e aceita os termos:
+            - O sistema registra o **Endereço IP**.
+            - Captura o **User-Agent** (dispositivo usado).
+            - Grava o **Timestamp** exato da operação.
+            
+            ### 4. Validação
+            Assim que assinado, o Lead é movido automaticamente para o estágio **"Contrato Assinado"** e uma tarefa de instalação é gerada para o setor técnico.
+        `
+    },
+    {
+        id: '4',
+        category: 'Integrações',
+        title: 'Open Finance: Integração Pluggy',
+        icon: CloudArrowUp,
+        tags: ['pluggy', 'financeiro', 'score'],
+        content: `
+            # Análise de Crédito com Pluggy
+            
+            O TITÃ integra-se ao **Pluggy** para oferecer uma análise de crédito moderna baseada em Open Finance e histórico bancário, indo além do simples Score de crédito tradicional.
+            
+            ### Como Ativar:
+            1. No Lead, clique no ícone de **"Análise Pluggy"**.
+            2. Gere o link de conexão segura e envie ao cliente.
+            3. O cliente autoriza o acesso temporário (apenas leitura).
+            
+            ### O Que o TITÃ Analisa:
+            - **Capacidade de Pagamento:** Média de entradas mensais.
+            - **Risco de Churn:** Histórico de pagamentos de contas de utilidade (luz, água).
+            - **Selo de Confiança:** Leads aprovados pelo Pluggy podem ter a taxa de instalação isenta automaticamente pelo sistema.
+        `
+    },
+    {
+        id: '5',
+        category: 'Segurança',
+        title: 'Auditoria Imutável e Segurança Global',
+        icon: ShieldCheck,
+        tags: ['auditoria', 'admin', 'logs'],
+        content: `
+            # Sistema de Auditoria Forense
+            
+            A segurança dos dados é levada a sério no TITÃ. Todas as ações cruciais são registradas em logs imutáveis que não podem ser apagados, nem por administradores.
+            
+            ### O Que é Monitorado?
+            - **Acessos:** Downloads de listas de leads, exportações de relatórios.
+            - **Alterações:** Mudança de valores de planos, troca de vendedor, alteração de status de OS.
+            - **Comunicações:** Reenvio de e-mails de contrato, mensagens de WhatsApp.
+            
+            ### Como Consultar:
+            Apenas Super-Admin e Admin podem acessar o painel em **Ajustes > Auditoria e Segurança**.
+            O log exibe o payload JSON original da ação, permitindo rastrear exatamente qual dado foi modificado e por quem.
         `
     }
 ];
