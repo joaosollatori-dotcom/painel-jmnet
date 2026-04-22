@@ -30,11 +30,11 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         console.log("TITÃ DEBUG: [V2.05.29] Proteção Anti-Loop Ativada");
 
         const safetyTimeout = setTimeout(() => {
-            if (mounted) {
-                console.warn("TITÃ DEBUG: EMERGENCY UNLOCK!");
+            if (mounted && loading) {
+                console.warn("TITÃ DEBUG: EMERGENCY UNLOCK (Safety fallback triggered)");
                 setLoading(false);
             }
-        }, 20000);
+        }, 10000); // Reduzido para 10s para recuperação mais rápida
 
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             const now = Date.now();

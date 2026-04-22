@@ -139,11 +139,29 @@ const App: React.FC = () => {
     };
   }, [isRetracted, toggleSidebar]);
 
-  if (loading) return <LoadingScreen />;
-  if (!session) return <Auth />;
+  // Renderização Defensiva (v2.07.03)
+  if (loading) return <LoadingScreen key="loading-screen" />;
+
+  // Se não tem sessão, exibe Auth
+  if (!session) {
+    return <Auth key="auth-screen" />;
+  }
+
+  // Se tem sessão mas o perfil não carregou (e não estamos em loading)
+  // Pode ser um erro de RLS ou perfil não criado.
+  if (!profile) {
+    return (
+      <div className="flex-center" style={{ height: '100vh', flexDirection: 'column', gap: '20px', backgroundColor: 'var(--bg-deep)' }}>
+        <h3 style={{ color: 'var(--text-primary)' }}>Configurando seu acesso...</h3>
+        <p style={{ color: 'var(--text-secondary)' }}>Estamos preparando sua estação de trabalho.</p>
+        <button className="btn-titan-auth" onClick={() => window.location.reload()}>TENTAR NOVAMENTE</button>
+        <button style={{ marginTop: '10px', color: 'var(--accent)', fontWeight: 600 }} onClick={signOut}>SAIR</button>
+      </div>
+    );
+  }
 
   return (
-    <div className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
+    <div key="app-root" className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
       <Sidebar
         isRetracted={isRetracted}
         onToggleRetraction={toggleSidebar}

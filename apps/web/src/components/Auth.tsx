@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Key, Envelope, ShieldCheck, ArrowRight, Spinner, Buildings } from '@phosphor-icons/react';
@@ -84,6 +84,11 @@ const Auth: React.FC = () => {
         }
     };
 
+    const isMounted = useRef(true);
+    useEffect(() => {
+        return () => { isMounted.current = false; };
+    }, []);
+
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -93,11 +98,11 @@ const Auth: React.FC = () => {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
 
-                if (data.user && inviteData) {
+                if (data.user && inviteData && isMounted.current) {
                     await claimInvite(data.user.id);
                 }
 
-                showToast('Bem-vindo ao TITÃ ISP!', 'success');
+                if (isMounted.current) showToast('Bem-vindo ao TITÃ ISP!', 'success');
             } else if (mode === 'signup') {
                 const { data, error } = await supabase.auth.signUp({
                     email,
@@ -114,24 +119,22 @@ const Auth: React.FC = () => {
                 if (error) throw error;
 
                 if (data.user && inviteData) {
-                    // Para signup, o trigger de banco deve cuidar disso, 
-                    // mas marcar o convite como usado é prudente.
                     await supabase
                         .from('invitations')
                         .update({ used_at: new Date().toISOString() })
                         .eq('invite_token', searchParams.get('invite'));
                 }
 
-                showToast('Verifique seu e-mail para confirmar a conta!', 'success');
+                if (isMounted.current) showToast('Verifique seu e-mail para confirmar a conta!', 'success');
             } else {
                 const { error } = await supabase.auth.resetPasswordForEmail(email);
                 if (error) throw error;
-                showToast('Link de recuperação enviado!', 'success');
+                if (isMounted.current) showToast('Link de recuperação enviado!', 'success');
             }
         } catch (err: any) {
-            showToast(err.message || 'Erro na autenticação', 'error');
+            if (isMounted.current) showToast(err.message || 'Erro na autenticação', 'error');
         } finally {
-            setLoading(false);
+            if (isMounted.current) setLoading(false);
         }
     };
 
