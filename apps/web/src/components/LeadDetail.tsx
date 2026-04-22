@@ -194,6 +194,19 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
         }
     };
 
+    const handleSendSignatureEmail = async () => {
+        try {
+            await api.post('/v1/assinatura/generate', {
+                leadId: localLead.id
+            });
+            showToast('Link de assinatura enviado com sucesso!', 'success');
+            loadLeadContext();
+        } catch (error) {
+            console.error('Failed to send signature email:', error);
+            showToast('Erro ao gerar link de assinatura.', 'error');
+        }
+    };
+
     const handleAdvanceStage = async () => {
         try {
             let updates: Partial<Lead> = {};

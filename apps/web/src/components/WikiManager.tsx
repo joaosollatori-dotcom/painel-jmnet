@@ -9,7 +9,8 @@ import {
     DeviceMobile,
     CloudArrowUp,
     FileText,
-    Question
+    Question,
+    Scroll
 } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import './WikiManager.css';
