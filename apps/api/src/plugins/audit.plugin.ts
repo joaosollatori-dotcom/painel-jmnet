@@ -2,8 +2,6 @@ import { FastifyPluginAsync } from "fastify";
 import fp from "fastify-plugin";
 import { PrismaClient } from "@prisma/client";
 
-const prisma = new PrismaClient();
-
 const auditPluginAsync: FastifyPluginAsync = async (fastify, options) => {
     fastify.addHook("onResponse", async (request, reply) => {
         // Ignorar hooks de rota vazia ou documentação
@@ -44,19 +42,19 @@ const auditPluginAsync: FastifyPluginAsync = async (fastify, options) => {
             const rawBody = request.body ? JSON.parse(JSON.stringify(request.body)) : null;
             if (rawBody && rawBody.password) delete rawBody.password;
 
-            const details = {
+            const details: any = {
                 method: request.method,
                 url: request.url,
                 params: request.params,
                 query: request.query,
                 body: rawBody,
                 statusCode: reply.statusCode,
-                responseTime: reply.getResponseTime()
+                responseTime: (reply as any).elapsedTime || 0
             };
 
             // Fila Passiva: Fire and Forget
             // O Prisma grava no Postgres sem travar o processamento do request
-            prisma.auditLog.create({
+            fastify.prisma.auditLog.create({
                 data: {
                     action,
                     entity,

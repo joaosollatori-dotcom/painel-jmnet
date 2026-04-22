@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import prisma from "../../lib/prisma.js";
 
 export async function auditRoutes(fastify: FastifyInstance) {
     // Somente Super Admins conseguiriam listar, a proteção seria feita por auth hooks
@@ -29,7 +28,7 @@ export async function auditRoutes(fastify: FastifyInstance) {
                 if (action) where.action = action;
 
                 const [logs, total] = await Promise.all([
-                    prisma.auditLog.findMany({
+                    fastify.prisma.auditLog.findMany({
                         where,
                         orderBy: { createdAt: "desc" },
                         take: limit ? parseInt(limit) : 50,
@@ -38,7 +37,7 @@ export async function auditRoutes(fastify: FastifyInstance) {
                             user: { select: { id: true, email: true, full_name: true } },
                         },
                     }),
-                    prisma.auditLog.count({ where }),
+                    fastify.prisma.auditLog.count({ where }),
                 ]);
 
                 return { success: true, total, logs };

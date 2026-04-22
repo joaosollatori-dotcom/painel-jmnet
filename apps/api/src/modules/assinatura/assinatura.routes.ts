@@ -1,6 +1,5 @@
 import { FastifyInstance } from "fastify";
 import { z } from "zod";
-import prisma from "../../lib/prisma.js";
 import { v4 as uuidv4 } from "uuid";
 
 export async function assinaturaRoutes(fastify: FastifyInstance) {
@@ -19,7 +18,7 @@ export async function assinaturaRoutes(fastify: FastifyInstance) {
         async (request, reply) => {
             const { token } = request.params as any;
 
-            const assinatura = await prisma.contratoAssinatura.findUnique({
+            const assinatura = await fastify.prisma.contratoAssinatura.findUnique({
                 where: { token },
             });
 
@@ -59,7 +58,7 @@ export async function assinaturaRoutes(fastify: FastifyInstance) {
             const ipAddress = (request.headers["x-forwarded-for"] as string) || request.ip;
             const userAgent = request.headers["user-agent"];
 
-            const assinatura = await prisma.contratoAssinatura.findUnique({
+            const assinatura = await fastify.prisma.contratoAssinatura.findUnique({
                 where: { token },
             });
 
@@ -68,7 +67,7 @@ export async function assinaturaRoutes(fastify: FastifyInstance) {
             }
 
             // Atualiza o registro de assinatura
-            const updated = await prisma.contratoAssinatura.update({
+            const updated = await fastify.prisma.contratoAssinatura.update({
                 where: { token },
                 data: {
                     status: "ASSINADO",
@@ -80,7 +79,7 @@ export async function assinaturaRoutes(fastify: FastifyInstance) {
 
             // Se houver um Lead vinculado, podemos atualizar o status do lead
             if (assinatura.leadId) {
-                await prisma.lead.update({
+                await fastify.prisma.lead.update({
                     where: { id: assinatura.leadId },
                     data: {
                         statusProposta: "CONTRATO_ASSINADO",
@@ -110,7 +109,7 @@ export async function assinaturaRoutes(fastify: FastifyInstance) {
             const { leadId, assinanteId } = request.body as any;
             const token = uuidv4();
 
-            const newAssinatura = await prisma.contratoAssinatura.create({
+            const newAssinatura = await fastify.prisma.contratoAssinatura.create({
                 data: {
                     leadId,
                     assinanteId,
