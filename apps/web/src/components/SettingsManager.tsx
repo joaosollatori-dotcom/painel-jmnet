@@ -288,30 +288,31 @@ const SettingsManager: React.FC = () => {
                                         </div>
                                     ))}
 
-                                    {invitations.map(inv => {
-                                        const isExpired = inv.expiresAt && new Date(inv.expiresAt) < new Date();
-                                        const status = inv.usedAt ? 'CONFIRMADO' : (isExpired ? 'EXPIRADO' : 'PENDENTE');
-                                        const statusColor = status === 'CONFIRMADO' ? '#10b981' : (status === 'EXPIRADO' ? '#ef4444' : '#f59e0b');
+                                    {invitations
+                                        .filter(inv => !inv.usedAt) // Oculta convites já usados para não duplicar com os cards de usuário
+                                        .map(inv => {
+                                            const isExpired = inv.expiresAt && new Date(inv.expiresAt) < new Date();
+                                            const status = isExpired ? 'EXPIRADO' : 'PENDENTE';
+                                            const statusColor = isExpired ? '#ef4444' : '#f59e0b';
 
-                                        return (
-                                            <div key={inv.id} className="user-card-titan" style={{ opacity: status === 'CONFIRMADO' ? 0.5 : 1 }}>
-                                                <div className="user-card-header">
-                                                    <div className="user-main-info">
-                                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                            <Envelope size={20} color="var(--text-secondary)" />
+                                            return (
+                                                <div key={inv.id} className="user-card-titan">
+                                                    <div className="user-card-header">
+                                                        <div className="user-main-info">
+                                                            <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                                <Envelope size={20} color="var(--text-secondary)" />
+                                                            </div>
+                                                            <div>
+                                                                <h4 style={{ color: 'var(--text-secondary)' }}>Convite {status !== 'PENDENTE' && `(${status})`}</h4>
+                                                                <span>{inv.email}</span>
+                                                            </div>
                                                         </div>
-                                                        <div>
-                                                            <h4 style={{ color: 'var(--text-secondary)' }}>Convite {status !== 'PENDENTE' && `(${status})`}</h4>
-                                                            <span>{inv.email}</span>
-                                                        </div>
+                                                        <div className={`role-badge ${inv.role.toLowerCase()}`}>{inv.role}</div>
                                                     </div>
-                                                    <div className={`role-badge ${inv.role.toLowerCase()}`}>{inv.role}</div>
-                                                </div>
-                                                <div className="user-card-actions" style={{ justifyContent: 'space-between' }}>
-                                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: statusColor, padding: '4px 8px', background: `${statusColor}15`, borderRadius: '6px' }}>
-                                                        {status}
-                                                    </span>
-                                                    {status !== 'CONFIRMADO' && (
+                                                    <div className="user-card-actions" style={{ justifyContent: 'space-between' }}>
+                                                        <span style={{ fontSize: '0.7rem', fontWeight: 800, color: statusColor, padding: '4px 8px', background: `${statusColor}15`, borderRadius: '6px' }}>
+                                                            {status}
+                                                        </span>
                                                         <div style={{ display: 'flex', gap: '8px' }}>
                                                             <button
                                                                 className="btn-titan-outline-sm"
@@ -326,11 +327,10 @@ const SettingsManager: React.FC = () => {
                                                                 <ArrowsClockwise size={14} /> RESETAR
                                                             </button>
                                                         </div>
-                                                    )}
+                                                    </div>
                                                 </div>
-                                            </div>
-                                        );
-                                    })}
+                                            );
+                                        })}
 
                                     <button className="add-user-placeholder" onClick={() => setShowInviteModal(true)}>
                                         <Plus size={32} />
