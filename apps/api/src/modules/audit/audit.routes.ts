@@ -5,19 +5,6 @@ export async function auditRoutes(fastify: FastifyInstance) {
     // Somente Super Admins conseguiriam listar, a proteção seria feita por auth hooks
     fastify.get(
         "/",
-        {
-            schema: {
-                tags: ["Audit"],
-                summary: "Listar Logs de Auditoria",
-                querystring: z.object({
-                    limit: z.string().optional(),
-                    offset: z.string().optional(),
-                    userId: z.string().optional(),
-                    entity: z.string().optional(),
-                    action: z.string().optional(),
-                }),
-            },
-        },
         async (request, reply) => {
             const { limit, offset, userId, entity, action } = request.query as any;
 

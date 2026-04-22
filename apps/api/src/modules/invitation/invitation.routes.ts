@@ -72,13 +72,6 @@ export async function invitationRoutes(fastify: FastifyInstance) {
     // Rota autenticada para resetar
     fastify.post(
         "/reset",
-        {
-            schema: {
-                body: z.object({
-                    inviteId: z.string(),
-                }),
-            },
-        },
         async (request, reply) => {
             const { inviteId } = request.body as any;
 
@@ -95,9 +88,9 @@ export async function invitationRoutes(fastify: FastifyInstance) {
                 });
 
                 return reply.send({ success: true, newInvite });
-            } catch (error) {
+            } catch (error: any) {
                 fastify.log.error(error);
-                return reply.status(500).send({ error: "Erro ao resetar convite" });
+                return reply.status(500).send({ error: "Erro ao resetar convite", details: error.message, stack: error.stack });
             }
         }
     );
