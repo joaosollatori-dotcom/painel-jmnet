@@ -311,6 +311,7 @@ model ContratoAssinatura {
   token          String    @unique
   dataAssinatura DateTime? @db.Timestamptz(6)
   ipAssinatura   String?
+  userAgent      String?
   createdAt      DateTime  @default(now()) @db.Timestamptz(6)
   Lead           Lead?     @relation(fields: [leadId], references: [id])
   Assinante      Assinante? @relation(fields: [assinanteId], references: [id])
