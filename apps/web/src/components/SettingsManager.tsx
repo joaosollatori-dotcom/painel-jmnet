@@ -4,7 +4,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { getSystemSettings, saveSystemSetting, deleteSystemSetting, SystemSetting } from '../services/systemSettingsService';
 import { getTenantUsers, updateUserProfile, Profile, UserRole, getCurrentProfile } from '../services/userService';
 import { getGlobalAuditLogs, AuditLog } from '../services/auditService';
-import { createInvitation, getInvitations, Invitation } from '../services/invitationService';
+import { createInvitation, getInvitations, resetInvitation, Invitation } from '../services/invitationService';
 import { generateRemoteAccessKey, getAllowedIPs, addAllowedIP, removeAllowedIP, AllowedIP } from '../services/remoteAccessService';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
@@ -146,6 +146,17 @@ const SettingsManager: React.FC = () => {
         }
     };
 
+    const handleResetInvite = async (inviteId: string) => {
+        try {
+            const link = await resetInvitation(inviteId);
+            setGeneratedLink(link);
+            showToast('Convite resetado/gerado um novo com sucesso!', 'success');
+            loadSettings();
+        } catch (err) {
+            showToast('Erro ao resetar convite', 'error');
+        }
+    };
+
     const currentSettingsList = settings.filter(s => s.category === activeTab);
 
     return (
@@ -274,6 +285,40 @@ const SettingsManager: React.FC = () => {
                                             </div>
                                         </div>
                                     ))}
+
+                                    {invitations.map(inv => {
+                                        const isExpired = inv.expiresAt && new Date(inv.expiresAt) < new Date();
+                                        const status = inv.usedAt ? 'CONFIRMADO' : (isExpired ? 'EXPIRADO' : 'PENDENTE');
+                                        const statusColor = status === 'CONFIRMADO' ? '#10b981' : (status === 'EXPIRADO' ? '#ef4444' : '#f59e0b');
+
+                                        return (
+                                            <div key={inv.id} className="user-card-titan" style={{ opacity: status === 'CONFIRMADO' ? 0.5 : 1 }}>
+                                                <div className="user-card-header">
+                                                    <div className="user-main-info">
+                                                        <div style={{ width: '40px', height: '40px', borderRadius: '50%', background: 'var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                            <Envelope size={20} color="var(--text-secondary)" />
+                                                        </div>
+                                                        <div>
+                                                            <h4 style={{ color: 'var(--text-secondary)' }}>Convite {status !== 'PENDENTE' && `(${status})`}</h4>
+                                                            <span>{inv.email}</span>
+                                                        </div>
+                                                    </div>
+                                                    <div className={`role-badge ${inv.role.toLowerCase()}`}>{inv.role}</div>
+                                                </div>
+                                                <div className="user-card-actions" style={{ justifyContent: 'space-between' }}>
+                                                    <span style={{ fontSize: '0.7rem', fontWeight: 800, color: statusColor, padding: '4px 8px', background: `${statusColor}15`, borderRadius: '6px' }}>
+                                                        {status}
+                                                    </span>
+                                                    {status !== 'CONFIRMADO' && (
+                                                        <button className="btn-titan-outline-sm" onClick={() => handleResetInvite(inv.id)}>
+                                                            <ArrowsClockwise size={14} /> RESETAR LINK
+                                                        </button>
+                                                    )}
+                                                </div>
+                                            </div>
+                                        );
+                                    })}
+
                                     <button className="add-user-placeholder" onClick={() => setShowInviteModal(true)}>
                                         <Plus size={32} />
                                         <span>Convidar Membro</span>

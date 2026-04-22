@@ -7,6 +7,7 @@ export interface Invitation {
     role: UserRole;
     token: string;
     expiresAt: string;
+    usedAt?: string;
 }
 
 export const createInvitation = async (email: string, role: UserRole): Promise<string> => {
@@ -28,13 +29,22 @@ export const createInvitation = async (email: string, role: UserRole): Promise<s
     return `${baseUrl}/signup?invite=${token}`;
 };
 
+export const resetInvitation = async (inviteId: string): Promise<string> => {
+    const { api } = await import('./api');
+    const response = await api.post('/v1/invitations/reset', { inviteId });
+    if (!response.data.success) throw new Error("Failed");
+
+    // Retorna novo link
+    const baseUrl = window.location.origin;
+    return `${baseUrl}/signup?invite=${response.data.newInvite.invite_token}`;
+};
+
 export const getInvitations = async (): Promise<Invitation[]> => {
     try {
         const { data, error } = await supabase
             .from('invitations')
             .select('*')
-            .is('used_at', null)
-            .gt('expires_at', new Date().toISOString());
+            .order('created_at', { ascending: false });
 
         if (error) {
             console.warn("Invitations table not found. Run SQL migration.");
@@ -45,8 +55,9 @@ export const getInvitations = async (): Promise<Invitation[]> => {
             email: d.email,
             role: d.role as UserRole,
             token: d.invite_token,
-            expiresAt: d.expires_at
-        }));
+            expiresAt: d.expires_at,
+            usedAt: d.used_at
+        })) as (Invitation & { usedAt: string | null })[];
     } catch (e) {
         return [];
     }

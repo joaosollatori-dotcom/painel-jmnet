@@ -14,6 +14,7 @@ import { telefoniaRoutes } from "./modules/telefonia/telefonia.routes.js";
 import { whatsappRoutes } from "./modules/whatsapp/whatsapp.routes.js";
 import { auditRoutes } from "./modules/audit/audit.routes.js";
 import { assinaturaRoutes } from "./modules/assinatura/assinatura.routes.js";
+import { invitationRoutes } from "./modules/invitation/invitation.routes.js";
 import { bullmqPlugin } from "./plugins/bullmq.plugin.js";
 import { prismaPlugin } from "./plugins/prisma.plugin.js";
 import { redisPlugin } from "./plugins/redis.plugin.js";
@@ -63,6 +64,7 @@ export async function setupServer() {
 	await server.register(whatsappRoutes, { prefix: "/v1/whatsapp" });
 	await server.register(auditRoutes, { prefix: "/v1/audit" });
 	await server.register(assinaturaRoutes, { prefix: "/v1/assinatura" });
+	await server.register(invitationRoutes, { prefix: "/v1/invitations" });
 
 	await server.register(redisPlugin);
 	await server.register(bullmqPlugin);

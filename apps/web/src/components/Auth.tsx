@@ -25,23 +25,24 @@ const Auth: React.FC = () => {
 
     const validateInvite = async (token: string) => {
         try {
-            const { data, error } = await supabase
-                .from('invitations')
-                .select('*, tenants(name)')
-                .eq('invite_token', token)
-                .maybeSingle();
+            const { api } = await import('../services/api');
+            const ua = navigator.userAgent;
+            const res = await api.post('/v1/invitations/validate', { token, userAgent: ua });
 
-            if (error) throw error;
-            if (data) {
+            if (res.data.status === 'VALID') {
                 setInviteData({
-                    tenant_id: data.tenant_id,
-                    role: data.role,
-                    company_name: data.tenants?.name
+                    tenant_id: res.data.data.tenant_id,
+                    role: res.data.data.role,
+                    company_name: res.data.data.company_name
                 });
-                setEmail(data.email);
-                showToast(`Convite aceito para ${data.tenants?.name}`, 'success');
+                setEmail(res.data.data.email);
+                showToast(`Convite aceito para ${res.data.data.company_name}`, 'success');
+            } else if (res.data.status === 'EXPIRED') {
+                showToast(res.data.message || 'Convite expirado. Contate o administrador.', 'error');
+                setSearchParams({});
+                setMode('login');
             } else {
-                showToast('Convite não encontrado ou expirado.', 'error');
+                showToast(res.data.message || 'Convite inválido.', 'error');
                 setSearchParams({});
                 setMode('login');
             }
