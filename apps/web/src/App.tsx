@@ -149,13 +149,23 @@ const App: React.FC = () => {
 
   // Se tem sessão mas o perfil não carregou (e não estamos em loading)
   // Pode ser um erro de RLS ou perfil não criado.
-  if (!profile) {
+  // Se tem sessão mas o perfil não carregou ou não tem tenant_id (Blindagem de Acesso)
+  if (!profile || !profile.tenant_id) {
+    // Se estiver em uma rota de signup, deixa passar
+    if (window.location.pathname === '/signup') {
+      return <Auth key="signup-screen" />;
+    }
+
     return (
-      <div className="flex-center" style={{ height: '100vh', flexDirection: 'column', gap: '20px', backgroundColor: 'var(--bg-deep)' }}>
-        <h3 style={{ color: 'var(--text-primary)' }}>Configurando seu acesso...</h3>
-        <p style={{ color: 'var(--text-secondary)' }}>Estamos preparando sua estação de trabalho.</p>
-        <button className="btn-titan-auth" onClick={() => window.location.reload()}>TENTAR NOVAMENTE</button>
-        <button style={{ marginTop: '10px', color: 'var(--accent)', fontWeight: 600 }} onClick={signOut}>SAIR</button>
+      <div className="flex-center" style={{ height: '100vh', flexDirection: 'column', gap: '20px', backgroundColor: 'var(--bg-deep)', padding: '20px', textAlign: 'center' }}>
+        <h3 style={{ color: 'var(--text-primary)' }}>Acesso Não Autorizado</h3>
+        <p style={{ color: 'var(--text-secondary)', maxWidth: '400px' }}>
+          Sua conta não possui uma Organização vinculada. Acesse via convite ou funde uma nova estação.
+        </p>
+        <div style={{ display: 'flex', gap: '10px' }}>
+          <button className="btn-titan-auth" onClick={() => window.location.href = '/'}>PÁGINA INICIAL</button>
+          <button style={{ color: 'var(--accent)', fontWeight: 600 }} onClick={signOut}>SAIR</button>
+        </div>
       </div>
     );
   }

@@ -1,9 +1,102 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
-import { Key, Envelope, ShieldCheck, ArrowRight, Spinner, Buildings } from '@phosphor-icons/react';
+import { Key, Envelope, ShieldCheck, ArrowRight, Spinner, Buildings, IdentificationCard, UserCircle, Cpu, Lock } from '@phosphor-icons/react';
 import { useToast } from '../contexts/ToastContext';
 import './Auth.css';
+
+// Componente de Partículas Minimalista (Estilo Security Grid)
+const Particles: React.FC = () => {
+    const canvasRef = useRef<HTMLCanvasElement>(null);
+
+    useEffect(() => {
+        const canvas = canvasRef.current;
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        if (!ctx) return;
+
+        let animationFrameId: number;
+        let particles: any[] = [];
+
+        const resize = () => {
+            canvas.width = canvas.offsetWidth;
+            canvas.height = canvas.offsetHeight;
+        };
+
+        class Particle {
+            x: number;
+            y: number;
+            vx: number;
+            vy: number;
+            size: number;
+
+            constructor() {
+                this.x = Math.random() * canvas!.width;
+                this.y = Math.random() * canvas!.height;
+                this.vx = (Math.random() - 0.5) * 0.5;
+                this.vy = (Math.random() - 0.5) * 0.5;
+                this.size = Math.random() * 2;
+            }
+
+            update() {
+                this.x += this.vx;
+                this.y += this.vy;
+                if (this.x < 0 || this.x > canvas!.width) this.vx *= -1;
+                if (this.y < 0 || this.y > canvas!.height) this.vy *= -1;
+            }
+
+            draw() {
+                if (!ctx) return;
+                ctx.fillStyle = 'rgba(59, 130, 246, 0.4)';
+                ctx.beginPath();
+                ctx.arc(this.x, this.y, this.size, 0, Math.PI * 2);
+                ctx.fill();
+            }
+        }
+
+        const init = () => {
+            resize();
+            particles = Array.from({ length: 50 }, () => new Particle());
+        };
+
+        const animate = () => {
+            ctx.clearRect(0, 0, canvas.width, canvas.height);
+            particles.forEach(p => {
+                p.update();
+                p.draw();
+            });
+
+            // Desenhar conexões próximas
+            for (let i = 0; i < particles.length; i++) {
+                for (let j = i + 1; j < particles.length; j++) {
+                    const dx = particles[i].x - particles[j].x;
+                    const dy = particles[i].y - particles[j].y;
+                    const dist = Math.sqrt(dx * dx + dy * dy);
+                    if (dist < 100) {
+                        ctx.strokeStyle = `rgba(59, 130, 246, ${0.1 * (1 - dist / 100)})`;
+                        ctx.lineWidth = 0.5;
+                        ctx.beginPath();
+                        ctx.moveTo(particles[i].x, particles[i].y);
+                        ctx.lineTo(particles[j].x, particles[j].y);
+                        ctx.stroke();
+                    }
+                }
+            }
+            animationFrameId = requestAnimationFrame(animate);
+        };
+
+        init();
+        animate();
+        window.addEventListener('resize', resize);
+
+        return () => {
+            cancelAnimationFrame(animationFrameId);
+            window.removeEventListener('resize', resize);
+        };
+    }, []);
+
+    return <canvas ref={canvasRef} className="particles-canvas" />;
+};
 
 const Auth: React.FC = () => {
     const { showToast } = useToast();
@@ -36,58 +129,33 @@ const Auth: React.FC = () => {
                     company_name: res.data.data.company_name
                 });
                 setEmail(res.data.data.email);
-                showToast(`Convite aceito para ${res.data.data.company_name}`, 'success');
-            } else if (res.data.status === 'EXPIRED') {
-                showToast(res.data.message || 'Convite expirado. Contate o administrador.', 'error');
-                setSearchParams({});
-                setMode('login');
             } else {
                 showToast(res.data.message || 'Convite inválido.', 'error');
-                setSearchParams({});
                 setMode('login');
             }
         } catch (err) {
             console.error('Invalid invite token:', err);
-            showToast('Erro ao validar o convite.', 'error');
-            setSearchParams({});
             setMode('login');
         }
     };
 
     const claimInvite = async (userId: string) => {
         if (!inviteData || !searchParams.get('invite')) return;
-
         try {
-            // 1. Atualizar o Perfil do Usuário com Tenant e Role
-            const { error: profileError } = await supabase
-                .from('profiles')
-                .update({
-                    tenant_id: inviteData.tenant_id,
-                    role: inviteData.role
-                })
-                .eq('id', userId);
-
+            const { error: profileError } = await supabase.from('profiles').update({
+                tenant_id: inviteData.tenant_id,
+                role: inviteData.role
+            }).eq('id', userId);
             if (profileError) throw profileError;
 
-            // 2. Marcar convite como utilizado
-            const { error: inviteError } = await supabase
-                .from('invitations')
-                .update({ used_at: new Date().toISOString() })
+            await supabase.from('invitations').update({ used_at: new Date().toISOString() })
                 .eq('invite_token', searchParams.get('invite'));
 
-            if (inviteError) throw inviteError;
-
-            showToast(`Vínculo com ${inviteData.company_name} estabelecido!`, 'success');
+            showToast(`Sua conta agora está vinculada a ${inviteData.company_name || 'Organização'}`, 'success');
         } catch (err) {
             console.error('Error claiming invite:', err);
-            showToast('Falha ao vincular convite à sua conta.', 'error');
         }
     };
-
-    const isMounted = useRef(true);
-    useEffect(() => {
-        return () => { isMounted.current = false; };
-    }, []);
 
     const handleAuth = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -97,12 +165,8 @@ const Auth: React.FC = () => {
             if (mode === 'login') {
                 const { data, error } = await supabase.auth.signInWithPassword({ email, password });
                 if (error) throw error;
-
-                if (data.user && inviteData && isMounted.current) {
-                    await claimInvite(data.user.id);
-                }
-
-                if (isMounted.current) showToast('Bem-vindo ao TITÃ ISP!', 'success');
+                if (data.user && inviteData) await claimInvite(data.user.id);
+                showToast('Acesso validado. Bem-vindo à Estação Matrix.', 'success');
             } else if (mode === 'signup') {
                 const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
                     email,
@@ -119,33 +183,28 @@ const Auth: React.FC = () => {
 
                 if (signUpError) {
                     if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400) {
-                        if (isMounted.current) {
-                            showToast('Você já possui uma conta! Use sua senha para entrar e aceitar o convite.', 'info');
-                            setMode('login');
-                            setLoading(false);
-                            return;
-                        }
+                        showToast('Você já possui uma conta! Detectamos seu registro anterior.', 'info');
+                        setMode('login');
+                        setLoading(false);
+                        return;
                     }
                     throw signUpError;
                 }
 
                 if (signUpData.user && inviteData) {
-                    await supabase
-                        .from('invitations')
-                        .update({ used_at: new Date().toISOString() })
+                    await supabase.from('invitations').update({ used_at: new Date().toISOString() })
                         .eq('invite_token', searchParams.get('invite'));
                 }
-
-                if (isMounted.current) showToast('Verifique seu e-mail para confirmar a conta!', 'success');
+                showToast('Identidade criada. Verifique seu e-mail para confirmação final.', 'success');
             } else {
                 const { error } = await supabase.auth.resetPasswordForEmail(email);
                 if (error) throw error;
-                if (isMounted.current) showToast('Link de recuperação enviado!', 'success');
+                showToast('Instruções de recuperação enviadas.', 'success');
             }
         } catch (err: any) {
-            if (isMounted.current) showToast(err.message || 'Erro na autenticação', 'error');
+            showToast(err.message || 'Erro na autenticação de segurança', 'error');
         } finally {
-            if (isMounted.current) setLoading(false);
+            setLoading(true); // Manter carregando até o redirect do AuthContext
         }
     };
 
@@ -155,54 +214,65 @@ const Auth: React.FC = () => {
                 <div className="auth-glass">
                     <header className="auth-header">
                         <div className="auth-logo">
-                            <ShieldCheck size={40} weight="fill" className="text-blue-500" />
+                            <ShieldCheck size={40} weight="fill" color="#3b82f6" />
                             <span>TITÃ | ISP</span>
                         </div>
                         <h2>
-                            {mode === 'login' && 'Acesso à Estação Matrix'}
-                            {mode === 'signup' && (inviteData ? `Integrar-se à ${inviteData.company_name || 'sua nova Organização'}` : 'Criar Nova Identidade')}
-                            {mode === 'reset' && 'Recuperar Acesso'}
+                            {mode === 'login' && (inviteData ? 'Vincular Identidade' : 'Estação de Comando')}
+                            {mode === 'signup' && (inviteData ? `Integrar-se à ${inviteData.company_name || 'Organização'}` : 'Fundar Nova Estação')}
+                            {mode === 'reset' && 'Recuperar Segurança'}
                         </h2>
                         <p>
                             {inviteData
-                                ? `Você foi convidado por ${inviteData.company_name || 'um Administrador'} como ${inviteData.role}`
-                                : 'Plataforma de Gestão e Inteligência Multi-Tenant'}
+                                ? `Protocolo de acesso ativo para ${inviteData.role}.`
+                                : 'Ambiente de gestão blindada para ISPs de alta performance.'}
                         </p>
+
+                        {inviteData && (
+                            <div className="invite-badge">
+                                <span className="invite-tag">Protocolo Válido</span>
+                                <div className="invite-badge-icon">
+                                    <IdentificationCard size={32} weight="duotone" />
+                                </div>
+                                <div className="invite-badge-info">
+                                    <h4>Nível de Acesso</h4>
+                                    <p>{inviteData.role} • {inviteData.company_name || 'TITÃ'}</p>
+                                </div>
+                            </div>
+                        )}
 
                         {mode === 'signup' && inviteData && (
                             <div className="invite-tip">
-                                <span>Já possui uma conta TITÃ?</span>
-                                <button type="button" onClick={() => setMode('login')} className="text-blue-400 underline ml-1">
-                                    Entre aqui para aceitar o convite.
-                                </button>
+                                <span>Já é um oficial da plataforma?</span>
+                                <button type="button" onClick={() => setMode('login')}>Entrar e vincular contrato</button>
                             </div>
                         )}
                     </header>
 
                     <form onSubmit={handleAuth} className="auth-form">
                         <div className="titan-field">
-                            <label><Envelope size={16} /> E-mail Profissional</label>
+                            <label><Envelope size={16} /> Identidade Digital (E-mail)</label>
                             <input
                                 className="titan-input"
                                 type="email"
-                                placeholder="nome@provedor.com"
                                 value={email}
                                 onChange={e => setEmail(e.target.value)}
                                 required
                                 readOnly={!!inviteData}
+                                placeholder="usuario@tita.com"
                             />
                         </div>
 
                         {mode !== 'reset' && (
                             <div className="titan-field">
-                                <label><Key size={16} /> Chave de Segurança (Senha)</label>
+                                <label><Lock size={16} /> Chave de Segurança (Senha)</label>
                                 <input
                                     className="titan-input"
                                     type="password"
-                                    placeholder="••••••••"
                                     value={password}
                                     onChange={e => setPassword(e.target.value)}
                                     required
+                                    placeholder="••••••••"
                                 />
                             </div>
                         )}
@@ -210,21 +280,20 @@ const Auth: React.FC = () => {
                         {mode === 'signup' && !inviteData && (
                             <>
                                 <div className="titan-field">
-                                    <label><Buildings size={18} /> Nome da Organização / ISP</label>
+                                    <label><Buildings size={18} /> Nome da Organização</label>
                                     <input
                                         className="titan-input"
-                                        placeholder="Ex: PoloNet Telecom"
                                         value={companyName}
                                         onChange={e => setCompanyName(e.target.value)}
                                         required
+                                        placeholder="Minha Empresa ISP"
                                     />
                                 </div>
                                 <div className="titan-field">
-                                    <label><ShieldCheck size={16} /> Identificador Único (Slug)</label>
+                                    <label><Cpu size={18} /> Identificador de Sistema (Slug)</label>
                                     <input
                                         className="titan-input"
-                                        placeholder="ex: polonet-telecom"
-                                        value={companyName.toLowerCase().replace(/ /g, '-')}
+                                        value={companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}
                                         readOnly
                                     />
                                 </div>
@@ -235,11 +304,11 @@ const Auth: React.FC = () => {
                             {loading ? <Spinner className="animate-spin" /> : (
                                 <>
                                     {mode === 'login'
-                                        ? (inviteData ? 'ENTRAR E VINCULAR AO CONVITE' : 'ENTRAR NO SISTEMA')
+                                        ? (inviteData ? 'ENTRAR E VINCULAR AO CONVITE' : 'ENTRAR NA ESTAÇÃO')
                                         : mode === 'signup'
                                             ? (inviteData ? 'CRIAR CONTA E ACEITAR CONVITE' : 'FUNDAR ESTAÇÃO & CRIAR CONTA')
-                                            : 'ENVIAR LINK'}
-                                    <ArrowRight weight="bold" />
+                                            : 'SOLICITAR RECONEXÃO'}
+                                    <ArrowRight size={18} weight="bold" />
                                 </>
                             )}
                         </button>
@@ -248,25 +317,26 @@ const Auth: React.FC = () => {
                     <footer className="auth-footer">
                         {mode === 'login' ? (
                             <>
-                                <button onClick={() => setMode('reset')}>Esqueci minha senha</button>
+                                <button onClick={() => setMode('reset')}>Recuperar Chave</button>
                                 <span className="divider" />
-                                <button onClick={() => setMode('signup')}>Ainda não tenho conta</button>
+                                <button onClick={() => setMode('signup')}>Ainda não tenho acesso</button>
                             </>
                         ) : (
-                            <button onClick={() => setMode('login')}>Voltar para o login</button>
+                            <button onClick={() => setMode('login')}>Voltar para Login</button>
                         )}
                     </footer>
                 </div>
 
                 <div className="auth-visual">
-                    <div className="v-blob" />
+                    <Particles />
                     <div className="v-grid" />
                     <div className="v-content">
-                        <h3>Monitoramento Global em Tempo Real</h3>
-                        <p>Gerencie leads, ordens de serviço e auditoria em uma única interface blindada.</p>
+                        <h3>Gestão Central Blindada</h3>
+                        <p>Infraestrutura multi-tenant com isolamento de dados via RLS e auditoria militar.</p>
                         <div className="v-badges">
-                            <div className="v-badge"><ShieldCheck size={14} /> Multi-Tenant RLS</div>
-                            <div className="v-badge"><Key size={14} /> Audit Trail logs</div>
+                            <div className="v-badge"><ShieldCheck size={18} weight="bold" /> Proteção RLS Ativa</div>
+                            <div className="v-badge"><Lock size={18} weight="bold" /> Auditoria de Operações</div>
+                            <div className="v-badge"><Cpu size={18} weight="bold" /> Núcleo de Processamento TITÃ</div>
                         </div>
                     </div>
                 </div>
