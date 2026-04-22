@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { Scroll, Funnel, MagnifyingGlass, User as UserIcon, Hash, Clock, ArrowRight, Activity, Cpu, Sparkle, Warning, ChartLineUp, MapPin, ListDashes, ShieldCheck, Browser } from '@phosphor-icons/react';
+import { Scroll, Funnel, MagnifyingGlass, User as UserIcon, Hash, Clock, ArrowRight, Lightning, Cpu, Sparkle, Warning, ChartLineUp, MapPin, ListDashes, ShieldCheck, Browser } from '@phosphor-icons/react';
 import { api } from '../services/api';
 import './AdminAuditDashboard.css';
 
@@ -135,7 +135,7 @@ export const AdminAuditLogs: React.FC = () => {
                     <div className="audit-glass-card">
                         <header>
                             <h3>Limite de Rate API</h3>
-                            <Activity color="#8b5cf6" />
+                            <Lightning color="#8b5cf6" />
                         </header>
                         <div className="mini-metric-value" style={{ fontSize: '1.5rem' }}>450.000 <span style={{ fontSize: '1rem', color: '#9ca3af' }}>de 1M</span></div>
                         <div className="mini-metric-trend trend-up">
