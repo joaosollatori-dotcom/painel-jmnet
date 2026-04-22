@@ -39,8 +39,9 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
             const now = Date.now();
 
-            // Anti-Loop: Ignora eventos idênticos ou de refresh em menos de 2s se já tivermos sessão
-            if (event === 'TOKEN_REFRESHED' && now - lastEventTime.current < 2000 && profileRef.current) {
+            // Anti-Loop: Ignora refreshes muito rápidos (menos de 5s) para evitar o bombardeio do Supabase
+            if (event === 'TOKEN_REFRESHED' && (now - lastEventTime.current < 5000)) {
+                console.log("TITÃ DEBUG: Ignorando refresh redundante (Anti-Loop)");
                 return;
             }
 
@@ -75,7 +76,16 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
     }, []);
 
     const fetchProfile = async (u: User) => {
+        // Anti-spam & Cooldown (v2.07.07)
+        // Se já houver um carregamento em curso para este usuário, ignora.
         if (fetchInProgress.current && lastFetchedUserId.current === u.id) return;
+
+        // Se o perfil já existe e foi carregado muito recentemente (< 2s), ignora TOKEN_REFRESHED barulhentos
+        const now = Date.now();
+        if (profileRef.current && now - lastEventTime.current < 2000) {
+            setLoading(false);
+            return;
+        }
 
         fetchInProgress.current = true;
         lastFetchedUserId.current = u.id;
