@@ -14,6 +14,12 @@ export const createInvitation = async (email: string, role: UserRole): Promise<s
     const token = btoa(Math.random().toString()).slice(0, 24); // Token simples para convite
     const { data: { user } } = await supabase.auth.getUser();
 
+    // Verificar se o e-mail já possui um convite pendente/antigo
+    const { data: existing } = await supabase.from('invitations').select('id, expires_at').eq('email', email).maybeSingle();
+    if (existing) {
+        throw new Error("Um convite para este e-mail já existe na base. Resete-o se necessário.");
+    }
+
     const { error } = await supabase.from('invitations').insert([{
         email,
         invite_token: token,

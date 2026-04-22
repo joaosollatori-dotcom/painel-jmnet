@@ -83,22 +83,14 @@ export async function invitationRoutes(fastify: FastifyInstance) {
             const { inviteId } = request.body as any;
 
             try {
-                // 1. Invalidar convite anterior setando expires_at pro passado
-                const oldInvite = await fastify.prisma.invitations.update({
-                    where: { id: inviteId },
-                    data: { expires_at: new Date(Date.now() - 1000) }
-                });
-
-                // 2. Criar novo token
+                // 1. Criar novo token e atualizar na mesma linha, pois e-mail deve ser único
                 const newToken = btoa(Math.random().toString()).slice(0, 24);
-                const newInvite = await fastify.prisma.invitations.create({
+                const newInvite = await fastify.prisma.invitations.update({
+                    where: { id: inviteId },
                     data: {
-                        email: oldInvite.email,
                         invite_token: newToken,
-                        role: oldInvite.role,
-                        created_by: oldInvite.created_by,
-                        tenant_id: oldInvite.tenant_id,
                         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
+                        used_at: null // Reseta caso já tivesse sido usado por acidente
                     }
                 });
 

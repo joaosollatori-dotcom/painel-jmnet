@@ -900,7 +900,7 @@ model internal_messages {
 model invitations {
   id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
   tenant_id    String?   @db.Uuid
-  email        String
+  email        String    @unique
   invite_token String    @unique
   role         String?   @default("VENDEDOR")
   created_by   String?   @db.Uuid
