@@ -5,15 +5,6 @@ export async function invitationRoutes(fastify: FastifyInstance) {
     // Rota pública para validar o convite sem estar autenticado no Supabase
     fastify.post(
         "/validate",
-        {
-            schema: {
-                body: z.object({
-                    token: z.string(),
-                    ipAddress: z.string().optional(),
-                    userAgent: z.string().optional(),
-                }),
-            },
-        },
         async (request, reply) => {
             const { token, ipAddress, userAgent } = request.body as any;
 
