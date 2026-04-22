@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ShieldCheck, Plus, PencilSimple, Trash, Warning, FloppyDisk, Prohibit, ListBullets, Users, Key, UserCircle, Globe, Scroll, LockKey, Fingerprint, Copy } from '@phosphor-icons/react';
+import { ShieldCheck, Plus, PencilSimple, Trash, Warning, FloppyDisk, Prohibit, ListBullets, Users, Key, UserCircle, Globe, Scroll, LockKey, Fingerprint, Copy, Envelope, ArrowsClockwise } from '@phosphor-icons/react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { getSystemSettings, saveSystemSetting, deleteSystemSetting, SystemSetting } from '../services/systemSettingsService';
 import { getTenantUsers, updateUserProfile, Profile, UserRole, getCurrentProfile } from '../services/userService';
