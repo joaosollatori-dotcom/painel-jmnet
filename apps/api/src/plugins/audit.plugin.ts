@@ -22,13 +22,13 @@ const auditPluginAsync: FastifyPluginAsync = async (fastify, options) => {
                 tenantId = user.tenant_id;
             }
 
-            // Tenta classificar o Entity com base na URL
-            let entity = "SYSTEM";
-            if (request.url.includes("/assinantes")) entity = "ASSINANTE";
-            else if (request.url.includes("/os")) entity = "ORDEM_SERVICO";
-            else if (request.url.includes("/whatsapp")) entity = "WHATSAPP";
-            else if (request.url.includes("/financeiro")) entity = "FINANCEIRO";
-            else if (request.url.includes("/genieacs")) entity = "TR069";
+            // Tenta classificar o Resource com base na URL
+            let resource = "SYSTEM";
+            if (request.url.includes("/assinantes")) resource = "ASSINANTE";
+            else if (request.url.includes("/os")) resource = "ORDEM_SERVICO";
+            else if (request.url.includes("/whatsapp")) resource = "WHATSAPP";
+            else if (request.url.includes("/financeiro")) resource = "FINANCEIRO";
+            else if (request.url.includes("/genieacs")) resource = "TR069";
 
             let action = "ACCESS";
             if (request.method === "POST") action = "CREATE";
@@ -49,7 +49,8 @@ const auditPluginAsync: FastifyPluginAsync = async (fastify, options) => {
                 query: request.query,
                 body: rawBody,
                 statusCode: reply.statusCode,
-                responseTime: (reply as any).elapsedTime || 0
+                responseTime: (reply as any).elapsedTime || 0,
+                userAgent: userAgent
             };
 
             // Fila Passiva: Fire and Forget
@@ -57,12 +58,11 @@ const auditPluginAsync: FastifyPluginAsync = async (fastify, options) => {
             fastify.prisma.auditLog.create({
                 data: {
                     action,
-                    entity,
-                    ipAddress,
-                    userAgent,
+                    resource,
+                    ip_address: ipAddress,
                     details,
-                    userId,
-                    tenantId
+                    actor_id: userId,
+                    tenant_id: tenantId
                 }
             }).catch(err => {
                 fastify.log.error(`Falha ao gravar AuditLog: ${err.message}`);

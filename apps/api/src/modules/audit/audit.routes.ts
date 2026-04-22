@@ -23,18 +23,18 @@ export async function auditRoutes(fastify: FastifyInstance) {
 
             try {
                 const where: any = {};
-                if (userId) where.userId = userId;
-                if (entity) where.entity = entity;
+                if (userId) where.actor_id = userId;
+                if (entity) where.resource = entity;
                 if (action) where.action = action;
 
                 const [logs, total] = await Promise.all([
                     fastify.prisma.auditLog.findMany({
                         where,
-                        orderBy: { createdAt: "desc" },
+                        orderBy: { created_at: "desc" },
                         take: limit ? parseInt(limit) : 50,
                         skip: offset ? parseInt(offset) : 0,
                         include: {
-                            user: { select: { id: true, email: true, full_name: true } },
+                            User: { select: { id: true, email: true, raw_user_meta_data: true } },
                         },
                     }),
                     fastify.prisma.auditLog.count({ where }),

@@ -1,19 +1,18 @@
 import React, { useState, useEffect } from 'react';
-import { Scroll, Funnel, MagnifyingGlass, User, Hash, Clock, ArrowRight, Activity, Cpu } from '@phosphor-icons/react';
+import { Scroll, Funnel, MagnifyingGlass, User as UserIcon, Hash, Clock, ArrowRight, Activity, Cpu } from '@phosphor-icons/react';
 import { z } from 'zod';
 import { api } from '../services/api';
 
 export interface AuditLog {
     id: string;
-    userId: string | null;
-    user: { email: string, full_name: string } | null;
+    actor_id: string | null;
+    User: { email: string, raw_user_meta_data: any } | null;
     action: string;
-    entity: string;
+    resource: string;
     entityId: string | null;
-    ipAddress: string | null;
-    userAgent: string | null;
+    ip_address: string | null;
     details: any;
-    createdAt: string;
+    created_at: string;
 }
 
 export const AdminAuditLogs: React.FC = () => {
@@ -34,7 +33,7 @@ export const AdminAuditLogs: React.FC = () => {
             if (filterAction) params.append('action', filterAction);
             if (filterEntity) params.append('entity', filterEntity);
             if (filterUserId) params.append('userId', filterUserId);
-            
+
             const req = await api.get(`/v1/audit?${params.toString()}`);
             setLogs(req.data.logs || []);
             setTotal(req.data.total || 0);
@@ -93,29 +92,31 @@ export const AdminAuditLogs: React.FC = () => {
                 <div className="audit-row-header">
                     <div className="col-time"><Clock /> HORA</div>
                     <div className="col-action">EVENTO</div>
-                    <div className="col-user"><User /> ALVO / AGENTE</div>
+                    <div className="col-user"><UserIcon /> ALVO / AGENTE</div>
                     <div className="col-desc">CONTEXTO E CARGA</div>
                 </div>
-                
+
                 <div className="audit-row-body ic-sidebar-scroll">
                     {loading && logs.length === 0 ? (
                         <div className="audit-loading">📡 Sincronizando nó central...</div>
                     ) : logs.map(log => {
                         const isExpanded = expandedLogId === log.id;
+                        const userName = log.User?.raw_user_meta_data?.full_name || log.User?.email || 'Sistema API';
+
                         return (
                             <div key={log.id} className={`audit-item ${isExpanded ? 'expanded' : ''}`}>
                                 <div className="audit-item-row" onClick={() => setExpandedLogId(isExpanded ? null : log.id)}>
                                     <div className="col-time">
-                                        {new Date(log.createdAt).toLocaleTimeString('pt-BR', { hour12: false })}<br/>
-                                        <small>{new Date(log.createdAt).toLocaleDateString()}</small>
+                                        {new Date(log.created_at).toLocaleTimeString('pt-BR', { hour12: false })}<br />
+                                        <small>{new Date(log.created_at).toLocaleDateString()}</small>
                                     </div>
                                     <div className="col-action">
                                         <span className={`badge-action ${log.action.toLowerCase()}`}>{log.action}</span>
-                                        <span className="badge-entity">{log.entity}</span>
+                                        <span className="badge-entity">{log.resource}</span>
                                     </div>
                                     <div className="col-user">
-                                        <strong>{log.user?.full_name || 'Sistema API'}</strong>
-                                        <small>{log.ipAddress}</small>
+                                        <strong>{userName}</strong>
+                                        <small>{log.ip_address}</small>
                                     </div>
                                     <div className="col-desc">
                                         <span className="log-url">{log.details?.method} {log.details?.url}</span>
