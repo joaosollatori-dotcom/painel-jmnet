@@ -118,10 +118,9 @@ const Auth: React.FC = () => {
                 });
 
                 if (signUpError) {
-                    // Trata erro de SMTP ou usuário já existente que retornou 500
-                    if (signUpError.status === 400 || signUpError.status === 500) {
+                    if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400) {
                         if (isMounted.current) {
-                            showToast('Esta conta já pode estar ativa. Tente fazer login agora!', 'warning');
+                            showToast('Você já possui uma conta! Use sua senha para entrar e aceitar o convite.', 'info');
                             setMode('login');
                             setLoading(false);
                             return;
@@ -161,10 +160,23 @@ const Auth: React.FC = () => {
                         </div>
                         <h2>
                             {mode === 'login' && 'Acesso à Estação Matrix'}
-                            {mode === 'signup' && (inviteData ? `Integrar-se à ${inviteData.company_name}` : 'Criar Nova Identidade')}
+                            {mode === 'signup' && (inviteData ? `Integrar-se à ${inviteData.company_name || 'sua nova Organização'}` : 'Criar Nova Identidade')}
                             {mode === 'reset' && 'Recuperar Acesso'}
                         </h2>
-                        <p>{inviteData ? `Você foi convidado como ${inviteData.role}` : 'Plataforma de Gestão e Inteligência Multi-Tenant'}</p>
+                        <p>
+                            {inviteData
+                                ? `Você foi convidado por ${inviteData.company_name || 'um Administrador'} como ${inviteData.role}`
+                                : 'Plataforma de Gestão e Inteligência Multi-Tenant'}
+                        </p>
+
+                        {mode === 'signup' && inviteData && (
+                            <div className="invite-tip">
+                                <span>Já possui uma conta TITÃ?</span>
+                                <button type="button" onClick={() => setMode('login')} className="text-blue-400 underline ml-1">
+                                    Entre aqui para aceitar o convite.
+                                </button>
+                            </div>
+                        )}
                     </header>
 
                     <form onSubmit={handleAuth} className="auth-form">
@@ -195,23 +207,38 @@ const Auth: React.FC = () => {
                             </div>
                         )}
 
-                        {mode === 'signup' && !searchParams.get('invite') && !inviteData && (
-                            <div className="titan-field">
-                                <label><Buildings size={18} /> Nome da Organização / ISP</label>
-                                <input
-                                    className="titan-input"
-                                    placeholder="Ex: PoloNet Telecom"
-                                    value={companyName}
-                                    onChange={e => setCompanyName(e.target.value)}
-                                    required
-                                />
-                            </div>
+                        {mode === 'signup' && !inviteData && (
+                            <>
+                                <div className="titan-field">
+                                    <label><Buildings size={18} /> Nome da Organização / ISP</label>
+                                    <input
+                                        className="titan-input"
+                                        placeholder="Ex: PoloNet Telecom"
+                                        value={companyName}
+                                        onChange={e => setCompanyName(e.target.value)}
+                                        required
+                                    />
+                                </div>
+                                <div className="titan-field">
+                                    <label><ShieldCheck size={16} /> Identificador Único (Slug)</label>
+                                    <input
+                                        className="titan-input"
+                                        placeholder="ex: polonet-telecom"
+                                        value={companyName.toLowerCase().replace(/ /g, '-')}
+                                        readOnly
+                                    />
+                                </div>
+                            </>
                         )}
 
                         <button className="btn-titan-auth" disabled={loading}>
                             {loading ? <Spinner className="animate-spin" /> : (
                                 <>
-                                    {mode === 'login' ? 'ENTRAR NO SISTEMA' : mode === 'signup' ? (inviteData ? 'ACEITAR CONVITE E CRIAR CONTA' : searchParams.get('invite') ? 'VALIDANDO CONVITE...' : 'FUNDAR ORGANIZAÇÃO & CRIAR CONTA') : 'ENVIAR LINK'}
+                                    {mode === 'login'
+                                        ? (inviteData ? 'ENTRAR E VINCULAR AO CONVITE' : 'ENTRAR NO SISTEMA')
+                                        : mode === 'signup'
+                                            ? (inviteData ? 'CRIAR CONTA E ACEITAR CONVITE' : 'FUNDAR ESTAÇÃO & CRIAR CONTA')
+                                            : 'ENVIAR LINK'}
                                     <ArrowRight weight="bold" />
                                 </>
                             )}
