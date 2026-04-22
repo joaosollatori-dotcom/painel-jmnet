@@ -1,5 +1,4 @@
 import React, { createContext, useContext, useState, useCallback } from 'react';
-import { motion, AnimatePresence } from 'framer-motion';
 import { CheckCircle, Info, Warning, XCircle } from '@phosphor-icons/react';
 
 type ToastType = 'success' | 'error' | 'info' | 'warning';
@@ -56,13 +55,10 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                 gap: '10px',
                 pointerEvents: 'none'
             }}>
-                <AnimatePresence>
+                <div>
                     {toasts.map(toast => (
-                        <motion.div
+                        <div
                             key={toast.id}
-                            initial={{ opacity: 0, y: 20, scale: 0.9, x: 20 }}
-                            animate={{ opacity: 1, y: 0, scale: 1, x: 0 }}
-                            exit={{ opacity: 0, scale: 0.9, x: 20, transition: { duration: 0.2 } }}
                             style={{
                                 background: 'color-mix(in srgb, #131313, transparent calc(100% - (var(--glass-opacity) * 100%)))',
                                 backdropFilter: 'var(--glass-blur)',
@@ -79,7 +75,8 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                                 gap: '12px',
                                 boxShadow: '0 10px 30px rgba(0,0,0,0.5)',
                                 pointerEvents: 'auto',
-                                minWidth: '280px'
+                                minWidth: '280px',
+                                marginBottom: '10px'
                             }}
                         >
                             {toast.type === 'success' && <CheckCircle size={24} weight="fill" color="#10b981" />}
@@ -88,9 +85,9 @@ export const ToastProvider: React.FC<{ children: React.ReactNode }> = ({ childre
                             {toast.type === 'info' && <Info size={24} weight="fill" color="#3b82f6" />}
 
                             <span style={{ fontSize: '0.9rem', fontWeight: 600 }}>{toast.message}</span>
-                        </motion.div>
+                        </div>
                     ))}
-                </AnimatePresence>
+                </div>
             </div>
         </ToastContext.Provider>
     );

@@ -104,7 +104,7 @@ const Auth: React.FC = () => {
 
                 if (isMounted.current) showToast('Bem-vindo ao TITÃ ISP!', 'success');
             } else if (mode === 'signup') {
-                const { data, error } = await supabase.auth.signUp({
+                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
                     email,
                     password,
                     options: {
@@ -116,9 +116,21 @@ const Auth: React.FC = () => {
                         }
                     }
                 });
-                if (error) throw error;
 
-                if (data.user && inviteData) {
+                if (signUpError) {
+                    // Trata erro de SMTP ou usuário já existente que retornou 500
+                    if (signUpError.status === 400 || signUpError.status === 500) {
+                        if (isMounted.current) {
+                            showToast('Esta conta já pode estar ativa. Tente fazer login agora!', 'warning');
+                            setMode('login');
+                            setLoading(false);
+                            return;
+                        }
+                    }
+                    throw signUpError;
+                }
+
+                if (signUpData.user && inviteData) {
                     await supabase
                         .from('invitations')
                         .update({ used_at: new Date().toISOString() })
