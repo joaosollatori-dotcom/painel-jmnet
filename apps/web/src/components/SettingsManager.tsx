@@ -41,6 +41,7 @@ const SettingsManager: React.FC = () => {
     const [editingItem, setEditingItem] = useState<Partial<SystemSetting> | null>(null);
     const [editingUser, setEditingUser] = useState<Partial<Profile> | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
+    const [showResetModal, setShowResetModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
     const [inviteRole, setInviteRole] = useState<UserRole>('VENDEDOR');
     const [generatedLink, setGeneratedLink] = useState('');
@@ -150,6 +151,7 @@ const SettingsManager: React.FC = () => {
         try {
             const link = await resetInvitation(inviteId);
             setGeneratedLink(link);
+            setShowResetModal(true);
             showToast('Convite resetado/gerado um novo com sucesso!', 'success');
             loadSettings();
         } catch (err) {
@@ -310,9 +312,20 @@ const SettingsManager: React.FC = () => {
                                                         {status}
                                                     </span>
                                                     {status !== 'CONFIRMADO' && (
-                                                        <button className="btn-titan-outline-sm" onClick={() => handleResetInvite(inv.id)}>
-                                                            <ArrowsClockwise size={14} /> RESETAR LINK
-                                                        </button>
+                                                        <div style={{ display: 'flex', gap: '8px' }}>
+                                                            <button
+                                                                className="btn-titan-outline-sm"
+                                                                onClick={() => {
+                                                                    const link = `${window.location.origin}/signup?invite=${inv.token}`;
+                                                                    navigator.clipboard.writeText(link);
+                                                                    showToast('Link copiado!', 'success');
+                                                                }}>
+                                                                <Copy size={14} /> COPIAR
+                                                            </button>
+                                                            <button className="btn-titan-outline-sm" onClick={() => handleResetInvite(inv.id)}>
+                                                                <ArrowsClockwise size={14} /> RESETAR
+                                                            </button>
+                                                        </div>
                                                     )}
                                                 </div>
                                             </div>
@@ -492,6 +505,35 @@ const SettingsManager: React.FC = () => {
                             <div className="modal-footer">
                                 <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
                                 {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+
+            {/* Reset Invitation Modal */}
+            <AnimatePresence>
+                {showResetModal && generatedLink && (
+                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                            <header>
+                                <div>
+                                    <h3>Novo Link Gerado</h3>
+                                    <p>O link anterior foi invalidado. Copie o novo link seguro.</p>
+                                </div>
+                                <button className="close-modal" onClick={() => { setShowResetModal(false); setGeneratedLink(''); }}>×</button>
+                            </header>
+                            <div className="invite-form-box" style={{ padding: '20px 0' }}>
+                                <div className="generated-link-area">
+                                    <label>Link de Convite Atualizado (Uso Único):</label>
+                                    <div className="link-box">
+                                        <code>{generatedLink}</code>
+                                        <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); }}><Copy size={18} /></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn-titan-primary" onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); setShowResetModal(false); setGeneratedLink(''); }}>COPIAR & FECHAR</button>
                             </div>
                         </motion.div>
                     </motion.div>
