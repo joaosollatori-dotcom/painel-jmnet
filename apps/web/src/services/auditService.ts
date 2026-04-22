@@ -36,11 +36,7 @@ export const getGlobalAuditLogs = async (limit = 100): Promise<AuditLog[]> => {
     try {
         const { data, error } = await supabase
             .from('audit_logs')
-            .select(`
-                *,
-                profiles:actor_id (full_name, email),
-                tenants:tenant_id (name)
-            `)
+            .select(`*`)
             .order('created_at', { ascending: false })
             .limit(limit);
 
