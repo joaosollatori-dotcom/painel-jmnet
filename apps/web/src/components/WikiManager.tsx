@@ -195,17 +195,20 @@ const WikiManager: React.FC = () => {
                     </div>
 
                     <div className="wiki-article-list">
-                        {filteredArticles.map(article => (
-                            <button
-                                key={article.id}
-                                className={`wiki-article-item ${selectedArticle?.id === article.id ? 'active' : ''}`}
-                                onClick={() => setSelectedArticle(article)}
-                            >
-                                <article.icon size={20} weight={selectedArticle?.id === article.id ? "fill" : "regular"} />
-                                <span>{article.title}</span>
-                                <CaretRight size={14} />
-                            </button>
-                        ))}
+                        {filteredArticles.map(article => {
+                            const Icon = article.icon;
+                            return (
+                                <button
+                                    key={article.id}
+                                    className={`wiki-article-item ${selectedArticle?.id === article.id ? 'active' : ''}`}
+                                    onClick={() => setSelectedArticle(article)}
+                                >
+                                    <Icon size={20} weight={selectedArticle?.id === article.id ? "fill" : "regular"} />
+                                    <span>{article.title}</span>
+                                    <CaretRight size={14} />
+                                </button>
+                            );
+                        })}
                     </div>
 
                     <div className="wiki-support-card">

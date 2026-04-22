@@ -92,17 +92,20 @@ const Dashboard: React.FC = () => {
             </header>
 
             <div className="stats-grid">
-                {stats.map((item, idx) => (
-                    <div key={idx} className="stat-card">
-                        <div className="stat-icon" style={{ backgroundColor: `${item.color}20`, color: item.color }}>
-                            <item.icon size={24} />
+                {stats.map((item, idx) => {
+                    const Icon = item.icon;
+                    return (
+                        <div key={idx} className="stat-card">
+                            <div className="stat-icon" style={{ backgroundColor: `${item.color}20`, color: item.color }}>
+                                <Icon size={24} />
+                            </div>
+                            <div className="stat-info">
+                                <span className="stat-value">{item.value}</span>
+                                <span className="stat-label">{item.label}</span>
+                            </div>
                         </div>
-                        <div className="stat-info">
-                            <span className="stat-value">{item.value}</span>
-                            <span className="stat-label">{item.label}</span>
-                        </div>
-                    </div>
-                ))}
+                    );
+                })}
             </div>
 
             <div className="dashboard-charts">

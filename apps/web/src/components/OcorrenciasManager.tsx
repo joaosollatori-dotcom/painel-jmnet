@@ -171,21 +171,24 @@ const OcorrenciasManager: React.FC = () => {
                                     { id: 'notes', label: 'Anotações OS', icon: ChatCircleDots },
                                     { id: 'stock', label: 'Lançamentos Estoque', icon: Package },
                                     { id: 'checklist', label: 'Checklist', icon: ListChecks }
-                                ].map(tab => (
-                                    <div
-                                        key={tab.id}
-                                        onClick={() => setActiveTab(tab.id)}
-                                        style={{
-                                            padding: '16px 24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
-                                            fontSize: '0.85rem', fontWeight: 700,
-                                            borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
-                                            color: activeTab === tab.id ? 'var(--accent)' : 'inherit',
-                                            opacity: activeTab === tab.id ? 1 : 0.6
-                                        }}
-                                    >
-                                        <tab.icon size={18} /> {tab.label}
-                                    </div>
-                                ))}
+                                ].map(tab => {
+                                    const Icon = tab.icon;
+                                    return (
+                                        <div
+                                            key={tab.id}
+                                            onClick={() => setActiveTab(tab.id)}
+                                            style={{
+                                                padding: '16px 24px', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px',
+                                                fontSize: '0.85rem', fontWeight: 700,
+                                                borderBottom: activeTab === tab.id ? '3px solid var(--accent)' : '3px solid transparent',
+                                                color: activeTab === tab.id ? 'var(--accent)' : 'inherit',
+                                                opacity: activeTab === tab.id ? 1 : 0.6
+                                            }}
+                                        >
+                                            <Icon size={18} /> {tab.label}
+                                        </div>
+                                    );
+                                })}
                             </div>
 
                             {/* CONTEÚDO DINÂMICO (Formulários) */}

@@ -100,42 +100,45 @@ const FinanceManager: React.FC = () => {
                     { label: 'Recebimentos (Mês)', value: 'R$ 45.200,00', icon: TrendUp, color: '#10b981', trend: '+5%' },
                     { label: 'Inadimplência', value: 'R$ 3.410,00', icon: TrendDown, color: '#ef4444', trend: '-2%' },
                     { label: 'Aguardando Pagto', value: 'R$ 12.800,00', icon: Clock, color: '#f59e0b', trend: 'stable' },
-                ].map((stat, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, y: 20 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        transition={{ delay: i * 0.1 }}
-                        style={{
-                            background: 'var(--bg-surface)',
-                            padding: '24px',
-                            borderRadius: '24px',
-                            border: '1px solid var(--border)',
-                            boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
-                        }}
-                    >
-                        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
-                            <div style={{ padding: '10px', borderRadius: '12px', background: `${stat.color}15`, color: stat.color }}>
-                                <stat.icon size={24} weight="fill" />
+                ].map((stat, i) => {
+                    const Icon = stat.icon;
+                    return (
+                        <motion.div
+                            key={i}
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ delay: i * 0.1 }}
+                            style={{
+                                background: 'var(--bg-surface)',
+                                padding: '24px',
+                                borderRadius: '24px',
+                                border: '1px solid var(--border)',
+                                boxShadow: '0 4px 12px rgba(0,0,0,0.05)'
+                            }}
+                        >
+                            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '16px' }}>
+                                <div style={{ padding: '10px', borderRadius: '12px', background: `${stat.color}15`, color: stat.color }}>
+                                    <Icon size={24} weight="fill" />
+                                </div>
+                                <span style={{
+                                    fontSize: '0.75rem',
+                                    fontWeight: 800,
+                                    color: stat.trend.startsWith('+') ? '#10b981' : stat.trend.startsWith('-') ? '#ef4444' : 'var(--text-secondary)',
+                                    background: stat.trend.startsWith('+') ? '#10b98115' : stat.trend.startsWith('-') ? '#ef444415' : '#8881',
+                                    padding: '4px 8px',
+                                    borderRadius: '8px',
+                                    alignSelf: 'flex-start'
+                                }}>
+                                    {stat.trend}
+                                </span>
                             </div>
-                            <span style={{
-                                fontSize: '0.75rem',
-                                fontWeight: 800,
-                                color: stat.trend.startsWith('+') ? '#10b981' : stat.trend.startsWith('-') ? '#ef4444' : 'var(--text-secondary)',
-                                background: stat.trend.startsWith('+') ? '#10b98115' : stat.trend.startsWith('-') ? '#ef444415' : '#8881',
-                                padding: '4px 8px',
-                                borderRadius: '8px',
-                                alignSelf: 'flex-start'
-                            }}>
-                                {stat.trend}
-                            </span>
-                        </div>
-                        <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6 }}>{stat.label}</div>
-                        <div style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '4px', filter: showValues ? 'none' : 'blur(8px)' }}>
-                            {stat.value}
-                        </div>
-                    </motion.div>
-                ))}
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, opacity: 0.6 }}>{stat.label}</div>
+                            <div style={{ fontSize: '1.5rem', fontWeight: 900, marginTop: '4px', filter: showValues ? 'none' : 'blur(8px)' }}>
+                                {stat.value}
+                            </div>
+                        </motion.div>
+                    );
+                })}
             </div>
 
             {/* Conteúdo Principal */}

@@ -445,10 +445,35 @@ const LeadDetail: React.FC<Partial<LeadDetailProps>> = ({ lead: propLead, onClos
     const renderDadosTab = () => (
         <div className="tab-pane-dados ic-sidebar-scroll">
             <div className="titan-form-section">
-                <h3><IdentificationBadge size={20} /> Contatos</h3>
+                <h3><IdentificationBadge size={20} /> Identificação e Contatos</h3>
                 <div className="titan-grid">
-                    <div className="titan-field"><label>Telefone</label><input className="titan-input" defaultValue={localLead.telefonePrincipal} onBlur={(e) => handleFieldUpdate('telefonePrincipal', e.target.value)} /></div>
-                    <div className="titan-field"><label>E-mail</label><input className="titan-input" defaultValue={localLead.email || ''} onBlur={(e) => handleFieldUpdate('email', e.target.value)} /></div>
+                    <div className="titan-field">
+                        <label>Tipo de Pessoa</label>
+                        <select className="titan-select" value={localLead.tipoPessoa || 'PF'} onChange={(e) => handleFieldUpdate('tipoPessoa', e.target.value)}>
+                            <option value="PF">Pessoa Física (PF)</option>
+                            <option value="PJ">Pessoa Jurídica (PJ)</option>
+                        </select>
+                    </div>
+                    <div className="titan-field">
+                        <label>{localLead.tipoPessoa === 'PJ' ? 'CNPJ' : 'CPF'}</label>
+                        <input className="titan-input" placeholder="000.000.000-00" defaultValue={localLead.cpfCnpj || ''} onBlur={(e) => handleFieldUpdate('cpfCnpj', e.target.value)} />
+                    </div>
+                    <div className="titan-field">
+                        <label>RG / IE</label>
+                        <input className="titan-input" defaultValue={localLead.rg || ''} onBlur={(e) => handleFieldUpdate('rg', e.target.value)} />
+                    </div>
+                    <div className="titan-field">
+                        <label>Data de Nascimento</label>
+                        <input className="titan-input" type="date" defaultValue={localLead.dataNascimento?.slice(0, 10) || ''} onBlur={(e) => handleFieldUpdate('dataNascimento', e.target.value)} />
+                    </div>
+                    <div className="titan-field">
+                        <label>Telefone</label>
+                        <input className="titan-input" defaultValue={localLead.telefonePrincipal || ''} onBlur={(e) => handleFieldUpdate('telefonePrincipal', e.target.value)} />
+                    </div>
+                    <div className="titan-field">
+                        <label>E-mail</label>
+                        <input className="titan-input" defaultValue={localLead.email || ''} onBlur={(e) => handleFieldUpdate('email', e.target.value)} />
+                    </div>
                 </div>
             </div>
         </div>
