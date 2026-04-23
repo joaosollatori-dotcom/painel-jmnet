@@ -1,6 +1,6 @@
 :root {
-    --titan-bg: #020617;
-    --titan-card: rgba(15, 23, 42, 0.8);
+    --titan-bg: #0f172a;
+    --titan-card: rgba(15, 23, 42, 0.85);
     --titan-accent: #3b82f6;
     --titan-border: rgba(255, 255, 255, 0.08);
     --titan-text: #f8fafc;
@@ -12,8 +12,8 @@
     display: flex;
     background: var(--titan-bg);
     position: relative;
+    overflow-x: hidden;
     overflow-y: auto;
-    padding: 40px 20px;
     font-family: 'Inter', system-ui, sans-serif;
 }
 
@@ -243,7 +243,7 @@
 /* Visual Side with Particles */
 .auth-visual {
     flex: 0.8;
-    background: #020617;
+    background: var(--titan-bg);
     position: relative;
     padding: 60px;
     display: flex;
@@ -332,7 +332,7 @@
     width: 100vw;
     height: 100vh;
     z-index: 10000;
-    background: #000;
+    background: var(--titan-bg);
     display: flex;
     align-items: center;
     justify-content: center;

@@ -7,6 +7,7 @@ import { createProfile } from '../services/userService';
 import { validateInvitation } from '../services/invitationService';
 import { getUserIP } from '../services/ipService';
 import { addAllowedIP } from '../services/remoteAccessService';
+import LoadingScreen from './LoadingScreen';
 import './Auth.css';
 
 // Componente de Partículas Minimalista (Estilo Security Grid)
