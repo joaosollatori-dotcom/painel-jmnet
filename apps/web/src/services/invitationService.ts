@@ -68,3 +68,31 @@ export const getInvitations = async (): Promise<Invitation[]> => {
         return [];
     }
 };
+export const validateInvitation = async (token: string): Promise<{ role: UserRole, tenantId: string, email: string } | null> => {
+    try {
+        const { data, error } = await supabase
+            .from('invitations')
+            .select('*')
+            .eq('invite_token', token)
+            .is('used_at', null)
+            .gt('expires_at', new Date().toISOString())
+            .single();
+
+        if (error || !data) return null;
+
+        return {
+            role: data.role as UserRole,
+            tenantId: data.tenant_id,
+            email: data.email
+        };
+    } catch (e) {
+        return null;
+    }
+};
+
+export const claimInvite = async (userId: string): Promise<void> => {
+    const { data: inv } = await supabase.from('invitations').select('id').eq('used_at', null).limit(1).single();
+    if (inv) {
+        await supabase.from('invitations').update({ used_at: new Date().toISOString(), used_by: userId }).eq('id', inv.id);
+    }
+};

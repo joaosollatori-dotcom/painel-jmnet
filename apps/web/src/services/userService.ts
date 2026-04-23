@@ -118,3 +118,15 @@ export const checkPermission = (profile: Profile, action: string, resource: stri
         p.allowed
     );
 };
+export const createProfile = async (profile: Partial<Profile>): Promise<void> => {
+    const { error } = await supabase.from('profiles').insert([{
+        id: profile.id,
+        email: profile.email,
+        full_name: profile.fullName,
+        role: profile.role || 'SUPORTE',
+        tenant_id: profile.tenantId,
+        is_active: true
+    }]);
+
+    if (error) throw error;
+};
