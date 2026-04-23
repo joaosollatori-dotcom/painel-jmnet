@@ -430,9 +430,9 @@ const SettingsManager: React.FC = () => {
                             exit={{ scale: 0.9, opacity: 0 }}
                         >
                             <header>
-                                <div>
-                                    <h3>Gestão de Credenciais: {editingUser.fullName}</h3>
-                                    <p>Configuração granular de permissões e chaves operacionais.</p>
+                                <div style={{ flex: 1, textAlign: 'left' }}>
+                                    <h3 style={{ margin: 0 }}>Gestão de Credenciais: {editingUser.fullName}</h3>
+                                    <p style={{ margin: 0, opacity: 0.6 }}>Configuração granular de permissões e chaves operacionais.</p>
                                 </div>
                                 <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
                             </header>
@@ -459,19 +459,15 @@ const SettingsManager: React.FC = () => {
                                     </div>
                                 </div>
 
-                                        ))}
-                                    </div>
-                                </div>
-
                                 {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
                                     <div className="wallpaper-settings-box">
-                                        <label><Image size={18} /> Wallpaper Padrão do Chat por Setor ({editingUser.role})</label>
+                                        <label>Wallpaper Padrão do Chat por Setor ({editingUser.role})</label>
                                         <p style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '12px' }}>Define a imagem de fundo para todos os usuários com o perfil <strong>{editingUser.role}</strong>.</p>
                                         <div className="titan-field">
-                                            <input 
-                                                className="titan-input" 
+                                            <input
+                                                className="titan-input"
                                                 placeholder="https://i.pinimg.com/originals/..."
-                                                defaultValue={""} // Em prod carregaríamos o valor atual
+                                                defaultValue={""}
                                                 onBlur={async (e) => {
                                                     if (!e.target.value.trim() || !profile?.tenantId) return;
                                                     try {
@@ -483,9 +479,6 @@ const SettingsManager: React.FC = () => {
                                                 }}
                                             />
                                             <small style={{ marginTop: '4px', display: 'block', color: 'var(--accent)' }}>O campo salva automaticamente ao sair.</small>
-                                        </div>
-                                        <div className="wallpaper-preview-small" style={{ marginTop: '12px', height: '80px', borderRadius: '12px', background: 'var(--bg-deep)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-                                            <span style={{ fontSize: '0.7rem', opacity: 0.4 }}>Preview Indisponível</span>
                                         </div>
                                     </div>
                                 )}
@@ -507,91 +500,94 @@ const SettingsManager: React.FC = () => {
 
                             <div className="modal-footer">
                                 <button className="btn-titan-secondary" onClick={() => setEditingUser(null)}>CANCELAR</button>
-                                <button className="btn-titan-primary">ATUALIZAR ACESSOS</button>
+                                <button className="btn-titan-primary" onClick={() => {
+                                    if (editingUser.id) {
+                                        updateUserProfile(editingUser.id, editingUser).then(() => {
+                                            showToast('Perfil atualizado!', 'success');
+                                            setEditingUser(null);
+                                            loadSettings();
+                                        });
+                                    }
+                                }}>ATUALIZAR ACESSOS</button>
                             </div>
                         </motion.div>
-        </motion.div>
-    )
-}
-            </AnimatePresence >
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-    {/* Invitation Modal */ }
-    <AnimatePresence>
-{
-    showInviteModal && (
-        <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                <header>
-                    <div>
-                        <h3>Convidar Novo Membro</h3>
-                        <p>Gere um link de onboarding seguro para sua organização.</p>
-                    </div>
-                    <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
-                </header>
-                <div className="invite-form-box">
-                    <div className="titan-field">
-                        <label>E-mail do Convidado</label>
-                        <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                    </div>
-                    <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
-                        <label>Nível Hierárquico Inicial</label>
-                        <div className="role-options">
-                            {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
-                                <button key={r} className={`role-opt ${inviteRole === r ? 'selected' : ''}`} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
-                            ))}
-                        </div>
-                    </div>
-                    {generatedLink && (
-                        <div className="generated-link-area">
-                            <label>Link de Convite Gerado (Uso Único):</label>
-                            <div className="link-box">
-                                <code>{generatedLink}</code>
-                                <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
+            {/* Invitation Modal */}
+            <AnimatePresence>
+                {showInviteModal && (
+                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                            <header>
+                                <div style={{ flex: 1, textAlign: 'left' }}>
+                                    <h3 style={{ margin: 0 }}>Convidar Novo Membro</h3>
+                                    <p style={{ margin: 0, opacity: 0.6 }}>Gere um link de onboarding seguro para sua organização.</p>
+                                </div>
+                                <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
+                            </header>
+                            <div className="invite-form-box" style={{ padding: '24px' }}>
+                                <div className="titan-field">
+                                    <label>E-mail do Convidado</label>
+                                    <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+                                </div>
+                                <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
+                                    <label>Nível Hierárquico Inicial</label>
+                                    <div className="role-options">
+                                        {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
+                                            <button key={r} className={`role-opt-card ${inviteRole === r ? 'selected' : ''}`} style={{ padding: '8px' }} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
+                                        ))}
+                                    </div>
+                                </div>
+                                {generatedLink && (
+                                    <div className="generated-link-area" style={{ marginTop: '20px', padding: '12px', background: 'var(--bg-deep)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                        <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase' }}>Link de Convite Gerado:</label>
+                                        <div className="link-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                            <code style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{generatedLink}</code>
+                                            <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
-                        </div>
-                    )}
-                </div>
-                <div className="modal-footer">
-                    <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
-                    {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
-                </div>
-            </motion.div>
-        </motion.div>
-    )
-}
-            </AnimatePresence >
+                            <div className="modal-footer">
+                                <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
+                                {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-    {/* Reset Invitation Modal */ }
-    <AnimatePresence>
-{
-    showResetModal && generatedLink && (
-        <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-            <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                <header>
-                    <div>
-                        <h3>Novo Link Gerado</h3>
-                        <p>O link anterior foi invalidado. Copie o novo link seguro.</p>
-                    </div>
-                    <button className="close-modal" onClick={() => { setShowResetModal(false); setGeneratedLink(''); }}>×</button>
-                </header>
-                <div className="invite-form-box" style={{ padding: '20px 0' }}>
-                    <div className="generated-link-area">
-                        <label>Link de Convite Atualizado (Uso Único):</label>
-                        <div className="link-box">
-                            <code>{generatedLink}</code>
-                            <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); }}><Copy size={18} /></button>
-                        </div>
-                    </div>
-                </div>
-                <div className="modal-footer">
-                    <button className="btn-titan-primary" onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); setShowResetModal(false); setGeneratedLink(''); }}>COPIAR & FECHAR</button>
-                </div>
-            </motion.div>
-        </motion.div>
-    )
-}
-            </AnimatePresence >
-        </div >
+            {/* Reset Invitation Modal */}
+            <AnimatePresence>
+                {showResetModal && generatedLink && (
+                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                            <header>
+                                <div style={{ flex: 1, textAlign: 'left' }}>
+                                    <h3 style={{ margin: 0 }}>Novo Link Gerado</h3>
+                                    <p style={{ margin: 0, opacity: 0.6 }}>O link anterior foi invalidado. Copie o novo link seguro.</p>
+                                </div>
+                                <button className="close-modal" onClick={() => { setShowResetModal(false); setGeneratedLink(''); }}>×</button>
+                            </header>
+                            <div className="invite-form-box" style={{ padding: '24px' }}>
+                                <div className="generated-link-area" style={{ padding: '12px', background: 'var(--bg-deep)', borderRadius: '12px', border: '1px solid var(--border)' }}>
+                                    <label style={{ fontSize: '0.7rem', fontWeight: 800, color: 'var(--accent)', textTransform: 'uppercase' }}>Link de Convite Atualizado:</label>
+                                    <div className="link-box" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginTop: '8px' }}>
+                                        <code style={{ flex: 1, overflow: 'hidden', textOverflow: 'ellipsis' }}>{generatedLink}</code>
+                                        <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); }}><Copy size={18} /></button>
+                                    </div>
+                                </div>
+                            </div>
+                            <div className="modal-footer">
+                                <button className="btn-titan-primary" onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); setShowResetModal(false); setGeneratedLink(''); }}>COPIAR & FECHAR</button>
+                            </div>
+                        </motion.div>
+                    </motion.div>
+                )}
+            </AnimatePresence>
+        </div>
     );
 };
 
