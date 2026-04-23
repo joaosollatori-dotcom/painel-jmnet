@@ -22,6 +22,7 @@ import LoadingScreen from './LoadingScreen';
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { getDeviceSignal } from '../services/genieacsService';
+import { getSectorWallpaper } from '../services/visualSettingsService';
 import './ChatArea.css';
 
 interface ChatAreaProps {
@@ -50,6 +51,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     const [showEditModal, setShowEditModal] = useState(false);
     const [showCloseModal, setShowCloseModal] = useState(false);
     const [editData, setEditData] = useState({ name: '', phone: '' });
+    const [sectorWallpaper, setSectorWallpaper] = useState<string>('https://i.pinimg.com/736x/81/49/6e/81496e74659f8c614b62fce9ac7d0d6c.jpg'); // Pinterest Wallpaper Padrão
 
     const fileInputRef = useRef<HTMLInputElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
@@ -110,6 +112,12 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
             const current = convs.find(c => c.id === chatId);
             if (current) setConversation(current);
             setMessages(msgs);
+
+            // Carregar Wallpaper do Setor
+            if (profile?.tenantId && profile?.role) {
+                const wall = await getSectorWallpaper(profile.tenantId, profile.role);
+                if (wall) setSectorWallpaper(wall);
+            }
         } catch (err) {
             console.error('Error loading chat:', err);
         } finally {
@@ -309,7 +317,15 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     </div>
                 </header>
 
-                <div className="messages-list">
+                <div
+                    className="messages-list"
+                    style={{
+                        backgroundImage: `linear-gradient(rgba(var(--bg-deep-rgb), 0.85), rgba(var(--bg-deep-rgb), 0.85)), url(${sectorWallpaper})`,
+                        backgroundSize: 'cover',
+                        backgroundPosition: 'center',
+                        backgroundAttachment: 'fixed'
+                    }}
+                >
                     <AnimatePresence>
                         {showAiSummary && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="ai-summary-box" style={{ position: 'relative' }}>
@@ -495,7 +511,7 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     </div>
                 )}
             </AnimatePresence>
-        </div>
+        </div >
     );
 };
 

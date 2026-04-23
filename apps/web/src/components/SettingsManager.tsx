@@ -11,6 +11,7 @@ import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
 import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminBrandingSettings } from './AdminBrandingSettings';
+import { saveSectorWallpaper } from '../services/visualSettingsService';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
@@ -458,34 +459,36 @@ const SettingsManager: React.FC = () => {
                                     </div>
                                 </div>
 
-                                <div className="permissions-matrix-container">
-                                    <label><ShieldCheck size={18} /> Matriz de Permissões (Zoho-Style)</label>
-                                    <div className="permissions-matrix">
-                                        <div className="matrix-row header">
-                                            <div className="resource-col">Módulo do Sistema</div>
-                                            <div>Ver</div>
-                                            <div>Criar</div>
-                                            <div>Editar</div>
-                                            <div>Apagar</div>
-                                        </div>
-                                        {[
-                                            { mod: 'CRM & Leads', perms: [true, true, true, false] },
-                                            { mod: 'Ordens de Serviço', perms: [true, true, true, false] },
-                                            { mod: 'Gestão Financeira', perms: [true, false, false, false] },
-                                            { mod: 'Infraestrutura de Rede', perms: [true, true, true, true] },
-                                            { mod: 'Configurações de Admin', perms: [false, false, false, false] }
-                                        ].map(item => (
-                                            <div key={item.mod} className="matrix-row">
-                                                <div className="resource-col">{item.mod}</div>
-                                                {item.perms.map((p, i) => (
-                                                    <div key={i} className="checkbox-cell">
-                                                        <input type="checkbox" defaultChecked={p} />
-                                                    </div>
-                                                ))}
-                                            </div>
                                         ))}
                                     </div>
                                 </div>
+
+                                {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
+                                    <div className="wallpaper-settings-box">
+                                        <label><Image size={18} /> Wallpaper Padrão do Chat por Setor ({editingUser.role})</label>
+                                        <p style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '12px' }}>Define a imagem de fundo para todos os usuários com o perfil <strong>{editingUser.role}</strong>.</p>
+                                        <div className="titan-field">
+                                            <input 
+                                                className="titan-input" 
+                                                placeholder="https://i.pinimg.com/originals/..."
+                                                defaultValue={""} // Em prod carregaríamos o valor atual
+                                                onBlur={async (e) => {
+                                                    if (!e.target.value.trim() || !profile?.tenantId) return;
+                                                    try {
+                                                        await saveSectorWallpaper(profile.tenantId, editingUser.role || 'SUPORTE', e.target.value);
+                                                        showToast(`Wallpaper para o setor ${editingUser.role} atualizado!`, 'success');
+                                                    } catch (err) {
+                                                        showToast('Erro ao salvar wallpaper do setor.', 'error');
+                                                    }
+                                                }}
+                                            />
+                                            <small style={{ marginTop: '4px', display: 'block', color: 'var(--accent)' }}>O campo salva automaticamente ao sair.</small>
+                                        </div>
+                                        <div className="wallpaper-preview-small" style={{ marginTop: '12px', height: '80px', borderRadius: '12px', background: 'var(--bg-deep)', border: '1px solid var(--border)', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+                                            <span style={{ fontSize: '0.7rem', opacity: 0.4 }}>Preview Indisponível</span>
+                                        </div>
+                                    </div>
+                                )}
 
                                 <div className="security-info-box">
                                     <label><LockKey size={18} /> Dados de Auditoria</label>
@@ -507,83 +510,88 @@ const SettingsManager: React.FC = () => {
                                 <button className="btn-titan-primary">ATUALIZAR ACESSOS</button>
                             </div>
                         </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+        </motion.div>
+    )
+}
+            </AnimatePresence >
 
-            {/* Invitation Modal */}
-            <AnimatePresence>
-                {showInviteModal && (
-                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                            <header>
-                                <div>
-                                    <h3>Convidar Novo Membro</h3>
-                                    <p>Gere um link de onboarding seguro para sua organização.</p>
-                                </div>
-                                <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
-                            </header>
-                            <div className="invite-form-box">
-                                <div className="titan-field">
-                                    <label>E-mail do Convidado</label>
-                                    <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
-                                </div>
-                                <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
-                                    <label>Nível Hierárquico Inicial</label>
-                                    <div className="role-options">
-                                        {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
-                                            <button key={r} className={`role-opt ${inviteRole === r ? 'selected' : ''}`} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
-                                        ))}
-                                    </div>
-                                </div>
-                                {generatedLink && (
-                                    <div className="generated-link-area">
-                                        <label>Link de Convite Gerado (Uso Único):</label>
-                                        <div className="link-box">
-                                            <code>{generatedLink}</code>
-                                            <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
-                                        </div>
-                                    </div>
-                                )}
+    {/* Invitation Modal */ }
+    <AnimatePresence>
+{
+    showInviteModal && (
+        <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                <header>
+                    <div>
+                        <h3>Convidar Novo Membro</h3>
+                        <p>Gere um link de onboarding seguro para sua organização.</p>
+                    </div>
+                    <button className="close-modal" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>×</button>
+                </header>
+                <div className="invite-form-box">
+                    <div className="titan-field">
+                        <label>E-mail do Convidado</label>
+                        <input className="titan-input" placeholder="email@exemplo.com" value={inviteEmail} onChange={e => setInviteEmail(e.target.value)} />
+                    </div>
+                    <div className="role-selector-box" style={{ padding: '0', marginTop: '20px' }}>
+                        <label>Nível Hierárquico Inicial</label>
+                        <div className="role-options">
+                            {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
+                                <button key={r} className={`role-opt ${inviteRole === r ? 'selected' : ''}`} onClick={() => setInviteRole(r as UserRole)}>{r}</button>
+                            ))}
+                        </div>
+                    </div>
+                    {generatedLink && (
+                        <div className="generated-link-area">
+                            <label>Link de Convite Gerado (Uso Único):</label>
+                            <div className="link-box">
+                                <code>{generatedLink}</code>
+                                <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Link copiado!', 'success'); }}><Copy size={18} /></button>
                             </div>
-                            <div className="modal-footer">
-                                <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
-                                {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
+                        </div>
+                    )}
+                </div>
+                <div className="modal-footer">
+                    <button className="btn-titan-secondary" onClick={() => { setShowInviteModal(false); setGeneratedLink(''); }}>CONCLUIR</button>
+                    {!generatedLink && <button className="btn-titan-primary" onClick={handleCreateInvite}>GERAR LINK DE CONVITE</button>}
+                </div>
+            </motion.div>
+        </motion.div>
+    )
+}
+            </AnimatePresence >
 
-            {/* Reset Invitation Modal */}
-            <AnimatePresence>
-                {showResetModal && generatedLink && (
-                    <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
-                        <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
-                            <header>
-                                <div>
-                                    <h3>Novo Link Gerado</h3>
-                                    <p>O link anterior foi invalidado. Copie o novo link seguro.</p>
-                                </div>
-                                <button className="close-modal" onClick={() => { setShowResetModal(false); setGeneratedLink(''); }}>×</button>
-                            </header>
-                            <div className="invite-form-box" style={{ padding: '20px 0' }}>
-                                <div className="generated-link-area">
-                                    <label>Link de Convite Atualizado (Uso Único):</label>
-                                    <div className="link-box">
-                                        <code>{generatedLink}</code>
-                                        <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); }}><Copy size={18} /></button>
-                                    </div>
-                                </div>
-                            </div>
-                            <div className="modal-footer">
-                                <button className="btn-titan-primary" onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); setShowResetModal(false); setGeneratedLink(''); }}>COPIAR & FECHAR</button>
-                            </div>
-                        </motion.div>
-                    </motion.div>
-                )}
-            </AnimatePresence>
-        </div>
+    {/* Reset Invitation Modal */ }
+    <AnimatePresence>
+{
+    showResetModal && generatedLink && (
+        <motion.div className="permissions-modal-overlay" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }}>
+            <motion.div className="permissions-modal" initial={{ scale: 0.9, opacity: 0 }} animate={{ scale: 1, opacity: 1 }} exit={{ scale: 0.9, opacity: 0 }}>
+                <header>
+                    <div>
+                        <h3>Novo Link Gerado</h3>
+                        <p>O link anterior foi invalidado. Copie o novo link seguro.</p>
+                    </div>
+                    <button className="close-modal" onClick={() => { setShowResetModal(false); setGeneratedLink(''); }}>×</button>
+                </header>
+                <div className="invite-form-box" style={{ padding: '20px 0' }}>
+                    <div className="generated-link-area">
+                        <label>Link de Convite Atualizado (Uso Único):</label>
+                        <div className="link-box">
+                            <code>{generatedLink}</code>
+                            <button onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); }}><Copy size={18} /></button>
+                        </div>
+                    </div>
+                </div>
+                <div className="modal-footer">
+                    <button className="btn-titan-primary" onClick={() => { navigator.clipboard.writeText(generatedLink); showToast('Novo link copiado!', 'success'); setShowResetModal(false); setGeneratedLink(''); }}>COPIAR & FECHAR</button>
+                </div>
+            </motion.div>
+        </motion.div>
+    )
+}
+            </AnimatePresence >
+        </div >
     );
 };
 

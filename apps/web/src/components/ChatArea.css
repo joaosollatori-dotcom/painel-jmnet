@@ -12,7 +12,7 @@
 /* Janela de Chat (Coluna Central) */
 .chat-window {
     flex: 1;
-    background: var(--bg-surface);
+    background: transparent;
     display: flex;
     flex-direction: column;
     height: 100%;
@@ -21,12 +21,9 @@
     transition: all 0.3s ease;
 }
 
-[data-theme='dark'] .chat-window {
-    background: var(--bg-surface);
-}
-
+[data-theme='dark'] .chat-window,
 [data-theme='soft'] .chat-window {
-    background: var(--bg-surface-light);
+    background: transparent;
 }
 
 .chat-header {

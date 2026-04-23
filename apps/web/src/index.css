@@ -2,6 +2,7 @@
   /* Branding Colors - Default Dark (Onyx Modern) */
   --primary-color: #3b82f6;
   --bg-deep: #09090b;
+  --bg-deep-rgb: 9, 9, 11;
   /* Zinc 950 */
   --bg-surface: #121214;
   /* Profundidade equilibrada */
@@ -62,6 +63,7 @@
 
 [data-theme='light'] {
   --bg-deep: #f8fafc;
+  --bg-deep-rgb: 248, 250, 252;
   /* Slate 50 */
   --bg-surface: #ffffff;
   --bg-surface-light: #f1f5f9;
@@ -88,6 +90,7 @@
 
 [data-theme='soft'] {
   --bg-deep: #fcfbf7;
+  --bg-deep-rgb: 252, 251, 247;
   /* Linen White */
   --bg-surface: #ffffff;
   --bg-surface-light: #f3f0e2;
