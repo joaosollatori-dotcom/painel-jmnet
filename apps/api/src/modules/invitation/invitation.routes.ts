@@ -1,87 +1,122 @@
 import { FastifyInstance } from "fastify";
-import { z } from "zod";
+import { btoa } from "buffer";
 
 export async function invitationRoutes(fastify: FastifyInstance) {
-    // Rota pública para validar o convite sem estar autenticado no Supabase
+    /**
+     * Rota de Produção Real: Criação de Usuário + Prisma de Vinculação
+     * O anfitrião cria a conta e o convite simultaneamente.
+     */
     fastify.post(
-        "/validate",
+        "/create",
         async (request, reply) => {
-            const { token, ipAddress, userAgent } = request.body as any;
+            const { email, password, role, tenantId } = request.body as any;
 
             try {
-                const invite = await fastify.prisma.invitations.findUnique({
-                    where: { invite_token: token },
-                    include: { tenants: true }
+                if (!email || !password || !tenantId) {
+                    return reply.status(400).send({ error: "E-mail, Senha e Tenant são obrigatórios." });
+                }
+
+                // 1. Criação Real no Supabase Auth (Via Admin API)
+                const { data: authUser, error: authError } = await fastify.supabaseAdmin.auth.admin.createUser({
+                    email,
+                    password,
+                    email_confirm: true, // Confirmado automaticamente para produção
+                    user_metadata: { role, tenant_id: tenantId }
                 });
 
-                if (!invite) {
-                    await fastify.prisma.auditLog.create({
-                        data: {
-                            action: "INVITE_INVALID_ATTEMPT",
-                            resource: "INVITATIONS",
-                            details: { token, userAgent, error: "Token não localizado na base" },
-                            ip_address: ipAddress || request.ip,
-                        }
-                    });
-                    return reply.send({ status: "INVALID", message: "O convite foi invalidado ou não existe." });
+                if (authError) {
+                    return reply.status(400).send({ error: `Erro no Auth: ${authError.message}` });
                 }
 
-                if (invite.used_at) {
-                    return reply.send({ status: "USED", message: "Este convite já foi utilizado." });
-                }
+                const userId = authUser.user.id;
 
-                if (invite.expires_at && new Date(invite.expires_at) < new Date()) {
-                    // Logar alerta para o admin que criou
-                    await fastify.prisma.auditLog.create({
-                        data: {
-                            action: "INVITE_EXPIRED_ATTEMPT",
-                            resource: "INVITATIONS",
-                            actor_id: invite.created_by,
-                            details: { token, email: invite.email, userAgent, error: "Tentativa de acesso a convite expirado" },
-                            ip_address: ipAddress || request.ip,
-                        }
-                    });
-                    return reply.send({ status: "EXPIRED", message: "O prazo de aceitação expirou. Solicite um novo link ao administrador." });
-                }
-
-                return reply.send({
-                    status: "VALID",
+                // 2. Criação do Profile vinculado ao Tenant
+                await fastify.prisma.profile.create({
                     data: {
-                        tenant_id: invite.tenant_id,
-                        role: invite.role,
-                        company_name: invite.tenants?.name,
-                        email: invite.email
+                        id: userId,
+                        email,
+                        role: role || "VENDEDOR",
+                        tenant_id: tenantId,
+                        is_active: true
                     }
                 });
+
+                // 3. Criação do Convite (Prisma de Vinculação)
+                const token = btoa(email + Date.now().toString()).slice(0, 32);
+                const invitation = await fastify.prisma.invitations.create({
+                    data: {
+                        email,
+                        invite_token: token,
+                        role: role || "VENDEDOR",
+                        tenant_id: tenantId,
+                        target_user_id: userId,
+                        expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000)
+                    }
+                });
+
+                return reply.send({
+                    success: true,
+                    userId,
+                    invitationId: invitation.id,
+                    link: `${process.env.VITE_FRONTEND_URL || 'http://localhost:5173'}/signup?invite=${token}`
+                });
+
             } catch (error) {
                 fastify.log.error(error);
-                return reply.status(500).send({ error: "Erro interno validar convite" });
+                return reply.status(500).send({ error: "Falha na criação de prisma de vinculação" });
             }
         }
     );
 
-    // Rota autenticada para resetar
+    /**
+     * Rota de Reset: Invalida e re-gera o vínculo
+     */
     fastify.post(
         "/reset",
         async (request, reply) => {
             const { inviteId } = request.body as any;
 
             try {
-                // 1. Criar novo token e atualizar na mesma linha, pois e-mail deve ser único
-                const newToken = btoa(Math.random().toString()).slice(0, 24);
-                const newInvite = await fastify.prisma.invitations.update({
+                if (!inviteId || inviteId.length < 20) {
+                    return reply.status(400).send({ error: "ID de convite inválido." });
+                }
+
+                const invite = await fastify.prisma.invitations.findUnique({ where: { id: inviteId } });
+                if (!invite) return reply.status(404).send({ error: "Convite não localizado." });
+
+                const newToken = btoa(invite.email + Date.now().toString()).slice(0, 32);
+
+                const updatedInvite = await fastify.prisma.invitations.update({
                     where: { id: inviteId },
                     data: {
                         invite_token: newToken,
                         expires_at: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000),
-                        used_at: null // Reseta caso já tivesse sido usado por acidente
+                        used_at: null
                     }
                 });
 
-                return reply.send({ success: true, newInvite });
+                return reply.send({ success: true, newInvite: updatedInvite });
             } catch (error) {
                 fastify.log.error(error);
-                return reply.status(500).send({ error: "Erro ao resetar convite" });
+                return reply.status(500).send({ error: "Erro no reset de convite" });
+            }
+        }
+    );
+
+    /**
+     * Listagem Real para o Dashboard Técnico
+     */
+    fastify.get(
+        "/",
+        async (request, reply) => {
+            try {
+                const invites = await fastify.prisma.invitations.findMany({
+                    orderBy: { created_at: 'desc' },
+                    take: 50
+                });
+                return reply.send(invites);
+            } catch (error) {
+                return reply.status(500).send({ error: "Erro ao listar convites" });
             }
         }
     );

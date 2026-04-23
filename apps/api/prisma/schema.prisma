@@ -235,16 +235,17 @@ model customer_occurrences {
 }
 
 model invitations {
-  id           String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  tenant_id    String?   @db.Uuid
-  email        String    @unique
-  invite_token String    @unique
-  role         String?   @default("VENDEDOR")
-  created_by   String?   @db.Uuid
-  used_at      DateTime? @db.Timestamptz(6)
-  expires_at   DateTime? @db.Timestamptz(6)
-  created_at   DateTime? @default(now()) @db.Timestamptz(6)
-  tenants      Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  id             String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  tenant_id      String?   @db.Uuid
+  email          String    @unique
+  invite_token   String    @unique
+  role           String?   @default("VENDEDOR")
+  created_by     String?   @db.Uuid
+  target_user_id String?   @db.Uuid
+  used_at        DateTime? @db.Timestamptz(6)
+  expires_at     DateTime? @db.Timestamptz(6)
+  created_at     DateTime? @default(now()) @db.Timestamptz(6)
+  tenants        Tenant?   @relation(fields: [tenant_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
 }
 
 model Profile {
