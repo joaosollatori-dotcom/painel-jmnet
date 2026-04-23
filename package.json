@@ -17,7 +17,8 @@
     "docker:down": "docker-compose down"
   },
   "devDependencies": {
-    "turbo": "^2.5.0"
+    "turbo": "^2.5.0",
+    "vitest": "^4.1.5"
   },
   "packageManager": "npm@10.8.0"
 }
