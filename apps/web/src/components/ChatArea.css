@@ -32,8 +32,11 @@
     display: flex;
     align-items: center;
     gap: 12px;
-    background: var(--bg-surface);
-    z-index: 10;
+    background: rgba(var(--bg-surface-rgb), 0.85);
+    backdrop-filter: blur(12px);
+    z-index: 100;
+    position: sticky;
+    top: 0;
 }
 
 [data-theme='dark'] .chat-header,
@@ -88,6 +91,11 @@
     display: flex;
     flex-direction: column;
     gap: 1.25rem;
+    padding-bottom: 220px;
+    /* Aumentado para garantir o scroll total além do input */
+    scroll-behavior: smooth;
+    mask-image: linear-gradient(to bottom, black calc(100% - 200px), transparent 100%);
+    -webkit-mask-image: linear-gradient(to bottom, black calc(100% - 200px), transparent 100%);
 }
 
 .msg-bubble {
@@ -139,13 +147,27 @@
     margin-bottom: -1px;
 }
 
-/* Sugestões IA */
+/* Container de Controles Flutuantes */
+.chat-controls-floating {
+    position: absolute;
+    bottom: 24px;
+    left: 24px;
+    right: 24px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    z-index: 90;
+    pointer-events: none;
+    /* Deixa cliques passarem por fora dos filhos */
+}
+
+/* Sugestões IA Flutuantes */
 .ai-suggestions {
-    padding: 0.75rem 1.5rem;
     display: flex;
     gap: 10px;
     overflow-x: auto;
-    background: rgba(255, 255, 255, 0.5);
+    padding: 4px 0;
+    pointer-events: auto;
 }
 
 [data-theme='dark'] .ai-suggestions {
@@ -178,16 +200,15 @@
     color: var(--accent);
 }
 
-/* Input */
+/* Input Flutuante */
 .chat-input-area {
-    padding: 1.5rem;
-    background: var(--bg-surface);
-    border-top: 1px solid var(--border);
-}
-
-[data-theme='dark'] .chat-input-area,
-[data-theme='soft'] .chat-input-area {
-    background: var(--bg-surface);
+    background: rgba(var(--bg-surface-rgb), 0.85);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+    pointer-events: auto;
 }
 
 .input-container {

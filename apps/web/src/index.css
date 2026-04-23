@@ -5,9 +5,10 @@
   --bg-deep-rgb: 9, 9, 11;
   /* Zinc 950 */
   --bg-surface: #121214;
+  --bg-surface-rgb: 18, 18, 20;
   /* Profundidade equilibrada */
   --bg-surface-light: #18181b;
-  /* Zinc 900 */
+  --bg-surface-light-rgb: 24, 24, 27;
   --text-primary: #fafafa;
   /* Zinc 50 */
   --text-secondary: #a1a1aa;
@@ -66,8 +67,9 @@
   --bg-deep-rgb: 248, 250, 252;
   /* Slate 50 */
   --bg-surface: #ffffff;
+  --bg-surface-rgb: 255, 255, 255;
   --bg-surface-light: #f1f5f9;
-  /* Slate 100 */
+  --bg-surface-light-rgb: 241, 245, 249;
   --text-primary: #020617;
   /* Slate 950 */
   --text-secondary: #475569;
@@ -93,8 +95,9 @@
   --bg-deep-rgb: 252, 251, 247;
   /* Linen White */
   --bg-surface: #ffffff;
+  --bg-surface-rgb: 255, 255, 255;
   --bg-surface-light: #f3f0e2;
-  /* Antique White */
+  --bg-surface-light-rgb: 243, 240, 226;
   --text-primary: #2d2a26;
   /* Charcoal Coffee */
   --text-secondary: #716b5f;

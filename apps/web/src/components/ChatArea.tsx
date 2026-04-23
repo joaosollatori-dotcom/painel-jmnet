@@ -41,7 +41,9 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
     });
 
     const [showEmojiPicker, setShowEmojiPicker] = useState(false);
-    const [showAiSummary, setShowAiSummary] = useState(true);
+    const [showAiSummary, setShowAiSummary] = useState(() => {
+        return localStorage.getItem('hide-ai-summary') !== 'true';
+    });
     const [conversation, setConversation] = useState<Conversation | null>(null);
     const [messages, setMessages] = useState<Message[]>([]);
     const [loading, setLoading] = useState(true);
@@ -329,7 +331,11 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     <AnimatePresence>
                         {showAiSummary && (
                             <motion.div initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, height: 0, marginBottom: 0 }} className="ai-summary-box" style={{ position: 'relative' }}>
-                                <button onClick={() => { setShowAiSummary(false); showToast('Resumo ocultado', 'info'); }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.6 }}>
+                                <button onClick={() => {
+                                    setShowAiSummary(false);
+                                    localStorage.setItem('hide-ai-summary', 'true');
+                                    showToast('Resumo ocultado', 'info');
+                                }} style={{ position: 'absolute', top: '10px', right: '10px', background: 'none', border: 'none', color: 'var(--text-secondary)', cursor: 'pointer', opacity: 0.6 }}>
                                     <X size={18} weight="bold" />
                                 </button>
                                 <div className="summary-header">
@@ -363,41 +369,43 @@ const ChatArea: React.FC<ChatAreaProps> = ({ chatId }) => {
                     <div ref={messagesEndRef} />
                 </div>
 
-                <div className="ai-suggestions">
-                    <button className="suggestion-pill" onClick={() => handleSendMessage("Como posso te ajudar com sua conexão?")}>
-                        <MagicWand size={16} /> Como posso ajudar?
-                    </button>
-                    <button className="suggestion-pill" onClick={() => handleSendMessage("Vou abrir uma ordem de reparo agora mesmo.")}>
-                        <MagicWand size={16} /> Abrir reparo
-                    </button>
-                </div>
-
-                <footer className="chat-input-area">
-                    <AnimatePresence>
-                        {showEmojiPicker && (
-                            <motion.div initial={{ opacity: 0, bottom: '80px' }} animate={{ opacity: 1, bottom: '100px' }} exit={{ opacity: 0 }} style={{ position: 'absolute', right: '2rem', zIndex: 1000 }}>
-                                <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.AUTO} emojiStyle={EmojiStyle.NATIVE} />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-                    <div className="input-container">
-                        <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} accept="image/*,video/*,audio/*,application/pdf" />
-                        <Paperclip size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => fileInputRef.current?.click()} />
-                        <Smiley size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setShowEmojiPicker(!showEmojiPicker)} />
-                        <input
-                            placeholder="Digite aqui..."
-                            value={message}
-                            onChange={(e) => setMessage(e.target.value)}
-                            onKeyDown={(e) => {
-                                if (e.key === 'Enter' && (e.ctrlKey || !e.shiftKey)) {
-                                    e.preventDefault();
-                                    handleSendMessage();
-                                }
-                            }}
-                        />
-                        <PaperPlaneTilt size={24} weight="fill" style={{ color: 'var(--accent-chat)', cursor: 'pointer' }} onClick={() => handleSendMessage()} />
+                <div className="chat-controls-floating">
+                    <div className="ai-suggestions">
+                        <button className="suggestion-pill" onClick={() => handleSendMessage("Como posso te ajudar com sua conexão?")}>
+                            <MagicWand size={16} /> Como posso ajudar?
+                        </button>
+                        <button className="suggestion-pill" onClick={() => handleSendMessage("Vou abrir uma ordem de reparo agora mesmo.")}>
+                            <MagicWand size={16} /> Abrir reparo
+                        </button>
                     </div>
-                </footer>
+
+                    <footer className="chat-input-area">
+                        <AnimatePresence>
+                            {showEmojiPicker && (
+                                <motion.div initial={{ opacity: 0, bottom: '80px' }} animate={{ opacity: 1, bottom: '100px' }} exit={{ opacity: 0 }} style={{ position: 'absolute', right: '2rem', zIndex: 1000 }}>
+                                    <EmojiPicker onEmojiClick={onEmojiClick} theme={Theme.AUTO} emojiStyle={EmojiStyle.NATIVE} />
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+                        <div className="input-container">
+                            <input type="file" multiple ref={fileInputRef} style={{ display: 'none' }} onChange={handleFileUpload} accept="image/*,video/*,audio/*,application/pdf" />
+                            <Paperclip size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => fileInputRef.current?.click()} />
+                            <Smiley size={22} style={{ cursor: 'pointer', opacity: 0.6 }} onClick={() => setShowEmojiPicker(!showEmojiPicker)} />
+                            <input
+                                placeholder="Digite aqui..."
+                                value={message}
+                                onChange={(e) => setMessage(e.target.value)}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && (e.ctrlKey || !e.shiftKey)) {
+                                        e.preventDefault();
+                                        handleSendMessage();
+                                    }
+                                }}
+                            />
+                            <PaperPlaneTilt size={24} weight="fill" style={{ color: 'var(--accent-chat)', cursor: 'pointer' }} onClick={() => handleSendMessage()} />
+                        </div>
+                    </footer>
+                </div>
             </div>
 
             <aside className={`chat-info-column ${isInfoRetracted ? 'retracted' : ''}`}>

@@ -276,7 +276,7 @@ const App: React.FC = () => {
       )}
       <main className="content">
         <Routes>
-          <Route path="/" element={<Navigate to="/dashboard" />} />
+          <Route path="/" element={<Navigate to="/dashboard" replace />} />
           <Route path="/signup" element={<Auth key="signup-screen" />} />
           <Route path="/atendimento" element={<ChatPage />} />
           <Route path="/agentes" element={<div className="loading-state"><h3>Robôs Titã AI</h3><p>Módulo de inteligência em processamento...</p></div>} />
