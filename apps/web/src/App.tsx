@@ -172,14 +172,16 @@ const App: React.FC = () => {
 
   return (
     <div key="app-root" className={`app-layout ${isRetracted ? 'retracted' : ''}`}>
-      <Sidebar
-        isRetracted={isRetracted}
-        onToggleRetraction={toggleSidebar}
-        theme={theme}
-        onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'soft' : 'dark')}
-        finish={finish}
-        onToggleFinish={() => setFinish(prev => prev === 'matte' ? 'glossy' : 'matte')}
-      />
+      {window.location.pathname !== '/signup' && (
+        <Sidebar
+          isRetracted={isRetracted}
+          onToggleRetraction={toggleSidebar}
+          theme={theme}
+          onToggleTheme={() => setTheme(prev => prev === 'dark' ? 'light' : prev === 'light' ? 'soft' : 'dark')}
+          finish={finish}
+          onToggleFinish={() => setFinish(prev => prev === 'matte' ? 'glossy' : 'matte')}
+        />
+      )}
       <main className="content">
         <Routes>
           <Route path="/" element={<Navigate to="/dashboard" />} />
