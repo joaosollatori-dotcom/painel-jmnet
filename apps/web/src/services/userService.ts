@@ -11,15 +11,15 @@ export interface Permission {
 
 export interface Profile {
     id: string; // matches auth.users.id
-    fullName: string;
-    email: string;
-    tenantId: string;
-    role: UserRole;
-    avatarUrl?: string;
-    isActive: boolean;
-    permissions?: Permission[];
-    createdAt?: string;
-    updatedAt?: string;
+    full_name_user: string;
+    email_user: string;
+    tenant_id_user: string;
+    role_user: UserRole;
+    avatar_url_user?: string;
+    is_active_user: boolean;
+    permissions_user?: Permission[];
+    created_at_user?: string;
+    updated_at_user?: string;
 }
 
 export interface Tenant {
@@ -30,39 +30,41 @@ export interface Tenant {
     isActive: boolean;
 }
 
+/**
+ * Converte os dados brutos do Supabase (snake_case) para o formato Unificado e Alongado.
+ * Remove as duplicidades para manter a engenharia limpa.
+ */
+const mapToLogicProfile = (raw: any): Profile => {
+    return {
+        id: raw.id,
+        full_name_user: raw.full_name,
+        email_user: raw.email,
+        tenant_id_user: raw.tenant_id,
+        role_user: raw.role as UserRole,
+        avatar_url_user: raw.avatar_url,
+        is_active_user: raw.is_active,
+        permissions_user: raw.permissions,
+        created_at_user: raw.created_at,
+        updated_at_user: raw.updated_at
+    };
+};
+
 export const getCurrentProfile = async (passedUser?: User): Promise<Profile | null> => {
-    console.log("TITÃ DEBUG: Iniciando getCurrentProfile...");
     try {
         const user = passedUser || (await supabase.auth.getUser()).data.user;
-        if (!user) {
-            console.log("TITÃ DEBUG: Usuário não encontrado em getCurrentProfile");
-            return null;
-        }
+        if (!user) return null;
 
-        console.log("TITÃ DEBUG: Consultando banco para ID:", user.id);
+        const { data, error } = await supabase
+            .from('profiles')
+            .select('*')
+            .eq('id', user.id)
+            .single();
 
-        // Timeout agressivo de 15s para o banco
-        const { data, error } = await Promise.race([
-            supabase.from('profiles').select('*').eq('id', user.id).single(),
-            new Promise((_, reject) => setTimeout(() => reject(new Error("Supabase Timeout")), 15000))
-        ]) as any;
+        if (error || !data) return null;
 
-        if (error) {
-            console.warn("TITÃ DEBUG: Perfil não encontrado ou erro de RLS:", error);
-            return null;
-        }
-
-        console.log("TITÃ DEBUG: Dados do perfil brutos recebidos");
-
-        return {
-            ...data,
-            tenantId: data.tenant_id,
-            fullName: data.full_name,
-            isActive: data.is_active,
-            role: data.role as UserRole
-        };
+        return mapToLogicProfile(data);
     } catch (e) {
-        console.error("TITÃ DEBUG: Exceção em getCurrentProfile:", e);
+        console.error("TITÃ ERROR [Profile Engine]:", e);
         return null;
     }
 };
@@ -74,18 +76,9 @@ export const getTenantUsers = async (tenantId: string): Promise<Profile[]> => {
             .select('*')
             .eq('tenant_id', tenantId);
 
-        if (error) {
-            console.warn("Profiles table not found. Using empty list.");
-            return [];
-        }
+        if (error) return [];
 
-        return data.map(d => ({
-            ...d,
-            tenantId: d.tenant_id,
-            fullName: d.full_name,
-            isActive: d.is_active,
-            role: d.role as UserRole
-        }));
+        return data.map(mapToLogicProfile);
     } catch (e) {
         return [];
     }
@@ -93,10 +86,10 @@ export const getTenantUsers = async (tenantId: string): Promise<Profile[]> => {
 
 export const updateUserProfile = async (userId: string, updates: Partial<Profile>): Promise<void> => {
     const payload: any = {};
-    if (updates.fullName) payload.full_name = updates.fullName;
-    if (updates.role) payload.role = updates.role;
-    if (updates.isActive !== undefined) payload.is_active = updates.isActive;
-    if (updates.avatarUrl) payload.avatar_url = updates.avatarUrl;
+    if (updates.full_name_user) payload.full_name = updates.full_name_user;
+    if (updates.role_user) payload.role = updates.role_user;
+    if (updates.is_active_user !== undefined) payload.is_active = updates.is_active_user;
+    if (updates.avatar_url_user) payload.avatar_url = updates.avatar_url_user;
 
     const { error } = await supabase
         .from('profiles')
@@ -106,25 +99,24 @@ export const updateUserProfile = async (userId: string, updates: Partial<Profile
     if (error) throw error;
 };
 
-// Zoho-style permissions might be stored in a JSONB column in profiles or a separate table
-// For now, let's implement the engine to read them.
 export const checkPermission = (profile: Profile, action: string, resource: string): boolean => {
-    if (profile.role === 'SUPER_ADMIN') return true;
-    if (!profile.permissions) return false;
+    if (profile.role_user === 'SUPER_ADMIN') return true;
+    if (!profile.permissions_user) return false;
 
-    return profile.permissions.some(p =>
+    return profile.permissions_user.some(p =>
         (p.action === action || p.action === '*') &&
         (p.resource === resource || p.resource === '*') &&
         p.allowed
     );
 };
+
 export const createProfile = async (profile: Partial<Profile>): Promise<void> => {
     const { error } = await supabase.from('profiles').insert([{
         id: profile.id,
-        email: profile.email,
-        full_name: profile.fullName,
-        role: profile.role || 'SUPORTE',
-        tenant_id: profile.tenantId,
+        email: profile.email_user,
+        full_name: profile.full_name_user,
+        role: profile.role_user || 'SUPORTE',
+        tenant_id: profile.tenant_id_user,
         is_active: true
     }]);
 

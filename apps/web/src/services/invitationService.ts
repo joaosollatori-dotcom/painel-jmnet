@@ -2,22 +2,37 @@ import { supabase } from '../lib/supabase';
 import { UserRole } from './userService';
 
 export interface Invitation {
-    id: string;
-    email: string;
-    role: UserRole;
-    token: string;
-    expiresAt: string;
-    usedAt?: string;
+    id_invite: string;
+    email_target_invite: string;
+    role_invite: UserRole;
+    token_invite: string;
+    expires_at_invite: string;
+    used_at_invite?: string;
+    tenant_id_ref_invite: string;
 }
 
+/**
+ * Mapeia os dados brutos de convites para o formato "Alongado" e limpo.
+ */
+const mapToLogicInvitation = (raw: any): Invitation => {
+    return {
+        id_invite: raw.id,
+        email_target_invite: raw.email,
+        role_invite: raw.role as UserRole,
+        token_invite: raw.invite_token,
+        expires_at_invite: raw.expires_at,
+        used_at_invite: raw.used_at,
+        tenant_id_ref_invite: raw.tenant_id
+    };
+};
+
 export const createInvitation = async (email: string, role: UserRole): Promise<string> => {
-    const token = btoa(Math.random().toString()).slice(0, 24); // Token simples para convite
+    const token = btoa(Math.random().toString()).slice(0, 24);
     const { data: { user } } = await supabase.auth.getUser();
 
-    // Verificar se o e-mail já possui um convite pendente/antigo
-    const { data: existing } = await supabase.from('invitations').select('id, expires_at').eq('email', email).maybeSingle();
+    const { data: existing } = await supabase.from('invitations').select('id').eq('email', email).maybeSingle();
     if (existing) {
-        throw new Error("Um convite para este e-mail já existe na base. Resete-o se necessário.");
+        throw new Error("Um convite para este e-mail já existe na base.");
     }
 
     const { error } = await supabase.from('invitations').insert([{
@@ -30,19 +45,8 @@ export const createInvitation = async (email: string, role: UserRole): Promise<s
 
     if (error) throw error;
 
-    // Retorna o link de convite (placeholder do domínio atual)
     const baseUrl = window.location.origin;
     return `${baseUrl}/signup?invite=${token}`;
-};
-
-export const resetInvitation = async (inviteId: string): Promise<string> => {
-    const { api } = await import('./api');
-    const response = await api.post('/v1/invitations/reset', { inviteId });
-    if (!response.data.success) throw new Error("Failed");
-
-    // Retorna novo link
-    const baseUrl = window.location.origin;
-    return `${baseUrl}/signup?invite=${response.data.newInvite.invite_token}`;
 };
 
 export const getInvitations = async (): Promise<Invitation[]> => {
@@ -52,23 +56,14 @@ export const getInvitations = async (): Promise<Invitation[]> => {
             .select('*')
             .order('created_at', { ascending: false });
 
-        if (error) {
-            console.warn("Invitations table not found. Run SQL migration.");
-            return [];
-        }
-        return data.map(d => ({
-            id: d.id,
-            email: d.email,
-            role: d.role as UserRole,
-            token: d.invite_token,
-            expiresAt: d.expires_at,
-            usedAt: d.used_at
-        })) as (Invitation & { usedAt: string | null })[];
+        if (error) return [];
+        return (data || []).map(mapToLogicInvitation);
     } catch (e) {
         return [];
     }
 };
-export const validateInvitation = async (token: string): Promise<{ role: UserRole, tenantId: string, email: string } | null> => {
+
+export const validateInvitation = async (token: string): Promise<Partial<Invitation> | null> => {
     try {
         const { data, error } = await supabase
             .from('invitations')
@@ -80,19 +75,15 @@ export const validateInvitation = async (token: string): Promise<{ role: UserRol
 
         if (error || !data) return null;
 
-        return {
-            role: data.role as UserRole,
-            tenantId: data.tenant_id,
-            email: data.email
-        };
+        return mapToLogicInvitation(data);
     } catch (e) {
         return null;
     }
 };
 
-export const claimInvite = async (userId: string): Promise<void> => {
-    const { data: inv } = await supabase.from('invitations').select('id').eq('used_at', null).limit(1).single();
-    if (inv) {
-        await supabase.from('invitations').update({ used_at: new Date().toISOString(), used_by: userId }).eq('id', inv.id);
-    }
+export const claimInvite = async (userId: string, token: string): Promise<void> => {
+    await supabase
+        .from('invitations')
+        .update({ used_at: new Date().toISOString(), used_by: userId })
+        .eq('invite_token', token);
 };

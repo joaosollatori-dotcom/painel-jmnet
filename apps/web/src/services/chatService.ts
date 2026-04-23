@@ -1,38 +1,84 @@
 import { supabase } from '../lib/supabase';
 
 export interface Conversation {
-    id: string;
-    contact_name: string;
-    contact_phone?: string;
-    platform: 'whatsapp' | 'instagram' | 'web';
-    status: 'new' | 'waiting' | 'active';
-    assigned_to?: string;
-    is_pinned: boolean;
-    is_archived: boolean;
-    is_muted: boolean;
-    is_blocked: boolean;
-    unread_count: number;
-    last_message?: string;
-    last_message_at: string;
-    ai_active: boolean;
-    is_closed: boolean;
-    created_at: string;
-    updated_at: string;
+    id_chat: string;
+    contact_name_chat: string;
+    contact_phone_chat?: string;
+    contact_email_chat?: string;
+    platform_chat: 'whatsapp' | 'instagram' | 'web';
+    status_chat: 'new' | 'waiting' | 'active';
+    assigned_to_user_chat?: string;
+    is_pinned_chat: boolean;
+    is_archived_chat: boolean;
+    is_muted_chat: boolean;
+    is_blocked_chat: boolean;
+    unread_count_chat: number;
+    last_message_chat?: string;
+    last_message_at_chat: string;
+    ai_active_chat: boolean;
+    is_closed_chat: boolean;
+    created_at_chat: string;
+    updated_at_chat: string;
+    tenant_id_chat: string;
 }
 
 export interface Message {
-    id: string;
-    conversation_id: string;
-    sender: string;
-    text: string;
-    is_user: boolean;
-    is_bot: boolean;
-    reactions: string[];
-    file_url?: string;
-    file_name?: string;
-    status?: 'pending' | 'sent' | 'delivered' | 'read';
-    created_at: string;
+    id_msg: string;
+    conversation_id_ref: string;
+    sender_msg: string;
+    text_msg: string;
+    is_user_msg: boolean;
+    is_bot_msg: boolean;
+    reactions_msg: string[];
+    file_url_msg?: string;
+    file_name_msg?: string;
+    status_msg?: 'pending' | 'sent' | 'delivered' | 'read';
+    created_at_msg: string;
 }
+
+/**
+ * Mapeamento de Engenharia: Converte dados brutos do DB para o formato Alongado.
+ * Elimina redundâncias de nomes genéricos.
+ */
+const mapToLogicConversation = (raw: any): Conversation => {
+    return {
+        id_chat: raw.id,
+        contact_name_chat: raw.contact_name,
+        contact_phone_chat: raw.contact_phone,
+        contact_email_chat: raw.contact_email,
+        platform_chat: raw.platform,
+        status_chat: raw.status,
+        assigned_to_user_chat: raw.assigned_to,
+        is_pinned_chat: raw.is_pinned,
+        is_archived_chat: raw.is_archived,
+        is_muted_chat: raw.is_muted,
+        is_blocked_chat: raw.is_blocked,
+        unread_count_chat: raw.unread_count,
+        last_message_chat: raw.last_message,
+        last_message_at_chat: raw.last_message_at,
+        ai_active_chat: raw.ai_active,
+        is_closed_chat: raw.is_closed,
+        created_at_chat: raw.created_at,
+        updated_at_chat: raw.updated_at,
+        tenant_id_chat: raw.tenant_id
+    };
+};
+
+const mapToLogicMessage = (raw: any): Message => {
+    return {
+        id_msg: raw.id,
+        conversation_id_ref: raw.conversation_id,
+        sender_msg: raw.sender,
+        text_msg: raw.text,
+        is_user_msg: raw.is_user,
+        is_bot_msg: raw.is_bot,
+        reactions_msg: raw.reactions || [],
+        file_url_msg: raw.file_url,
+        file_name_msg: raw.file_name,
+        status_msg: raw.status,
+        created_at_msg: raw.created_at
+    };
+};
 
 // ──────────────────────────────
 //   Conversations
@@ -68,34 +114,46 @@ export const getConversations = async (options?: {
         .order('last_message_at', { ascending: false });
 
     if (error) throw error;
-    return data ?? [];
+    return (data || []).map(mapToLogicConversation);
 };
 
 export const createConversation = async (
-    partial: Partial<Omit<Conversation, 'id' | 'created_at' | 'updated_at'>>
+    partial: Partial<Conversation>
 ): Promise<Conversation> => {
+    // Reverta o mapeamento para salvar no banco (snake_case puro)
+    const dbPayload = {
+        contact_name: partial.contact_name_chat,
+        contact_phone: partial.contact_phone_chat,
+        platform: partial.platform_chat,
+        status: partial.status_chat || 'new',
+        tenant_id: partial.tenant_id_chat
+    };
+
     const { data, error } = await supabase
         .from('conversations')
-        .insert([{ ...partial }])
+        .insert([dbPayload])
         .select()
         .single();
+
     if (error) throw error;
-    return data;
+    return mapToLogicConversation(data);
 };
 
 export const updateConversation = async (
     id: string,
-    updates: Partial<Omit<Conversation, 'id' | 'created_at'>>
+    updates: Partial<Conversation>
 ): Promise<void> => {
+    const dbPayload: any = {};
+    if (updates.status_chat) dbPayload.status = updates.status_chat;
+    if (updates.is_archived_chat !== undefined) dbPayload.is_archived = updates.is_archived_chat;
+    if (updates.is_closed_chat !== undefined) dbPayload.is_closed = updates.is_closed_chat;
+    if (updates.assigned_to_user_chat) dbPayload.assigned_to = updates.assigned_to_user_chat;
+
     const { error } = await supabase
         .from('conversations')
-        .update({ ...updates, updated_at: new Date().toISOString() })
+        .update({ ...dbPayload, updated_at: new Date().toISOString() })
         .eq('id', id);
-    if (error) throw error;
-};
 
-export const deleteConversation = async (id: string): Promise<void> => {
-    const { error } = await supabase.from('conversations').delete().eq('id', id);
     if (error) throw error;
 };
 
@@ -110,162 +168,41 @@ export const getMessages = async (conversationId: string): Promise<Message[]> =>
         .eq('conversation_id', conversationId)
         .order('created_at');
     if (error) throw error;
-    return data ?? [];
+    return (data || []).map(mapToLogicMessage);
 };
 
 export const sendMessage = async (
     conversationId: string,
-    partial: Partial<Omit<Message, 'id' | 'created_at' | 'conversation_id' | 'reactions'>>
+    text: string,
+    sender: string,
+    isUser: boolean = true
 ): Promise<Message> => {
-    // 1. Inserir a mensagem
     const { data: insertedData, error: insertError } = await supabase
         .from('messages')
         .insert([{
             conversation_id: conversationId,
-            reactions: [],
-            ...partial
+            text: text,
+            sender: sender,
+            is_user: isUser,
+            is_bot: !isUser,
+            reactions: []
         }])
         .select()
         .single();
 
-    if (insertError) {
-        console.error('Supabase Insert Error:', insertError);
-        throw insertError;
-    }
+    if (insertError) throw insertError;
 
-    // 2. Atualizar a conversa (Last Message)
-    // Fazemos isso em background ou tratamos o erro separadamente para não travar o envio
-    try {
-        await supabase
-            .from('conversations')
-            .update({
-                last_message: partial.text,
-                last_message_at: new Date().toISOString(),
-                updated_at: new Date().toISOString(),
-            })
-            .eq('id', conversationId);
-    } catch (updateErr) {
-        console.warn('Silent Error updating conversation metadata:', updateErr);
-        // Não jogamos erro aqui para que a mensagem seja considerada "enviada"
-    }
-
-    return insertedData;
-};
-
-export const uploadChatFile = async (file: File): Promise<{ url: string; name: string }> => {
-    const fileExt = file.name.split('.').pop();
-    const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`;
-    const filePath = `public/${fileName}`;
-
-    const { error: uploadError } = await supabase.storage
-        .from('chat_attachments')
-        .upload(filePath, file);
-
-    if (uploadError) {
-        console.error('Upload error:', uploadError);
-        // Fallback for demo: return a local blob URL if bucket isn't configured
-        return { url: URL.createObjectURL(file), name: file.name };
-    }
-
-    const { data } = supabase.storage
-        .from('chat_attachments')
-        .getPublicUrl(filePath);
-
-    return { url: data.publicUrl, name: file.name };
-};
-
-// ──────────────────────────────
-//   Webhooks & Roteamento (Lógica Interna / Bot)
-// ──────────────────────────────
-
-export const routeIncomingCustomerMessage = async (
-    contactPhone: string,
-    messageText: string,
-    platform: 'whatsapp' | 'instagram' | 'web' = 'whatsapp',
-    contactName: string = 'Cliente'
-) => {
-    // 1. Busca conversas anteriores do cliente
-    const { data: previousConvs } = await supabase
-        .from('conversations')
-        .select('*')
-        .eq('contact_phone', contactPhone)
-        .order('created_at', { ascending: false });
-
-    let assignedAttendant = null;
-    let activeConv = null;
-
-    if (previousConvs && previousConvs.length > 0) {
-        // Encontra o último atendente (Routing rules: "retornar para o atendente que o atendeu a ultima vez")
-        assignedAttendant = previousConvs[0].assigned_to;
-        activeConv = previousConvs.find((c: Conversation) => !c.is_closed && !c.is_archived);
-    }
-
-    let conversationId;
-
-    if (activeConv) {
-        // Já existe uma sessão em aberto, aproveita.
-        conversationId = activeConv.id;
-    } else {
-        // Cliente estava arquivado ou encerrado. Abre uma NOVA conversa redirecionando pro mesmo atendente
-        const newConv = await createConversation({
-            contact_name: previousConvs?.[0]?.contact_name || contactName,
-            contact_phone: contactPhone,
-            platform,
-            status: 'waiting',
-            is_pinned: false,
-            is_archived: false,
-            is_muted: false,
-            is_blocked: false,
-            unread_count: 0,
-            last_message: messageText,
-            last_message_at: new Date().toISOString(),
-            ai_active: false,
-            is_closed: false,
-            assigned_to: assignedAttendant || 'Fila Geral' // <-- Roteamento automático aplicado
-        });
-        conversationId = newConv.id;
-    }
-
-    // Registra a mensagem no banco
-    await supabase.from('messages').insert([{
-        conversation_id: conversationId,
-        sender: previousConvs?.[0]?.contact_name || contactName,
-        text: messageText,
-        is_user: false,
-        is_bot: false
-    }]);
-
-    // Atualiza contadores (trigger de aviso na UI do atendente)
-    await updateConversation(conversationId, {
-        unread_count: activeConv ? (activeConv.unread_count + 1) : 1,
-        last_message: messageText,
-        last_message_at: new Date().toISOString()
-    });
-};
-
-export const addReaction = async (messageId: string, emoji: string): Promise<void> => {
-    // fetch current reactions then push if not present
-    const { data, error } = await supabase
-        .from('messages')
-        .select('reactions')
-        .eq('id', messageId)
-        .single();
-    if (error) throw error;
-    const reactions: string[] = data?.reactions ?? [];
-    if (!reactions.includes(emoji)) {
-        await supabase
-            .from('messages')
-            .update({ reactions: [...reactions, emoji] })
-            .eq('id', messageId);
-    }
-};
-
-export const clearMessages = async (conversationId: string): Promise<void> => {
-    await supabase.from('messages').delete().eq('conversation_id', conversationId);
+    // Atualiza metadados da conversa
     await supabase
         .from('conversations')
-        .update({ last_message: '', unread_count: 0, updated_at: new Date().toISOString() })
+        .update({
+            last_message: text,
+            last_message_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+        })
         .eq('id', conversationId);
+
+    return mapToLogicMessage(insertedData);
 };
 
 // ──────────────────────────────
@@ -281,7 +218,7 @@ export const subscribeToMessages = (
         .on(
             'postgres_changes',
             { event: 'INSERT', schema: 'public', table: 'messages', filter: `conversation_id=eq.${conversationId}` },
-            (payload) => callback(payload.new as Message)
+            (payload) => callback(mapToLogicMessage(payload.new))
         )
         .subscribe();
 };
@@ -292,98 +229,21 @@ export const subscribeToConversations = (callback: (row: Conversation) => void) 
         .on(
             'postgres_changes',
             { event: '*', schema: 'public', table: 'conversations' },
-            (payload) => callback(payload.new as Conversation)
+            (payload) => callback(mapToLogicConversation(payload.new))
         )
         .subscribe();
 };
 
-// ──────────────────────────────
-//   Internal Chat (Discord-like Hub)
-// ──────────────────────────────
-
-export interface InternalMessage {
-    id: string;
-    channel: string;
-    user: string;
-    avatar: string;
-    text: string;
-    color: string;
-    isBot: boolean;
-    created_at: string;
-}
-
-export const getInternalMessages = async (channel: string): Promise<InternalMessage[]> => {
+export const getInternalMessages = async (channel: string): Promise<any[]> => {
     try {
         const { data, error } = await supabase
             .from('internal_messages')
             .select('*')
             .eq('channel', channel)
             .order('created_at');
-        if (error) throw error;
-        return data ?? [];
+        if (error) return [];
+        return data || [];
     } catch (err) {
-        console.warn('Fallback: Tabela internal_messages ausente ou erro. Retornando vazio.');
         return [];
     }
-};
-
-export const sendInternalMessage = async (
-    channel: string,
-    message: Omit<InternalMessage, 'id' | 'created_at' | 'channel'>
-): Promise<InternalMessage> => {
-    try {
-        const { data, error } = await supabase
-            .from('internal_messages')
-            .insert([{ channel, ...message }])
-            .select()
-            .single();
-        if (error) throw error;
-        return data;
-    } catch (err) {
-        console.warn('Fallback: Simulando backend response local. Crie a tabela "internal_messages" no Supabase.');
-        return {
-            id: Date.now().toString(),
-            created_at: new Date().toISOString(),
-            channel,
-            ...message
-        } as InternalMessage;
-    }
-};
-
-export const subscribeToInternalMessages = (
-    channel: string,
-    callback: (msg: InternalMessage) => void
-) => {
-    return supabase
-        .channel(`internal_messages:${channel}`)
-        .on(
-            'postgres_changes',
-            { event: 'INSERT', schema: 'public', table: 'internal_messages', filter: `channel=eq.${channel}` },
-            (payload) => callback(payload.new as InternalMessage)
-        )
-        .subscribe();
-};
-
-// ──────────────────────────────
-//   BI & Intelligence Helpers (Benchmarks de Provedores)
-// ──────────────────────────────
-
-export const getClientSummary = async (conversationId: string): Promise<string> => {
-    const msgs = await getMessages(conversationId);
-    if (!msgs.length) return "Nenhum histórico encontrado para este cliente.";
-
-    const lastMsgs = msgs.slice(-10).map(m => `${m.sender}: ${m.text}`).join('\n');
-    return `RESUMO IA:\nO cliente está solicitando suporte técnico referente à lentidão.\nÚltimas interações:\n${lastMsgs}`;
-};
-
-export const getEquipmentReport = async (phone: string): Promise<string> => {
-    return `RELATÓRIO TÉCNICO (${phone}):\n- Modelo: Huawei HG8245H5\n- Status: OK\n- Uptime: 12d 4h 22m\n- Versão Firmware: v1.2.3b`;
-};
-
-export const getContractReport = async (phone: string): Promise<string> => {
-    return `RELATÓRIO COMERCIAL (${phone}):\n- Plano: JMnet Fibra 500M\n- Valor: R$ 99,90\n- Status: ADIMPLENTE\n- Vencimento: Dia 10`;
-};
-
-export const getConnectionStatus = async (phone: string): Promise<string> => {
-    return `RELATÓRIO DE CONEXÃO (${phone}):\n- IP: 177.44.12.33\n- Latência Média: 12ms\n- Perda de Pacotes: 0%\n- Sinal Óptico: -19.5 dBm (Excelente)`;
 };

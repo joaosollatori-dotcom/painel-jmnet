@@ -1,92 +1,95 @@
 import { supabase } from '../lib/supabase';
 
 export interface Lead {
-    id: string;
-    tenantId: string; // SaaS Isolation
-    // Identidade
-    nomeCompleto: string;
-    cpfCnpj?: string;
-    rg?: string;
-    dataNascimento?: string;
-    email?: string;
-    telefonePrincipal: string;
-    telefoneSecundario?: string;
-    telefoneWhatsapp?: string;
-    tipoPessoa: 'PF' | 'PJ';
+    id_crm: string;
+    tenant_id_crm: string;
+    nome_completo_crm: string;
+    cpf_cnpj_crm?: string;
+    rg_crm?: string;
+    data_nascimento_crm?: string;
+    email_crm?: string;
+    telefone_principal_crm: string;
+    telefone_secundario_crm?: string;
+    telefone_whatsapp_crm?: string;
+    tipo_pessoa_crm: 'PF' | 'PJ';
 
     // Endereço
-    cep?: string;
-    logradouro?: string;
-    numero?: string;
-    complemento?: string;
-    bairro?: string;
-    cidade?: string;
-    uf?: string;
-    pontoReferencia?: string;
-    latitude?: number;
-    longitude?: number;
+    cep_crm?: string;
+    logradouro_crm?: string;
+    numero_crm?: string;
+    complemento_crm?: string;
+    bairro_crm?: string;
+    cidade_crm?: string;
+    uf_crm?: string;
 
-    // Origem
-    canalEntrada: 'WhatsApp' | 'Ligação' | 'Formulário Web' | 'Indicação' | 'Visita' | 'Campanha';
-    campanha?: string;
-    vendedorId?: string;
-    vendedorNome?: string; // Cache do nome para o Ranking
+    // Negócio
+    canal_entrada_crm: string;
+    vendedor_id_crm?: string;
+    score_qualificacao_crm: number;
+    status_qualificacao_crm: string;
+    status_viabilidade_crm: string;
+    plano_interesse_crm?: string;
+    valor_plano_crm?: number;
 
-    // Classificação
-    tipoCliente: 'RESIDENCIAL' | 'EMPRESARIAL';
-    perfilUso?: string;
-    scoreQualificacao: number;
-    interessePlano?: string;
-    statusQualificacao: 'PENDENTE' | 'EM_ANALISE' | 'QUALIFICADO' | 'DESQUALIFICADO';
-    statusViabilidade: 'PENDENTE' | 'EM_ANALISE' | 'VIAVEL' | 'INVIAVEL' | 'ESPECIAL';
-
-    // Proposta e Fechamento (DADOS PARA O MOTOR)
-    planoSelecionado?: string;
-    valorPlano?: number; // Para cálculo de LTV/Ticket Médio no Dashboard
-    custoLead?: number; // Para cálculo de CAC real
-    statusProposta?: 'ENVIADA' | 'VISUALIZADA' | 'ACEITA' | 'RECUSADA';
-    motivoPerda?: 'PRECO' | 'SINAL' | 'CONCORRENCIA' | 'FIDELIDADE' | 'ATENDIMENTO' | 'OUTROS';
-
-    // Datas e Controle (PADRÃO DO SEU DB)
-    dataEntrada: string;
-    dataUltimaInteracao: string;
-    dataPrimeiroContato?: string; // Para o SLA de Resposta
-    dataProximoContato?: string;
-    createdAt: string;
-    updatedAt: string;
-
-    // Fallbacks para Realtime/Novos Schemas
-    created_at?: string;
-    updated_at?: string;
-
-    stageId?: string;
-    provedor?: string;
-}
-
-export interface LeadHistory {
-    id: string;
-    leadId: string;
-    lead_id?: string;
-    type: 'STAGE_CHANGE' | 'NOTE' | 'CALL' | 'WA' | 'WHATSAPP' | 'EMAIL' | 'TASK' | 'DOCUMENT' | 'SYSTEM' | 'SYS';
-    content?: string;
-    duration?: number;
-    fromStage?: string;
-    toStage?: string;
-    responsavelId?: string;
-    dataEvento: string;
-    metadata?: any;
+    // Controle
+    data_entrada_crm: string;
+    data_ultima_interacao_crm: string;
+    created_at_crm: string;
+    updated_at_crm: string;
+    stage_id_crm?: string;
+    status_agendamento_crm?: string;
 }
 
 export interface Appointment {
-    id: string;
-    leadId?: string;
-    titulo: string;
-    dataInicio: string;
-    status: 'AGENDADO' | 'CONFIRMADO' | 'DESLOCAMENTO' | 'EM_ANDAMENTO' | 'CONCLUIDO' | 'NAO_ATENDIDO' | 'CANCELADO' | 'REAGENDADO';
-    tecnicoId?: string;
-    vendedorId?: string;
-    tipo: 'VISITA_COMERCIAL' | 'INSTALACAO' | 'DEMONSTRACAO' | 'LIGACAO' | 'RETORNO_PROPOSTA' | 'VISTORIA_TECNICA';
+    id_appt: string;
+    lead_id_ref: string;
+    titulo_appt: string;
+    data_inicio_appt: string;
+    status_appt: string;
+    tecnico_id_ref?: string;
+    vendedor_id_ref?: string;
+    tipo_appt: string;
 }
+
+/**
+ * Mapeamento de Engenharia: Converte dados brutos do DB para o formato Alongado.
+ * Elimina redundâncias e unifica snake/camel case.
+ */
+const mapToLogicLead = (raw: any): Lead => {
+    return {
+        id_crm: raw.id,
+        tenant_id_crm: raw.tenant_id || raw.tenantId,
+        nome_completo_crm: raw.nomeCompleto || raw.full_name,
+        cpf_cnpj_crm: raw.cpfCnpj || raw.cpf_cnpj,
+        rg_crm: raw.rg,
+        data_nascimento_crm: raw.dataNascimento || raw.data_nascimento,
+        email_crm: raw.email,
+        telefone_principal_crm: raw.telefonePrincipal || raw.telefone_principal,
+        telefone_secundario_crm: raw.telefoneSecundario || raw.telefone_secundario,
+        telefone_whatsapp_crm: raw.telefoneWhatsapp || raw.telefone_whatsapp,
+        tipo_pessoa_crm: raw.tipoPessoa || raw.tipo_pessoa,
+        cep_crm: raw.cep,
+        logradouro_crm: raw.logradouro,
+        numero_crm: raw.numero,
+        complemento_crm: raw.complemento,
+        bairro_crm: raw.bairro,
+        cidade_crm: raw.cidade,
+        uf_crm: raw.uf,
+        canal_entrada_crm: raw.canalEntrada || raw.canal_entrada,
+        vendedor_id_crm: raw.vendedorId || raw.vendedor_id,
+        score_qualificacao_crm: raw.scoreQualificacao || 0,
+        status_qualificacao_crm: raw.statusQualificacao || raw.status_qualificacao,
+        status_viabilidade_crm: raw.statusViabilidade || raw.status_viabilidade,
+        plano_interesse_crm: raw.interessePlano || raw.plano_interesse,
+        valor_plano_crm: raw.valorPlano || raw.valor_plano,
+        data_entrada_crm: raw.dataEntrada || raw.data_entrada,
+        data_ultima_interacao_crm: raw.dataUltimaInteracao || raw.data_ultima_interacao,
+        created_at_crm: raw.createdAt || raw.created_at,
+        updated_at_crm: raw.updatedAt || raw.updated_at,
+        stage_id_crm: raw.stageId || raw.stage_id,
+        status_agendamento_crm: raw.status_agendamento
+    };
+};
 
 export const getLeads = async (): Promise<Lead[]> => {
     const { data, error } = await supabase
@@ -94,85 +97,45 @@ export const getLeads = async (): Promise<Lead[]> => {
         .select('*')
         .order('createdAt', { ascending: false });
 
-    if (error) {
-        console.error('Erro Supabase (getLeads):', error);
-        return [];
-    }
-    return data || [];
-};
-
-export const getLead = async (id: string): Promise<Lead> => {
-    const { data, error } = await supabase
-        .from('Lead')
-        .select('*')
-        .eq('id', id)
-        .single();
-    if (error) throw error;
-    return data;
+    if (error) return [];
+    return (data || []).map(mapToLogicLead);
 };
 
 export const createLead = async (lead: Partial<Lead>): Promise<Lead> => {
+    const dbPayload = {
+        nomeCompleto: lead.nome_completo_crm,
+        telefonePrincipal: lead.telefone_principal_crm,
+        tipoPessoa: lead.tipo_pessoa_crm,
+        tenant_id: lead.tenant_id_crm,
+        updatedAt: new Date().toISOString()
+    };
+
     const { data, error } = await supabase
         .from('Lead')
-        .insert([{ ...lead, updatedAt: new Date().toISOString() }])
+        .insert([dbPayload])
         .select()
         .single();
-    if (error) throw error;
-    return data;
-};
-
-export const updateLead = async (id: string, updates: Partial<Lead>): Promise<void> => {
-    // Limpeza de campos calculados antes do envio
-    const { id: _id, createdAt: _c, created_at: _c2, ...cleanUpdates } = updates as any;
-
-    const { error } = await supabase
-        .from('Lead')
-        .update({ ...cleanUpdates, updatedAt: new Date().toISOString() })
-        .eq('id', id);
 
     if (error) throw error;
-};
-
-export const getLeadHistory = async (leadId: string): Promise<LeadHistory[]> => {
-    const { data, error } = await supabase
-        .from('lead_history')
-        .select('*')
-        .eq('leadId', leadId)
-        .order('dataEvento', { ascending: false });
-    return data || [];
-};
-
-// ... restante mantido ...
-export const createLeadHistory = async (history: Partial<LeadHistory>): Promise<LeadHistory> => {
-    const { metadados, metadata, leadId, ...cleanHistory } = history as any;
-    const { data, error } = await supabase
-        .from('lead_history')
-        .insert([{ ...cleanHistory, leadId: leadId || history.leadId, dataEvento: new Date().toISOString() }])
-        .select().single();
-    if (error) throw error;
-    return data;
+    return mapToLogicLead(data);
 };
 
 export const getAppointments = async (): Promise<Appointment[]> => {
     const { data, error } = await supabase
         .from('Lead')
-        .select('id, nomeCompleto, dataInstalacao, turnoInstalacao, tecnicoId, vendedorId, statusQualificacao, statusAgendamento')
-        .not('dataInstalacao', 'is', null)
-        .order('dataInstalacao', { ascending: true });
-    if (error) return [];
-    return (data || []).map(l => ({
-        id: l.id,
-        leadId: l.id,
-        titulo: `Instalação: ${l.nomeCompleto}`,
-        dataInicio: l.dataInstalacao,
-        status: (l.statusAgendamento || (l.statusQualificacao === 'CONCLUIDO' ? 'CONCLUIDO' : 'AGENDADO')) as Appointment['status'],
-        tecnicoId: l.tecnicoId,
-        vendedorId: l.vendedorId,
-        tipo: 'INSTALACAO'
-    }));
-};
+        .select('id, nomeCompleto, dataInstalacao, tecnicoId, vendedorId, statusQualificacao, status_agendamento')
+        .not('dataInstalacao', 'is', null);
 
-export const createAppointment = async (appt: any) => {
-    const { error } = await supabase.from('appointments').insert([appt]);
-    if (error) throw error;
+    if (error) return [];
+
+    return (data || []).map(l => ({
+        id_appt: l.id,
+        lead_id_ref: l.id,
+        titulo_appt: `Instalação: ${l.nomeCompleto}`,
+        data_inicio_appt: l.dataInstalacao,
+        status_appt: l.status_agendamento || 'AGENDADO',
+        tecnico_id_ref: l.tecnicoId,
+        vendedor_id_ref: l.vendedorId,
+        tipo_appt: 'INSTALACAO'
+    }));
 };

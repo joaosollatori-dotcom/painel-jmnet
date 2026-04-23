@@ -71,7 +71,7 @@ const App: React.FC = () => {
       <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
         <div>
           <h1>Titã Core Dashboard</h1>
-          <p>Status: <span className="status-badge status-success">Autenticado</span> | User: {profile?.fullName || session.user.email}</p>
+          <p>Status: <span className="status-badge status-success">Autenticado</span> | User: {profile?.full_name_user || session.user.email}</p>
         </div>
         <button onClick={signOut} style={{ background: '#444' }}>Encerrar Sessão</button>
       </header>
@@ -82,7 +82,7 @@ const App: React.FC = () => {
           <h3>Usuários & Sistema</h3>
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
             <button onClick={() => runAction('getCurrentProfile', () => userService.getCurrentProfile(session.user))}>Get My Profile</button>
-            <button onClick={() => runAction('getTenantUsers', () => userService.getTenantUsers(profile?.tenantId || ''))}>List All Profiles</button>
+            <button onClick={() => runAction('getTenantUsers', () => userService.getTenantUsers(profile?.tenant_id_user || ''))}>List All Profiles</button>
           </div>
         </div>
 
