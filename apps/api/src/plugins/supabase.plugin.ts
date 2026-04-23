@@ -1,9 +1,9 @@
-import { createClient } from "@supabase/supabase-js";
+import { createClient, SupabaseClient } from "@supabase/supabase-js";
 import fp from "fastify-plugin";
 
 declare module "fastify" {
     interface FastifyInstance {
-        supabaseAdmin: ReturnType<typeof createClient>;
+        supabaseAdmin: SupabaseClient;
     }
 }
 
@@ -17,5 +17,6 @@ export default fp(async (fastify) => {
 
     const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey);
 
-    fastify.decorate("supabaseAdmin", supabaseAdmin);
+    // Casting para any para evitar conflito de tipos genéricos complexos no decorate do Fastify
+    fastify.decorate("supabaseAdmin", supabaseAdmin as any);
 });
