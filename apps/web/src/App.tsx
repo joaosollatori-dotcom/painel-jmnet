@@ -307,10 +307,29 @@ const App: React.FC = () => {
 const ChatPage: React.FC = () => {
   const [selectedChat, setSelectedChat] = useState<string | null>(null);
   return (
-    <div style={{ display: 'flex', height: '100%', width: '100%' }}>
+    <div style={{
+      display: 'flex',
+      height: '100%',
+      width: '100%',
+      gap: '1.5rem',
+      padding: '0 1.5rem',
+      background: 'var(--bg-deep)',
+      overflow: 'hidden'
+    }}>
       <ChatList selectedChatId={selectedChat} onSelectChat={setSelectedChat} />
       {selectedChat ? <ChatArea chatId={selectedChat} /> : (
-        <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--bg-deep)', color: 'var(--text-secondary)' }}>
+        <div style={{
+          flex: 1,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          background: 'rgba(var(--bg-surface-rgb), 0.4)',
+          backdropFilter: 'blur(10px)',
+          borderRadius: '24px',
+          margin: '1.5rem 1.5rem 1.5rem 0',
+          border: '1px solid var(--border)',
+          color: 'var(--text-secondary)'
+        }}>
           Escolha uma conversa para começar
         </div>
       )}

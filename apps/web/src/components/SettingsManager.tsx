@@ -32,6 +32,7 @@ const SettingsManager: React.FC = () => {
         'os/tipos': 'OS_TYPE',
         'suporte/ocorrencias': 'OCCURRENCE_TYPE',
         'equipe': 'USERS',
+        'visual': 'VISUAL',
         'seguranca': 'SECURITY',
         'contratos': 'CONTRACTS'
     };
@@ -189,11 +190,14 @@ const SettingsManager: React.FC = () => {
                     </button>
                     {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
                         <>
+                            <button className={`sett-tab ${activeTab === 'VISUAL' ? 'active' : ''}`} onClick={() => navigate('/ajustes/visual')}>
+                                <UserCircle size={18} /> Personalização Visual
+                            </button>
                             <button className={`sett-tab ${activeTab === 'SECURITY' ? 'active' : ''}`} onClick={() => navigate('/ajustes/seguranca')}>
                                 <ShieldCheck size={18} /> Auditoria e Segurança
                             </button>
                             <button className={`sett-tab ${activeTab === 'CONTRACTS' ? 'active' : ''}`} onClick={() => navigate('/ajustes/contratos')}>
-                                <Scroll size={18} /> Personalização & Contratos
+                                <Scroll size={18} /> Brading & Contratos
                             </button>
                         </>
                     )}
@@ -209,11 +213,13 @@ const SettingsManager: React.FC = () => {
                                     {activeTab === 'OS_TYPE' && 'Tipos de Ordens de Serviço (Técnico)'}
                                     {activeTab === 'OCCURRENCE_TYPE' && 'Tipificação de Ocorrências (Suporte)'}
                                     {activeTab === 'USERS' && 'Controle de Acessos e Níveis (SaaS)'}
+                                    {activeTab === 'VISUAL' && 'Identidade Visual e Wallpapers do Chat'}
                                     {activeTab === 'SECURITY' && 'Segurança Avançada e Auditoria Global'}
                                     {activeTab === 'CONTRACTS' && 'Branding e Automação de Contratos'}
                                 </h2>
                                 <span>
                                     {activeTab === 'USERS' && 'Configure quem pode acessar o TITÃ e quais ações podem executar.'}
+                                    {activeTab === 'VISUAL' && 'Personalize o fundo das conversas por setor e a experiência visual do sistema.'}
                                     {activeTab === 'SECURITY' && 'Histórico completo de ações, chaves remotas e IPs permitidos.'}
                                     {activeTab === 'CONTRACTS' && 'Ajuste a identidade da sua empresa, cores de e-mail e templates de contrato.'}
                                     {activeTab !== 'USERS' && activeTab !== 'SECURITY' && activeTab !== 'CONTRACTS' && 'Altere, ative ou adicione novas opções que refletirão globalmente no sistema.'}
@@ -350,6 +356,38 @@ const SettingsManager: React.FC = () => {
                                         <span>Convidar Membro</span>
                                     </button>
                                 </div>
+                            ) : activeTab === 'VISUAL' ? (
+                                <div className="visual-settings-layout">
+                                    <div className="security-grid-main">
+                                        {[
+                                            { role: 'ADMIN', desc: 'Gestão Total (Onyx Default)' },
+                                            { role: 'VENDEDOR', desc: 'Setor de Vendas / CRM' },
+                                            { role: 'TECNICO', desc: 'Gestão Técnica / OS' },
+                                            { role: 'SUPORTE', desc: 'Central de Atendimento' }
+                                        ].map(target => (
+                                            <div key={target.role} className="security-card">
+                                                <h3><Globe size={20} /> Chat Wallpaper: {target.role}</h3>
+                                                <p>{target.desc}</p>
+                                                <div className="titan-field" style={{ marginTop: '12px' }}>
+                                                    <input
+                                                        className="titan-input"
+                                                        placeholder="Cole a URL da imagem (JPG/PNG)..."
+                                                        onBlur={async (e) => {
+                                                            if (!e.target.value.trim() || !profile?.tenantId) return;
+                                                            try {
+                                                                await saveSectorWallpaper(profile.tenantId, target.role as any, e.target.value);
+                                                                showToast(`Visual do setor ${target.role} atualizado!`, 'success');
+                                                            } catch (err) {
+                                                                showToast('Erro ao salvar wallpaper.', 'error');
+                                                            }
+                                                        }}
+                                                    />
+                                                    <small style={{ color: 'var(--accent)', marginTop: '4px', display: 'block' }}>A imagem será aplicada a todos os membros deste setor.</small>
+                                                </div>
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
                             ) : activeTab === 'SECURITY' ? (
                                 <div className="security-settings-layout">
                                     <div className="security-grid-main">
@@ -460,42 +498,19 @@ const SettingsManager: React.FC = () => {
                                 </div>
 
                                 {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
-                                    <div className="wallpaper-settings-box">
-                                        <label>Wallpaper Padrão do Chat por Setor ({editingUser.role})</label>
-                                        <p style={{ fontSize: '0.75rem', opacity: 0.6, marginBottom: '12px' }}>Define a imagem de fundo para todos os usuários com o perfil <strong>{editingUser.role}</strong>.</p>
-                                        <div className="titan-field">
-                                            <input
-                                                className="titan-input"
-                                                placeholder="https://i.pinimg.com/originals/..."
-                                                defaultValue={""}
-                                                onBlur={async (e) => {
-                                                    if (!e.target.value.trim() || !profile?.tenantId) return;
-                                                    try {
-                                                        await saveSectorWallpaper(profile.tenantId, editingUser.role || 'SUPORTE', e.target.value);
-                                                        showToast(`Wallpaper para o setor ${editingUser.role} atualizado!`, 'success');
-                                                    } catch (err) {
-                                                        showToast('Erro ao salvar wallpaper do setor.', 'error');
-                                                    }
-                                                }}
-                                            />
-                                            <small style={{ marginTop: '4px', display: 'block', color: 'var(--accent)' }}>O campo salva automaticamente ao sair.</small>
+                                    <div className="security-info-box">
+                                        <label><LockKey size={18} /> Dados de Auditoria</label>
+                                        <div className="audit-data-grid">
+                                            <div className="audit-item">
+                                                <strong>UUID do Perfil</strong>
+                                                <code>{editingUser.id}</code>
+                                            </div>
+                                            <div className="audit-item">
+                                                <strong>ID do Tenant</strong>
+                                                <code>{editingUser.tenantId}</code>
+                                            </div>
                                         </div>
                                     </div>
-                                )}
-
-                                <div className="security-info-box">
-                                    <label><LockKey size={18} /> Dados de Auditoria</label>
-                                    <div className="audit-data-grid">
-                                        <div className="audit-item">
-                                            <strong>UUID do Perfil</strong>
-                                            <code>{editingUser.id}</code>
-                                        </div>
-                                        <div className="audit-item">
-                                            <strong>ID do Tenant</strong>
-                                            <code>{editingUser.tenantId}</code>
-                                        </div>
-                                    </div>
-                                </div>
                             </div>
 
                             <div className="modal-footer">
