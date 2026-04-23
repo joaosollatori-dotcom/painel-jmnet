@@ -34,6 +34,7 @@ const App: React.FC = () => {
   const [isRetracted, setIsRetracted] = useState(() => localStorage.getItem('sidebar-retracted') === 'true');
   const navigate = useNavigate();
   const [lastCtrlSpace, setLastCtrlSpace] = useState(0);
+  const [offlineToastId, setOfflineToastId] = useState<string | null>(null);
   const [isIPChecking, setIsIPChecking] = useState(true);
   const [isAuthorizedIP, setIsAuthorizedIP] = useState(false);
   const [currentUserIP, setCurrentUserIP] = useState('');
