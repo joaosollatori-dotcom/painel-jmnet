@@ -1,136 +1,129 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useAuth } from './contexts/AuthContext';
-import { useToast } from './contexts/ToastContext';
-import { supabase } from './lib/supabase';
-
-// Services
-import * as chatService from './services/chatService';
 import * as userService from './services/userService';
+import * as chatService from './services/chatService';
 import * as leadService from './services/leadService';
-import * as osService from './services/osService';
-import * as financeiroService from './services/financeiroService';
 import * as auditService from './services/auditService';
+import * as osService from './services/osService';
+import * as invitationService from './services/invitationService';
+import * as remoteAccessService from './services/remoteAccessService';
+import * as kraService from './services/kraService';
+import * as ipService from './services/ipService';
 
 const App: React.FC = () => {
-  const { session, profile, loading, signOut } = useAuth();
-  const { showToast } = useToast();
+  const { user, profile, signOut } = useAuth();
   const [result, setResult] = useState<any>(null);
-  const [executing, setExecuting] = useState(false);
-  const [email, setEmail] = useState('');
-  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [currentIp, setCurrentIp] = useState<string>('Detectando...');
 
-  const handleLogin = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setExecuting(true);
-    const { error } = await supabase.auth.signInWithPassword({ email, password });
-    if (error) showToast(error.message, 'error');
-    else showToast('Login realizado', 'success');
-    setExecuting(false);
-  };
+  useEffect(() => {
+    ipService.getUserIP().then(setCurrentIp);
+  }, []);
 
-  const runAction = async (name: string, action: () => Promise<any>) => {
-    setExecuting(true);
-    setResult({ status: 'executing', service: name });
+  const runAction = async (name: string, fn: () => Promise<any>) => {
+    setLoading(true);
     try {
-      const data = await action();
-      setResult(data);
-      showToast(`${name} executado com sucesso`, 'success');
+      console.log(`Executando: ${name}`);
+      const res = await fn();
+      setResult(res || { success: true });
     } catch (err: any) {
       console.error(err);
-      setResult({ error: err.message || 'Erro desconhecido' });
-      showToast(`Erro em ${name}`, 'error');
+      setResult({ error: err.message });
     } finally {
-      setExecuting(false);
+      setLoading(false);
     }
   };
 
-  if (loading) return <div style={{ padding: '2rem' }}>Carregando motor Titã...</div>;
-
-  if (!session) {
+  if (!user) {
     return (
-      <div className="container" style={{ maxWidth: '400px', marginTop: '10vh' }}>
-        <div className="card">
-          <h1>Titã Engineering Mode</h1>
-          <p style={{ marginBottom: '1.5rem', color: '#888' }}>Validação direta de Backend & Regras de Negócio</p>
-          <form onSubmit={handleLogin}>
-            <label>E-mail</label>
-            <input type="email" value={email} onChange={e => setEmail(e.target.value)} required />
-            <label>Senha</label>
-            <input type="password" value={password} onChange={e => setPassword(e.target.value)} required />
-            <button type="submit" disabled={executing} style={{ width: '100%', marginTop: '1rem' }}>
-              {executing ? 'Autenticando...' : 'Entrar (Acesso Direto)'}
-            </button>
-          </form>
-        </div>
+      <div className="tech-dashboard">
+        <h1>Painel Técnico JMNet (Autenticação Necessária)</h1>
+        <p>Use o formulário de login padrão ou convite.</p>
       </div>
     );
   }
 
   return (
-    <div className="container">
-      <header style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '2rem' }}>
-        <div>
-          <h1>Titã Core Dashboard</h1>
-          <p>Status: <span className="status-badge status-success">Autenticado</span> | User: {profile?.full_name_user || session.user.email}</p>
+    <div className="tech-dashboard">
+      <header>
+        <h1>Dashboard de Engenharia</h1>
+        <div className="user-blob">
+          <span>{profile?.full_name_user} ({profile?.role_user})</span>
+          <button onClick={signOut}>Sair</button>
         </div>
-        <button onClick={signOut} style={{ background: '#444' }}>Encerrar Sessão</button>
       </header>
 
       <div className="grid">
-        {/* USER & SYSTEM */}
-        <div className="card">
-          <h3>Usuários & Sistema</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => runAction('getCurrentProfile', () => userService.getCurrentProfile(session.user))}>Get My Profile</button>
-            <button onClick={() => runAction('getTenantUsers', () => userService.getTenantUsers(profile?.tenant_id_user || ''))}>List All Profiles</button>
-          </div>
-        </div>
+        {/* 1. SEÇÃO DE SEGURANÇA */}
+        <section className="card">
+          <h2>Autenticação & Segurança (Produção)</h2>
+          <p>IP Atual: <strong>{currentIp}</strong></p>
+          <div className="actions">
+            <div className="group">
+              <h3>Convites (Invites)</h3>
+              <button onClick={() => runAction('List Invitations', () => invitationService.getInvitations())}>Listar Ativos</button>
+              <button onClick={() => {
+                const email = prompt('Email do alvo:');
+                if (email) runAction('Create Invite', () => invitationService.createInvitation(email, 'ADMIN'));
+              }}>Novo Convite (ADMIN)</button>
+              <button onClick={() => {
+                const id = prompt('ID do convite:');
+                if (id) runAction('Reset Invite', () => invitationService.resetInvitation(id));
+              }}>Reset Link (ID)</button>
+              <button onClick={() => {
+                const id = prompt('ID do convite:');
+                if (id) runAction('Cancel Invite', () => invitationService.cancelInvitation(id));
+              }}>Cancelar Convite (ID)</button>
+            </div>
 
-        {/* CHAT LOGIC */}
-        <div className="card">
-          <h3>Chat & Atendimento</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => runAction('getConversations', () => chatService.getConversations())}>List Conversations</button>
-            <button onClick={() => runAction('getInternalMessages', () => chatService.getInternalMessages('general'))}>Internal Chat Logs</button>
-          </div>
-        </div>
+            <div className="group">
+              <h3>Whitelist de IP</h3>
+              <button onClick={() => runAction('List Allowed IPs', () => remoteAccessService.getAllowedIPs())}>Listar IPs Permitidos</button>
+              <button onClick={() => runAction('Add Current IP', () => remoteAccessService.addAllowedIP(currentIp, 'Suporte Manual'))}>Liberar Meu IP</button>
+              <button onClick={() => {
+                const id = prompt('ID do IP p/ remover:');
+                if (id) runAction('Remove IP', () => remoteAccessService.removeAllowedIP(id));
+              }}>Bloquear IP (Remover ID)</button>
+            </div>
 
-        {/* CRM & SALES */}
-        <div className="card">
-          <h3>CRM & Pipeline</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => runAction('getLeads', () => leadService.getLeads())}>List My Leads</button>
-            <button onClick={() => runAction('getAppointments', () => leadService.getAppointments())}>Service Appointments</button>
+            <div className="group">
+              <h3>KRA / CVA Support</h3>
+              <button onClick={() => {
+                const code = prompt('Código CVA:');
+                if (code) runAction('Validate CVA', () => kraService.validateCVA(code, currentIp));
+              }}>Validar CVA & Desbloquear</button>
+            </div>
           </div>
-        </div>
+        </section>
 
-        {/* OPERATIONAL */}
-        <div className="card">
-          <h3>Operacional & OS</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => runAction('getServiceOrders', () => osService.getServiceOrders())}>List OS (Orders)</button>
-            <button onClick={() => runAction('getFaturasSummary', () => financeiroService.getFaturasSummary())}>Get Billing Data</button>
+        {/* 2. LOGS & AUDITORIA */}
+        <section className="card">
+          <h2>Auditoria (Real Time)</h2>
+          <div className="actions">
+            <button onClick={() => runAction('Get Audit Logs', () => auditService.getGlobalAuditLogs(20))}>Puxar 20 Logs</button>
           </div>
-        </div>
+        </section>
 
-        {/* AUDIT */}
-        <div className="card">
-          <h3>Logs & Auditoria</h3>
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-            <button onClick={() => runAction('getGlobalAuditLogs', () => auditService.getGlobalAuditLogs())}>Security Audit Logs</button>
+        {/* 3. CORE DATA */}
+        <section className="card">
+          <h2>Engenharia de Dados</h2>
+          <div className="actions">
+            <button onClick={() => runAction('Get CRM Leads', () => leadService.getLeads())}>Leads CRM</button>
+            <button onClick={() => runAction('Get Chat', () => chatService.getConversations())}>Conversas</button>
+            <button onClick={() => runAction('Get OS', () => osService.getServiceOrders())}>Ordens de Serviço</button>
           </div>
-        </div>
+        </section>
       </div>
 
-      {/* DEBUGGER TIP: To add new tests, import the service and add a button calling runAction('Label', () => service.method()) */}
-
-      <div className="card" style={{ marginTop: '2rem' }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-          <h3>Execution Result</h3>
-          {executing && <span style={{ color: 'var(--accent)' }}>Processing...</span>}
-          <button onClick={() => setResult(null)} style={{ background: '#333', fontSize: '0.7rem', padding: '0.2rem 0.5rem' }}>Clear</button>
+      {/* CONSOLE DE RESULTADOS */}
+      <div className="result-viewer">
+        <div className="viewer-header">
+          <h3>Resultado da Execução (JSON Bruto)</h3>
+          <button onClick={() => setResult(null)}>Limpar</button>
         </div>
-        <pre>{result ? JSON.stringify(result, null, 2) : '// No action executed yet. Select a service above.'}</pre>
+        <pre>
+          {loading ? '// Carregando dados de produção...' : result ? JSON.stringify(result, null, 2) : '// Escolha uma ação para validar a engenharia de backend'}
+        </pre>
       </div>
     </div>
   );

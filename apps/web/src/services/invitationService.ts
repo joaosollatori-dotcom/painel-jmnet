@@ -26,14 +26,23 @@ const mapToLogicInvitation = (raw: any): Invitation => {
     };
 };
 
+// ──────────────────────────────
+//   INVITATION LOGIC (PRODUCTION)
+// ──────────────────────────────
+
+export const getInvitations = async (): Promise<Invitation[]> => {
+    const { data, error } = await supabase
+        .from('invitations')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(mapToLogicInvitation);
+};
+
 export const createInvitation = async (email: string, role: UserRole): Promise<string> => {
     const token = btoa(Math.random().toString()).slice(0, 24);
     const { data: { user } } = await supabase.auth.getUser();
-
-    const { data: existing } = await supabase.from('invitations').select('id').eq('email', email).maybeSingle();
-    if (existing) {
-        throw new Error("Um convite para este e-mail já existe na base.");
-    }
 
     const { error } = await supabase.from('invitations').insert([{
         email,
@@ -49,41 +58,50 @@ export const createInvitation = async (email: string, role: UserRole): Promise<s
     return `${baseUrl}/signup?invite=${token}`;
 };
 
-export const getInvitations = async (): Promise<Invitation[]> => {
-    try {
-        const { data, error } = await supabase
-            .from('invitations')
-            .select('*')
-            .order('created_at', { ascending: false });
+/**
+ * Funçao Real de Reset: Chama o backend para invalidar o token antigo e gerar um novo.
+ */
+export const resetInvitation = async (inviteId: string): Promise<string> => {
+    const { api } = await import('./api');
+    const response = await api.post('/v1/invitations/reset', { inviteId });
 
-        if (error) return [];
-        return (data || []).map(mapToLogicInvitation);
-    } catch (e) {
-        return [];
+    if (response.data?.newInvite?.invite_token) {
+        const baseUrl = window.location.origin;
+        return `${baseUrl}/signup?invite=${response.data.newInvite.invite_token}`;
     }
+    throw new Error("Erro ao resetar convite no servidor.");
 };
 
-export const validateInvitation = async (token: string): Promise<Partial<Invitation> | null> => {
-    try {
-        const { data, error } = await supabase
-            .from('invitations')
-            .select('*')
-            .eq('invite_token', token)
-            .is('used_at', null)
-            .gt('expires_at', new Date().toISOString())
-            .single();
+/**
+ * Funçao Real de Cancelamento: Deleta o registro do banco.
+ */
+export const cancelInvitation = async (inviteId: string): Promise<void> => {
+    const { error } = await supabase
+        .from('invitations')
+        .delete()
+        .eq('id', inviteId);
 
-        if (error || !data) return null;
+    if (error) throw error;
+};
 
-        return mapToLogicInvitation(data);
-    } catch (e) {
-        return null;
-    }
+export const validateInvitation = async (token: string): Promise<Invitation | null> => {
+    const { data, error } = await supabase
+        .from('invitations')
+        .select('*')
+        .eq('invite_token', token)
+        .is('used_at', null)
+        .gt('expires_at', new Date().toISOString())
+        .single();
+
+    if (error || !data) return null;
+    return mapToLogicInvitation(data);
 };
 
 export const claimInvite = async (userId: string, token: string): Promise<void> => {
-    await supabase
+    const { error } = await supabase
         .from('invitations')
         .update({ used_at: new Date().toISOString(), used_by: userId })
         .eq('invite_token', token);
+
+    if (error) throw error;
 };

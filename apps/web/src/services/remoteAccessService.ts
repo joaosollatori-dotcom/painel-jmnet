@@ -1,20 +1,47 @@
 import { supabase } from '../lib/supabase';
 
 export interface RemoteAccessKey {
-    id: string;
-    token: string;
-    expiresAt: string;
-    usedAt?: string;
+    id_key: string;
+    token_key: string;
+    expires_at_key: string;
+    used_at_key?: string;
+    created_at_key: string;
 }
 
 export interface AllowedIP {
-    id: string;
-    ipAddress: string;
-    description: string;
+    id_ip: string;
+    ip_address_ip: string;
+    description_ip: string;
+    created_at_ip: string;
 }
 
+/**
+ * Mapeamento de Engenharia: Converte dados brutos do DB para o formato Alongado.
+ */
+const mapToLogicIP = (raw: any): AllowedIP => {
+    return {
+        id_ip: raw.id,
+        ip_address_ip: raw.ip_address,
+        description_ip: raw.description,
+        created_at_ip: raw.created_at
+    };
+};
+
+const mapToLogicKey = (raw: any): RemoteAccessKey => {
+    return {
+        id_key: raw.id,
+        token_key: raw.key_token,
+        expires_at_key: raw.expires_at,
+        used_at_key: raw.used_at,
+        created_at_key: raw.created_at
+    };
+};
+
+// ──────────────────────────────
+//   SECURITY KEYS (PRODUCTION)
+// ──────────────────────────────
+
 export const generateRemoteAccessKey = async (): Promise<string> => {
-    // Design similar to Service Role Key (titã_sk_...)
     const randomBody = btoa(Math.random().toString() + Date.now().toString()).slice(0, 48);
     const fullKey = `tita_sk_${randomBody}`;
 
@@ -30,45 +57,53 @@ export const generateRemoteAccessKey = async (): Promise<string> => {
     return fullKey;
 };
 
-export const consumeRemoteAccessKey = async (key: string): Promise<boolean> => {
+export const listRemoteAccessKeys = async (): Promise<RemoteAccessKey[]> => {
     const { data, error } = await supabase
         .from('remote_access_keys')
-        .update({ used_at: new Date().toISOString() })
-        .eq('key_token', key)
-        .is('used_at', null)
-        .gt('expires_at', new Date().toISOString())
-        .select();
+        .select('*')
+        .order('created_at', { ascending: false });
 
-    if (error || !data || data.length === 0) return false;
-    return true;
+    if (error) throw error;
+    return (data || []).map(mapToLogicKey);
 };
 
+// ──────────────────────────────
+//   IP WHITELIST (PRODUCTION)
+// ──────────────────────────────
+
 export const getAllowedIPs = async (): Promise<AllowedIP[]> => {
-    try {
-        const { data, error } = await supabase.from('allowed_ips').select('*');
-        if (error) {
-            console.warn("Allowed IPs table not found. Run SQL migration.");
-            return [];
-        }
-        return data.map(d => ({
-            id: d.id,
-            ipAddress: d.ip_address,
-            description: d.description
-        }));
-    } catch (e) {
-        return [];
-    }
+    const { data, error } = await supabase
+        .from('allowed_ips')
+        .select('*')
+        .order('created_at', { ascending: false });
+
+    if (error) throw error;
+    return (data || []).map(mapToLogicIP);
 };
 
 export const addAllowedIP = async (ip: string, description: string): Promise<void> => {
+    // Validação de segurança: Impede duplicidade de IP na whitelist
+    const { data: existing } = await supabase
+        .from('allowed_ips')
+        .select('id')
+        .eq('ip_address', ip)
+        .maybeSingle();
+
+    if (existing) return;
+
     const { error } = await supabase.from('allowed_ips').insert([{
         ip_address: ip,
         description
     }]);
+
     if (error) throw error;
 };
 
 export const removeAllowedIP = async (id: string): Promise<void> => {
-    const { error } = await supabase.from('allowed_ips').delete().eq('id', id);
+    const { error } = await supabase
+        .from('allowed_ips')
+        .delete()
+        .eq('id', id);
+
     if (error) throw error;
 };

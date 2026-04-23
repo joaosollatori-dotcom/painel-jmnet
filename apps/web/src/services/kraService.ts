@@ -1,21 +1,17 @@
 import { supabase } from '../lib/supabase';
+import { addAllowedIP } from './remoteAccessService';
 
 export interface CVAValidation {
-    isValid: boolean;
-    expiresAt?: string;
-    targetIp?: string;
+    is_valid_kra: boolean;
+    expires_at_kra?: string;
+    target_ip_kra?: string;
 }
 
 /**
- * Solicita a validação de um código CVA para liberação de acesso KRA.
- * O código é gerado pelo suporte e validado pelo Founder (ou sistema).
+ * Validação Real de CVA: Verifica o token, marca como usado e libera o IP.
  */
-export const validateCVA = async (code: string): Promise<CVAValidation> => {
+export const validateCVA = async (code: string, currentIp: string): Promise<CVAValidation> => {
     try {
-        // Mock da lógica: No futuro isso chamará uma Edge Function que valida o CVA
-        // e já adiciona o IP à tabela allowed_ips com expiração automática.
-
-        // Simulação de verificação
         const { data, error } = await supabase
             .from('remote_access_keys')
             .select('*')
@@ -25,34 +21,32 @@ export const validateCVA = async (code: string): Promise<CVAValidation> => {
             .single();
 
         if (error || !data) {
-            return { isValid: false };
+            return { is_valid_kra: false };
         }
 
-        // Marcar como usado e retornar validade
+        // Marcar chave como usada (Persistência Real)
         await supabase
             .from('remote_access_keys')
             .update({ used_at: new Date().toISOString() })
             .eq('id', data.id);
 
+        // Autoflow: Registra o IP atual na whitelist por ser um acesso KRA validado
+        await addAllowedIP(currentIp, `KRA Access - Code: ${code.slice(-6)}`);
+
         return {
-            isValid: true,
-            expiresAt: data.expires_at,
+            is_valid_kra: true,
+            expires_at_kra: data.expires_at,
+            target_ip_kra: currentIp
         };
     } catch (e) {
-        return { isValid: false };
+        return { is_valid_kra: false };
     }
 };
 
 /**
- * Adiciona o IP atual à whitelist com uma nota de expiração (KRA).
+ * Registro de Emergência (Produção): Permite registrar um IP com tempo de vida.
+ * Nota: Requer que o banco suporte expiração automática ou rotina de limpeza.
  */
-export const registerKRA = async (ip: string, durationMinutes: number = 60): Promise<void> => {
-    const expiresAt = new Date(Date.now() + durationMinutes * 60 * 1000);
-    const description = `KRA Support - Expira em ${expiresAt.toLocaleTimeString('pt-BR')}`;
-
-    await supabase.from('allowed_ips').insert([{
-        ip_address: ip,
-        description,
-        // No banco real, deveríamos ter uma coluna 'expires_at'
-    }]);
+export const registerKRA = async (ip: string, reason: string): Promise<void> => {
+    await addAllowedIP(ip, `KRA Emergency: ${reason}`);
 };
