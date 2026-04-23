@@ -36,9 +36,9 @@
   --space-xl: 3.5rem;
   /* 56px */
 
-  /* Typography */
-  --font-title: 'Space Grotesk', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  /* Typography - Modern & Accessible */
+  --font-title: 'Space Grotesk', 'Inter', system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', 'Roboto', system-ui, -apple-system, sans-serif;
 
   /* Effects */
   --radius-sm: 6px;
@@ -247,4 +247,24 @@ textarea:focus {
   to {
     transform: rotate(360deg);
   }
+}
+
+/* Fix CSS Leaking: Code tags in Light/Soft themes */
+[data-theme='light'] code,
+[data-theme='soft'] code {
+  background-color: var(--bg-surface-light);
+  color: var(--accent);
+  border: 1px solid var(--border);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
+}
+
+[data-theme='dark'] code {
+  background-color: rgba(255, 255, 255, 0.05);
+  color: var(--accent);
+  border: 1px solid var(--border-light);
+  padding: 0.2em 0.4em;
+  border-radius: 6px;
+  font-family: 'JetBrains Mono', monospace;
 }

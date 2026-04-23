@@ -165,8 +165,8 @@ const SettingsManager: React.FC = () => {
         <div className="settings-manager-pane">
             <header className="settings-header">
                 <div>
-                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações Avançadas (Administrador) - v2.07.07</h1>
-                    <p>Controle global de variáveis, motivos de perda e tipos operacionais.</p>
+                    <h1><ShieldCheck weight="fill" className="text-blue-500" /> Configurações de Segurança e Sistema</h1>
+                    <p>Controle de variáveis operacionais, níveis de acesso e auditoria.</p>
                 </div>
             </header>
 
@@ -266,24 +266,36 @@ const SettingsManager: React.FC = () => {
                             ) : activeTab === 'USERS' ? (
                                 <div className="user-settings-grid">
                                     {users.map(user => (
-                                        <div key={user.id} className="user-card-titan">
+                                        <div key={user.id} className="user-card-titan" onClick={() => setEditingUser(user)}>
                                             <div className="user-card-header">
                                                 <div className="user-main-info">
-                                                    <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.fullName}&background=random`} alt="" />
+                                                    <div className="avatar-wrapper">
+                                                        <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.fullName}&background=random`} alt="" />
+                                                        <div className={`status-indicator ${user.isActive ? 'online' : 'offline'}`} />
+                                                    </div>
                                                     <div>
                                                         <h4>{user.fullName}</h4>
-                                                        <span>{user.email}</span>
+                                                        <span className="user-email">{user.email}</span>
+                                                        <span className="user-system-id">UID: {user.id.substring(0, 8)}...</span>
                                                     </div>
                                                 </div>
                                                 <div className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</div>
                                             </div>
-                                            <div className="user-card-actions">
-                                                <button className="btn-titan-outline-sm" onClick={() => setEditingUser(user)}>
-                                                    <Key size={14} /> PERMISSÕES
-                                                </button>
-                                                <div className="status-toggle" onClick={() => {/* status handle */ }}>
-                                                    <div className={`t-knob ${user.isActive ? 'on' : 'off'}`} />
+                                            <div className="user-card-stats">
+                                                <div className="stat-item">
+                                                    <strong>Status</strong>
+                                                    <span style={{ color: user.isActive ? '#10b981' : '#ef4444' }}>{user.isActive ? 'Ativo' : 'Inativo'}</span>
                                                 </div>
+                                                <div className="stat-divider" />
+                                                <div className="stat-item">
+                                                    <strong>Membro Desde</strong>
+                                                    <span>{new Date(user.createdAt || '').toLocaleDateString('pt-BR')}</span>
+                                                </div>
+                                            </div>
+                                            <div className="user-card-actions">
+                                                <button className="btn-titan-outline-sm w-full">
+                                                    <PencilSimple size={14} /> GERENCIAR ACESSOS
+                                                </button>
                                             </div>
                                         </div>
                                     ))}
@@ -350,12 +362,12 @@ const SettingsManager: React.FC = () => {
                                                         <button onClick={() => { navigator.clipboard.writeText(remoteKey); showToast('Chave copiada!', 'success'); }}><Copy /></button>
                                                     </div>
                                                 ) : (
-                                                    <button className="btn-titan-primary" onClick={handleGenerateRemoteKey}>GERAR CHAVE SERVICE ROLE</button>
+                                                    <button className="btn-titan-primary" onClick={handleGenerateRemoteKey}>GERAR CHAVE DE ACESSO</button>
                                                 )}
                                             </div>
                                         </div>
                                         <div className="security-card">
-                                            <h3><Globe size={20} /> Whitelist de IPs Administrativos</h3>
+                                            <h3><Globe size={20} /> Whitelist de IPs</h3>
                                             <div className="ip-list">
                                                 {allowedIps.map(ip => (
                                                     <div key={ip.id} className="ip-row">
@@ -418,44 +430,76 @@ const SettingsManager: React.FC = () => {
                         >
                             <header>
                                 <div>
-                                    <h3>Ajustar Perfil: {editingUser.fullName}</h3>
-                                    <p>Nível de acesso Zoho-Style (Granular)</p>
+                                    <h3>Gestão de Credenciais: {editingUser.fullName}</h3>
+                                    <p>Configuração granular de permissões e chaves operacionais.</p>
                                 </div>
                                 <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
                             </header>
 
-                            <div className="role-selector-box">
-                                <label>Nível Hierárquico</label>
-                                <div className="role-options">
-                                    {['ADMIN', 'VENDEDOR', 'TECNICO', 'SUPORTE'].map(r => (
-                                        <button
-                                            key={r}
-                                            className={`role-opt ${editingUser.role === r ? 'selected' : ''}`}
-                                            onClick={() => setEditingUser({ ...editingUser, role: r as UserRole })}
-                                        >
-                                            {r}
-                                        </button>
-                                    ))}
-                                </div>
-                            </div>
-
-                            <div className="permissions-matrix">
-                                <div className="matrix-row header">
-                                    <div className="resource-col">Módulo</div>
-                                    <div>Ver</div>
-                                    <div>Criar</div>
-                                    <div>Editar</div>
-                                    <div>Apagar</div>
-                                </div>
-                                {['Leads', 'Vendas', 'OS', 'Financeiro', 'Rede'].map(mod => (
-                                    <div key={mod} className="matrix-row">
-                                        <div className="resource-col">{mod}</div>
-                                        <div><input type="checkbox" defaultChecked /></div>
-                                        <div><input type="checkbox" defaultChecked /></div>
-                                        <div><input type="checkbox" defaultChecked /></div>
-                                        <div><input type="checkbox" /></div>
+                            <div className="modal-scroll-area">
+                                <div className="role-selector-box">
+                                    <label><Fingerprint size={18} /> Perfil de Acesso Principal</label>
+                                    <div className="role-options">
+                                        {[
+                                            { role: 'ADMIN', desc: 'Acesso total ao sistema' },
+                                            { role: 'VENDEDOR', desc: 'Foco em CRM e Vendas' },
+                                            { role: 'TECNICO', desc: 'Gestão de Rede e OS' },
+                                            { role: 'SUPORTE', desc: 'Atendimento e Ocorrências' }
+                                        ].map(opt => (
+                                            <button
+                                                key={opt.role}
+                                                className={`role-opt-card ${editingUser.role === opt.role ? 'selected' : ''}`}
+                                                onClick={() => setEditingUser({ ...editingUser, role: opt.role as UserRole })}
+                                            >
+                                                <strong>{opt.role}</strong>
+                                                <span>{opt.desc}</span>
+                                            </button>
+                                        ))}
                                     </div>
-                                ))}
+                                </div>
+
+                                <div className="permissions-matrix-container">
+                                    <label><ShieldCheck size={18} /> Matriz de Permissões (Zoho-Style)</label>
+                                    <div className="permissions-matrix">
+                                        <div className="matrix-row header">
+                                            <div className="resource-col">Módulo do Sistema</div>
+                                            <div>Ver</div>
+                                            <div>Criar</div>
+                                            <div>Editar</div>
+                                            <div>Apagar</div>
+                                        </div>
+                                        {[
+                                            { mod: 'CRM & Leads', perms: [true, true, true, false] },
+                                            { mod: 'Ordens de Serviço', perms: [true, true, true, false] },
+                                            { mod: 'Gestão Financeira', perms: [true, false, false, false] },
+                                            { mod: 'Infraestrutura de Rede', perms: [true, true, true, true] },
+                                            { mod: 'Configurações de Admin', perms: [false, false, false, false] }
+                                        ].map(item => (
+                                            <div key={item.mod} className="matrix-row">
+                                                <div className="resource-col">{item.mod}</div>
+                                                {item.perms.map((p, i) => (
+                                                    <div key={i} className="checkbox-cell">
+                                                        <input type="checkbox" defaultChecked={p} />
+                                                    </div>
+                                                ))}
+                                            </div>
+                                        ))}
+                                    </div>
+                                </div>
+
+                                <div className="security-info-box">
+                                    <label><LockKey size={18} /> Dados de Auditoria</label>
+                                    <div className="audit-data-grid">
+                                        <div className="audit-item">
+                                            <strong>UUID do Perfil</strong>
+                                            <code>{editingUser.id}</code>
+                                        </div>
+                                        <div className="audit-item">
+                                            <strong>ID do Tenant</strong>
+                                            <code>{editingUser.tenantId}</code>
+                                        </div>
+                                    </div>
+                                </div>
                             </div>
 
                             <div className="modal-footer">

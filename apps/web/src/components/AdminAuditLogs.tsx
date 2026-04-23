@@ -293,10 +293,10 @@ export const AdminAuditLogs: React.FC = () => {
                 </header>
 
                 <div className="audit-row-header">
-                    <div className="col-time"><Clock /> HORA</div>
-                    <div className="col-action">EVENTO</div>
-                    <div className="col-user"><UserIcon /> ALVO / AGENTE</div>
-                    <div className="col-desc">CONTEXTO E CARGA</div>
+                    <div className="col-time">INTERACTION DATE</div>
+                    <div className="col-action">TOPIC / ACTION</div>
+                    <div className="col-user">AGENT - ID / SOURCE</div>
+                    <div className="col-desc">CONTEXT & PAYLOAD</div>
                 </div>
 
                 <div className="audit-row-body ic-sidebar-scroll" style={{ maxHeight: '400px' }}>

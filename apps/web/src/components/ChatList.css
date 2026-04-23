@@ -110,7 +110,6 @@
 
 .conv-avatar {
     width: 42px;
-    /* TAMANHO REDUZIDO (Era 52px) */
     height: 42px;
     background: var(--bg-deep);
     border-radius: 12px;

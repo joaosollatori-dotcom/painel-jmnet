@@ -3,6 +3,10 @@ import { useSearchParams } from 'react-router-dom';
 import { supabase } from '../lib/supabase';
 import { Key, Envelope, ShieldCheck, ArrowRight, Spinner, Buildings, IdentificationCard, UserCircle, Cpu, Lock } from '@phosphor-icons/react';
 import { useToast } from '../contexts/ToastContext';
+import { createProfile } from '../services/userService';
+import { validateInvitation } from '../services/invitationService';
+import { getUserIP } from '../services/ipService';
+import { addAllowedIP } from '../services/remoteAccessService';
 import './Auth.css';
 
 // Componente de Partículas Minimalista (Estilo Security Grid)
@@ -101,12 +105,41 @@ const Particles: React.FC = () => {
 const Auth: React.FC = () => {
     const { showToast } = useToast();
     const [loading, setLoading] = useState(false);
+    const [verifyingInvite, setVerifyingInvite] = useState(false);
+    const [loadingMessage, setLoadingMessage] = useState('Identificando Credenciais...');
     const [searchParams, setSearchParams] = useSearchParams();
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
     const [companyName, setCompanyName] = useState('');
     const [mode, setMode] = useState<'login' | 'signup' | 'reset'>('login');
     const [inviteData, setInviteData] = useState<{ tenant_id: string, role: string, company_name?: string } | null>(null);
+
+    // Sequenciador de Contextual Loading
+    useEffect(() => {
+        if (!loading && !verifyingInvite) return;
+
+        const messages = [
+            'Sincronizando com TITÃ Cloud...',
+            'Validando Protocolos de Segurança...',
+            'Verificando Integridade do Token...',
+            'Consultando ID Organizacional...',
+            'Mapeando Permissões Granulares...',
+            'Preparando Estação de Trabalho...',
+            'Sincronizando Módulos de Operação...',
+            'Autenticando Identidade Digital...',
+            'Blindando Canal de Dados...'
+        ];
+
+        let idx = 0;
+        const interval = setInterval(() => {
+            idx++;
+            if (idx < messages.length) {
+                setLoadingMessage(messages[idx]);
+            }
+        }, 2500); // 2.5s base
+
+        return () => clearInterval(interval);
+    }, [loading, verifyingInvite]);
 
     useEffect(() => {
         const token = searchParams.get('invite');
@@ -117,6 +150,8 @@ const Auth: React.FC = () => {
     }, [searchParams]);
 
     const validateInvite = async (token: string) => {
+        setVerifyingInvite(true);
+        setLoadingMessage('Consultando Convite Ativo...');
         try {
             const { api } = await import('../services/api');
             const ua = navigator.userAgent;
@@ -129,6 +164,7 @@ const Auth: React.FC = () => {
                     company_name: res.data.data.company_name
                 });
                 setEmail(res.data.data.email);
+                showToast('Protocolo de convite validado.', 'success');
             } else {
                 showToast(res.data.message || 'Convite inválido.', 'error');
                 setMode('login');
@@ -136,6 +172,9 @@ const Auth: React.FC = () => {
         } catch (err) {
             console.error('Invalid invite token:', err);
             setMode('login');
+        } finally {
+            // Pequeno delay para UX
+            setTimeout(() => setVerifyingInvite(false), 1000);
         }
     };
 
@@ -168,45 +207,78 @@ const Auth: React.FC = () => {
                 if (data.user && inviteData) await claimInvite(data.user.id);
                 showToast('Acesso validado. Bem-vindo à Estação Matrix.', 'success');
             } else if (mode === 'signup') {
-                const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
-                    email,
-                    password,
-                    options: {
-                        data: {
-                            company_name: inviteData ? inviteData.company_name : companyName,
-                            full_name: email.split('@')[0],
-                            invite_role: inviteData?.role,
-                            invite_tenant_id: inviteData?.tenant_id
-                        }
-                    }
-                });
-
-                if (signUpError) {
-                    if (signUpError.message.toLowerCase().includes('already registered') || signUpError.status === 400) {
-                        showToast('Você já possui uma conta! Detectamos seu registro anterior.', 'info');
-                        setMode('login');
-                        setLoading(false);
+                if (inviteData) {
+                    const inviteToken = searchParams.get('invite') || '';
+                    const invData = await validateInvitation(inviteToken);
+                    if (!invData) {
+                        setLoadingMessage("Convite inválido ou expirado.");
                         return;
                     }
-                    throw signUpError;
-                }
 
-                if (signUpData.user && inviteData) {
-                    await supabase.from('invitations').update({ used_at: new Date().toISOString() })
-                        .eq('invite_token', searchParams.get('invite'));
+                    // Capturar IP para blindagem automática (Milestone 4)
+                    const userIp = await getUserIP();
+
+                    setLoadingMessage("Finalizando seu acesso seguro...");
+                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                        email: email,
+                        password: password,
+                    });
+
+                    if (signUpError) throw signUpError;
+
+                    await createProfile({
+                        id: signUpData.user?.id || '',
+                        email: email,
+                        fullName: email.split('@')[0],
+                        role: invData.role,
+                        tenantId: invData.tenantId
+                    });
+
+                    // Registrar IP automaticamente para este tenant (Blindagem de Onboarding)
+                    if (userIp !== 'UNKNOWN') {
+                        try {
+                            await addAllowedIP(userIp, `Onboarding: ${email.split('@')[0]}`);
+                        } catch (e) {
+                            console.warn("Falha ao registrar IP auto, prossiga sem bloqueio inicial.");
+                        }
+                    }
+
+                    await claimInvite(signUpData.user?.id || '');
+                    showToast('Identidade integrada com sucesso.', 'success');
+                } else {
+                    // Signup normal para novos Founders
+                    const { data: signUpData, error: signUpError } = await supabase.auth.signUp({
+                        email,
+                        password,
+                        options: {
+                            data: {
+                                company_name: companyName,
+                                full_name: email.split('@')[0]
+                            }
+                        }
+                    });
+
+                    if (signUpError) throw signUpError;
+                    showToast('Estação fundada. Verifique seu e-mail para ativação.', 'success');
                 }
-                showToast('Identidade criada. Verifique seu e-mail para confirmação final.', 'success');
             } else {
                 const { error } = await supabase.auth.resetPasswordForEmail(email);
                 if (error) throw error;
-                showToast('Instruções de recuperação enviadas.', 'success');
+                showToast('Instruções de recuperação enviadas para seu e-mail.', 'success');
             }
         } catch (err: any) {
             showToast(err.message || 'Erro na autenticação de segurança', 'error');
-        } finally {
-            setLoading(true); // Manter carregando até o redirect do AuthContext
+            setLoading(false);
         }
     };
+
+    if (verifyingInvite) {
+        return <LoadingScreen message={loadingMessage} />;
+    }
+
+    if (loading) {
+        return <LoadingScreen message={loadingMessage} />;
+    }
 
     return (
         <div className="auth-hero">
@@ -218,9 +290,9 @@ const Auth: React.FC = () => {
                             <span>TITÃ | ISP</span>
                         </div>
                         <h2>
-                            {mode === 'login' && (inviteData ? 'Vincular Identidade' : 'Estação de Comando')}
-                            {mode === 'signup' && (inviteData ? `Integrar-se à ${inviteData.company_name || 'Organização'}` : 'Fundar Nova Estação')}
-                            {mode === 'reset' && 'Recuperar Segurança'}
+                            {mode === 'login' && 'Estação de Comando'}
+                            {mode === 'signup' && (inviteData ? `Acessar ${inviteData.company_name || 'Organização'}` : 'Fundar Nova Estação')}
+                            {mode === 'reset' && 'Esqueci a Senha'}
                         </h2>
                         <p>
                             {inviteData
@@ -228,23 +300,16 @@ const Auth: React.FC = () => {
                                 : 'Ambiente de gestão blindada para ISPs de alta performance.'}
                         </p>
 
-                        {inviteData && (
+                        {inviteData && mode === 'signup' && (
                             <div className="invite-badge">
-                                <span className="invite-tag">Protocolo Válido</span>
+                                <span className="invite-tag">Acesso Autorizado</span>
                                 <div className="invite-badge-icon">
                                     <IdentificationCard size={32} weight="duotone" />
                                 </div>
                                 <div className="invite-badge-info">
-                                    <h4>Nível de Acesso</h4>
+                                    <h4>Nível Liberado</h4>
                                     <p>{inviteData.role} • {inviteData.company_name || 'TITÃ'}</p>
                                 </div>
-                            </div>
-                        )}
-
-                        {mode === 'signup' && inviteData && (
-                            <div className="invite-tip">
-                                <span>Já é um oficial da plataforma?</span>
-                                <button type="button" onClick={() => setMode('login')}>Entrar e vincular contrato</button>
                             </div>
                         )}
                     </header>
@@ -265,7 +330,7 @@ const Auth: React.FC = () => {
 
                         {mode !== 'reset' && (
                             <div className="titan-field">
-                                <label><Lock size={16} /> Chave de Segurança (Senha)</label>
+                                <label><Lock size={16} /> {inviteData ? 'Chave Fornecida pelo Fundador' : 'Chave de Segurança (Senha)'}</label>
                                 <input
                                     className="titan-input"
                                     type="password"
@@ -289,14 +354,6 @@ const Auth: React.FC = () => {
                                         placeholder="Minha Empresa ISP"
                                     />
                                 </div>
-                                <div className="titan-field">
-                                    <label><Cpu size={18} /> Identificador de Sistema (Slug)</label>
-                                    <input
-                                        className="titan-input"
-                                        value={companyName.toLowerCase().replace(/[^a-z0-9]/g, '-').replace(/-+/g, '-')}
-                                        readOnly
-                                    />
-                                </div>
                             </>
                         )}
 
@@ -304,10 +361,10 @@ const Auth: React.FC = () => {
                             {loading ? <Spinner className="animate-spin" /> : (
                                 <>
                                     {mode === 'login'
-                                        ? (inviteData ? 'ENTRAR E VINCULAR AO CONVITE' : 'ENTRAR NA ESTAÇÃO')
+                                        ? 'ENTRAR NA ESTAÇÃO'
                                         : mode === 'signup'
-                                            ? (inviteData ? 'CRIAR CONTA E ACEITAR CONVITE' : 'FUNDAR ESTAÇÃO & CRIAR CONTA')
-                                            : 'SOLICITAR RECONEXÃO'}
+                                            ? (inviteData ? 'VALIDAR ACESSO AO CONVITE' : 'FUNDAR ESTAÇÃO & CRIAR CONTA')
+                                            : 'SOLICITAR NOVA SENHA'}
                                     <ArrowRight size={18} weight="bold" />
                                 </>
                             )}
@@ -317,7 +374,7 @@ const Auth: React.FC = () => {
                     <footer className="auth-footer">
                         {mode === 'login' ? (
                             <>
-                                <button onClick={() => setMode('reset')}>Recuperar Chave</button>
+                                <button onClick={() => setMode('reset')}>Esqueci a senha</button>
                                 <span className="divider" />
                                 <button onClick={() => setMode('signup')}>Ainda não tenho acesso</button>
                             </>
