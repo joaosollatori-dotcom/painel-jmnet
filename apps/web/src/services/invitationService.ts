@@ -2,26 +2,26 @@ import { supabase } from '../lib/supabase';
 import { UserRole } from './userService';
 
 export interface Invitation {
-    id_invite: string;
-    email_target_invite: string;
-    role_invite: UserRole;
-    token_invite: string;
-    expires_at_invite: string;
-    used_at_invite?: string;
-    tenant_id_ref_invite: string;
-    target_user_id_invite?: string;
+    id: string;
+    email: string;
+    role: UserRole;
+    token: string;
+    expiresAt: string;
+    usedAt?: string;
+    tenantId: string;
+    targetUserId?: string;
 }
 
 const mapToLogicInvitation = (raw: any): Invitation => {
     return {
-        id_invite: raw.id,
-        email_target_invite: raw.email,
-        role_invite: raw.role as UserRole,
-        token_invite: raw.invite_token,
-        expires_at_invite: raw.expires_at,
-        used_at_invite: raw.used_at,
-        tenant_id_ref_invite: raw.tenant_id,
-        target_user_id_invite: raw.target_user_id
+        id: raw.id,
+        email: raw.email,
+        role: raw.role as UserRole,
+        token: raw.invite_token,
+        expiresAt: raw.expires_at,
+        usedAt: raw.used_at,
+        tenantId: raw.tenant_id,
+        targetUserId: raw.target_user_id
     };
 };
 
