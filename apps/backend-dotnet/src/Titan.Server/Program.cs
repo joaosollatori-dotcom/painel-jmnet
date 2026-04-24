@@ -76,6 +76,27 @@ app.UseHttpsRedirection();
 
 // Importante: UseMultiTenant deve vir antes de UseAuthentication/UseAuthorization
 app.UseMultiTenant(); 
+using (var scope = app.Services.CreateScope())
+{
+    var context = scope.ServiceProvider.GetRequiredService<TitanDbContext>();
+    var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
+    
+    // Simplificadamente cria o usuário mestre se não existir
+    var adminUser = await userManager.FindByNameAsync("admin");
+    if (adminUser == null)
+    {
+        adminUser = new ApplicationUser 
+        { 
+            UserName = "admin", 
+            Email = "admin@titan.com.br", 
+            TenantId = "master", 
+            EmailConfirmed = true 
+        };
+        await userManager.CreateAsync(adminUser, "Titan@Root123!");
+        await userManager.AddToRoleAsync(adminUser, "admin");
+    }
+}
+
 app.UseAuthentication();
 app.UseAuthorization();
 

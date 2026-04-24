@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Titan.Server")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+7869fe3029a321c241879721019f1bef29ca6b61")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+e6e8e0e98739409b8e470ba5af361c63a32275c7")]
 [assembly: System.Reflection.AssemblyProductAttribute("Titan.Server")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Titan.Server")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

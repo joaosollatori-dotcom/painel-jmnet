@@ -33,3 +33,8 @@ Este documento serve como um registro imutável de falhas de implementação, de
    - **O que aconteceu**: Mantive o padrão PascalCase nativo do Entity Framework para as novas tabelas, ignorando o padrão snake_case já estabelecido no projeto legado.
    - **Resultado**: Criação de tabelas com nomes duplicados semanticamente (`AuditLogs` vs `audit_logs`, `TenantInfo` vs `tenants`), aumentando a carga cognitiva e dificultando a manutenção centralizada do banco.
    - **Lição**: Em projetos de migração gradual, o novo backend deve adaptar-se à convenção de nomenclatura existente no banco de dados para manter a coesão visual e funcional.
+
+7. **Falha: Definição de Modelo Incompleta para Propriedades de Tenant**
+   - **O que aconteceu**: Tentei atribuir manualmente o valor da propriedade `TenantId` no seeder do `ApplicationUser` sem ter declaro essa propriedade explicitamente na classe POCO.
+   - **Resultado**: Erro de compilação `CS0117: ApplicationUser não contém uma definição para TenantId`. 
+   - **Lição**: Mesmo que o Finbuckle gerencie propriedades de tenant via shadow properties, elas devem ser declaradas explicitamente no modelo C# caso precisem ser manipuladas diretamente pelo código (como em seeders ou lógica de negócio).
