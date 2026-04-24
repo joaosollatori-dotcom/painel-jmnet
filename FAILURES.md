@@ -23,3 +23,13 @@ Este documento serve como um registro imutável de falhas de implementação, de
    - **O que aconteceu**: Inseri dados na tabela `TenantInfo` sem especificar a coluna `IsActive`.
    - **Resultado**: Erro `23502: null value in column "IsActive" violates not-null constraint`. O EF Core criou a coluna como `NOT NULL` (por ser um `bool` não-anulável no C#), mas o banco não tinha um valor padrão definido via SQL.
    - **Lição**: Propriedades C# com valores padrão (ex: `bool = true`) não garantem defaults no banco de dados se não forem explicitamente configuradas via Fluent API ou passadas no `INSERT` SQL.
+
+5. **Falha: Coexistência Indireta e Instabilidade de Schema Cache**
+   - **O que aconteceu**: Apliquei migrações de um novo backend (.NET/PascalCase) no mesmo banco de dados do backend legado (Node/snake_case/Supabase) sem o devido isolamento ou aviso de reinicialização de cache.
+   - **Resultado**: Erro `Internal Server Error (500)` em rotas legadas e erro `PGRST204` (coluna não encontrada) no PostgREST. A alteração estrutural massiva invalidou o cache de metadados do Supabase e potencialmente causou inconsistências temporárias para o Prisma.
+   - **Lição**: Mudanças estruturais em bancos de dados compartilhados exigem um plano de coexistência que inclua o reload do cache de ferramentas dependentes (Supabase/PostgREST) e a verificação de integridade do ORM legado.
+
+6. **Falha: Desalinhamento de Convenção de Nomenclatura**
+   - **O que aconteceu**: Mantive o padrão PascalCase nativo do Entity Framework para as novas tabelas, ignorando o padrão snake_case já estabelecido no projeto legado.
+   - **Resultado**: Criação de tabelas com nomes duplicados semanticamente (`AuditLogs` vs `audit_logs`, `TenantInfo` vs `tenants`), aumentando a carga cognitiva e dificultando a manutenção centralizada do banco.
+   - **Lição**: Em projetos de migração gradual, o novo backend deve adaptar-se à convenção de nomenclatura existente no banco de dados para manter a coesão visual e funcional.
