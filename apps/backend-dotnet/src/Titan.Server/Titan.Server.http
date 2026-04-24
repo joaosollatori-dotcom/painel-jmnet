@@ -1,0 +1,6 @@
+@Titan.Server_HostAddress = http://localhost:5168
+
+GET {{Titan.Server_HostAddress}}/weatherforecast/
+Accept: application/json
+
+###

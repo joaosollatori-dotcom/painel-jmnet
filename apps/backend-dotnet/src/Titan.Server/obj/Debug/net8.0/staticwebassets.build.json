@@ -1,0 +1,11 @@
+{
+  "Version": 1,
+  "Hash": "9bHVeyEYBRgkaRPOBEgPxY54BR1dkQXzCI7/4uL+hxw=",
+  "Source": "Titan.Server",
+  "BasePath": "_content/Titan.Server",
+  "Mode": "Default",
+  "ManifestType": "Build",
+  "ReferencedProjectsConfiguration": [],
+  "DiscoveryPatterns": [],
+  "Assets": []
+}
