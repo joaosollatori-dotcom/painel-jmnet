@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Identity;
+using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Titan.Server.Infrastructure;
 using Titan.Server.Modules.Audit;
@@ -81,13 +82,15 @@ app.UseHttpsRedirection();
 app.UseMultiTenant(); 
 using (var scope = app.Services.CreateScope())
 {
+    // 0. Estabelece o contexto de Tenant ANTES de resolver qualquer serviço dependente (DbContext/UserManager)
+    var setter = scope.ServiceProvider.GetRequiredService<IMultiTenantContextSetter>();
+    setter.MultiTenantContext = new MultiTenantContext<TitanTenantInfo> 
+    { 
+        TenantInfo = new TitanTenantInfo { Id = "master", Identifier = "master", Name = "Master Tenant" } 
+    };
+
     var dbContext = scope.ServiceProvider.GetRequiredService<TitanDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
-    
-    // Injeta manualmente o contexto de Tenant para o Seeder (visto que não há HttpContext aqui)
-    var tenantInfo = new TitanTenantInfo { Id = "master", Identifier = "master", Name = "Master Tenant" };
-    var accessor = scope.ServiceProvider.GetRequiredService<IMultiTenantContextAccessor<TitanTenantInfo>>();
-    accessor.MultiTenantContext = new MultiTenantContext<TitanTenantInfo> { TenantInfo = tenantInfo };
 
     // 1. Admin User
     if (!dbContext.Users.IgnoreQueryFilters().Any())
@@ -126,7 +129,7 @@ app.MapIdentityEndpoints();
 app.MapFinanceEndpoints();
 
 // Exemplo de Endpoint Protegido e com Escopo de Tenant
-app.MapGet("/", (ITenantInfo tenantInfo) => 
+app.MapGet("/", ([FromServices] ITenantInfo tenantInfo) => 
     $"Bem-vindo ao TITÃ CLI. Tenant Atual: {tenantInfo?.Name ?? "Nenhum"}")
     .WithName("GetHome")
     .WithOpenApi();

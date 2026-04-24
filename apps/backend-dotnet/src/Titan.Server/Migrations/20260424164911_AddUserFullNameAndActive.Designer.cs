@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using Titan.Server.Infrastructure;
@@ -11,9 +12,11 @@ using Titan.Server.Infrastructure;
 namespace Titan.Server.Migrations
 {
     [DbContext(typeof(TitanDbContext))]
-    partial class TitanDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260424164911_AddUserFullNameAndActive")]
+    partial class AddUserFullNameAndActive
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
