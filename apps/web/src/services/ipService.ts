@@ -12,7 +12,7 @@ export const getUserIP = async (): Promise<string> => {
     for (const url of services) {
         try {
             const controller = new AbortController();
-            const timeoutId = setTimeout(() => controller.abort(), 3500); // 3.5s timeout
+            const timeoutId = setTimeout(() => controller.abort(), 10000); // 10s timeout
 
             const response = await fetch(url, { signal: controller.signal });
             clearTimeout(timeoutId);
