@@ -81,23 +81,36 @@ app.UseHttpsRedirection();
 app.UseMultiTenant(); 
 using (var scope = app.Services.CreateScope())
 {
-    var context = scope.ServiceProvider.GetRequiredService<TitanDbContext>();
+    var dbContext = scope.ServiceProvider.GetRequiredService<TitanDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     
-    // Simplificadamente cria o usuário mestre se não existir
-    var adminUser = await userManager.FindByNameAsync("admin");
-    if (adminUser == null)
+    // 1. Admin User
+    if (!dbContext.Users.Any())
     {
-        adminUser = new ApplicationUser 
-        { 
-            UserName = "admin", 
-            Email = "admin@titan.com.br", 
-            TenantId = "master", 
-            EmailConfirmed = true 
+        var adminUser = new ApplicationUser
+        {
+            UserName = "admin@titan.com.br",
+            Email = "admin@titan.com.br",
+            EmailConfirmed = true,
+            TenantId = "master",
+            FullName = "Administrador Mestre",
+            IsActive = true
         };
-        await userManager.CreateAsync(adminUser, "Titan@Root123!");
-        await userManager.AddToRoleAsync(adminUser, "admin");
+        await userManager.CreateAsync(adminUser, "Admin123!");
     }
+
+    // 2. Dados de Teste Financeiro (Nano/Micro Validação)
+    if (!dbContext.FinancialMovements.Any())
+    {
+        dbContext.FinancialMovements.AddRange(
+            new FinancialMovement { Description = "Assinatura Internet - João", Amount = 150.00m, Type = FinancialType.Income, Date = DateTime.UtcNow.AddDays(-1), TenantId = "master", Category = "Receita" },
+            new FinancialMovement { Description = "Manutenção Fibra Óptica", Amount = 1200.00m, Type = FinancialType.Expense, Date = DateTime.UtcNow.AddDays(-2), TenantId = "master", Category = "Infraestrutura" },
+            new FinancialMovement { Description = "Link Dedicado Transit", Amount = 5000.00m, Type = FinancialType.Expense, Date = DateTime.UtcNow.AddDays(-3), TenantId = "master", Category = "Link" }
+        );
+    }
+
+    await dbContext.SaveChangesAsync();
+    Console.WriteLine("TITÃ: Banco de Dados Semeado com Sucesso!");
 }
 
 app.UseAuthentication();

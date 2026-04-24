@@ -9,22 +9,17 @@ import { generateRemoteAccessKey, getAllowedIPs, addAllowedIP, removeAllowedIP, 
 import { useToast } from '../contexts/ToastContext';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate, useParams } from 'react-router-dom';
+import { useQueryState } from '../../hooks/useQueryState';
 import { AdminAuditLogs } from './AdminAuditLogs';
 import { AdminBrandingSettings } from './AdminBrandingSettings';
 import { saveSectorWallpaper } from '../services/visualSettingsService';
 import './SettingsManager.css';
 
 const SettingsManager: React.FC = () => {
+    const { tenantId, section, subsection } = useParams();
+    const navigate = useNavigate();
     const { showToast } = useToast();
     const { profile } = useAuth();
-    const navigate = useNavigate();
-    const { section, subsection } = useParams();
-    const [settings, setSettings] = useState<SystemSetting[]>([]);
-    const [users, setUsers] = useState<Profile[]>([]);
-    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
-    const [allowedIps, setAllowedIps] = useState<AllowedIP[]>([]);
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
-    const [isLoading, setIsLoading] = useState(true);
 
     // Mapeamento de URL para Categoria interna
     const routeToTab: Record<string, string> = {
@@ -39,9 +34,18 @@ const SettingsManager: React.FC = () => {
 
     const activeTab = routeToTab[`${section}/${subsection}`] || routeToTab[section || ''] || 'LOSS_REASON';
 
+    const [settings, setSettings] = useState<SystemSetting[]>([]);
+    const [users, setUsers] = useState<Profile[]>([]);
+    const [auditLogs, setAuditLogs] = useState<AuditLog[]>([]);
+    const [allowedIps, setAllowedIps] = useState<AllowedIP[]>([]);
+    const [invitations, setInvitations] = useState<Invitation[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    // Deep Link para Modais (Nano Validação)
+    const [editingUserId, setEditingUserId] = useQueryState('editUser', { defaultValue: '' });
+
     // Edit/Modal States
     const [editingItem, setEditingItem] = useState<Partial<SystemSetting> | null>(null);
-    const [editingUser, setEditingUser] = useState<Partial<Profile> | null>(null);
     const [showInviteModal, setShowInviteModal] = useState(false);
     const [showResetModal, setShowResetModal] = useState(false);
     const [inviteEmail, setInviteEmail] = useState('');
@@ -51,14 +55,15 @@ const SettingsManager: React.FC = () => {
 
     useEffect(() => {
         loadSettings();
-    }, []);
+    }, [tenantId]);
 
     const loadSettings = async () => {
         setIsLoading(true);
         try {
+            const currentTenant = tenantId || profile?.tenantId;
             const [settingsData, usersData] = await Promise.all([
                 getSystemSettings(),
-                profile?.tenantId ? getTenantUsers(profile.tenantId) : Promise.resolve([])
+                currentTenant ? getTenantUsers(currentTenant) : Promise.resolve([])
             ]);
             setSettings(settingsData);
             setUsers(usersData);
@@ -273,30 +278,30 @@ const SettingsManager: React.FC = () => {
                             ) : activeTab === 'USERS' ? (
                                 <div className="user-settings-grid">
                                     {users.map(user => (
-                                        <div key={user.id} className="user-card-titan" onClick={() => setEditingUser(user)}>
+                                        <div key={user.id} className="user-card-titan" onClick={() => setEditingUserId(user.id)}>
                                             <div className="user-card-header">
                                                 <div className="user-main-info">
                                                     <div className="avatar-wrapper">
-                                                        <img src={user.avatarUrl || `https://ui-avatars.com/api/?name=${user.fullName}&background=random`} alt="" />
-                                                        <div className={`status-indicator ${user.isActive ? 'online' : 'offline'}`} />
+                                                        <img src={user.avatar_url_user || `https://ui-avatars.com/api/?name=${user.full_name_user}&background=random`} alt="" />
+                                                        <div className={`status-indicator ${user.is_active_user ? 'online' : 'offline'}`} />
                                                     </div>
                                                     <div>
-                                                        <h4>{user.fullName}</h4>
-                                                        <span className="user-email">{user.email}</span>
+                                                        <h4>{user.full_name_user}</h4>
+                                                        <span className="user-email">{user.email_user}</span>
                                                         <span className="user-system-id">UID: {user.id.substring(0, 8)}...</span>
                                                     </div>
                                                 </div>
-                                                <div className={`role-badge ${user.role.toLowerCase()}`}>{user.role}</div>
+                                                <div className={`role-badge ${user.role_user.toLowerCase()}`}>{user.role_user}</div>
                                             </div>
                                             <div className="user-card-stats">
                                                 <div className="stat-item">
                                                     <strong>Status</strong>
-                                                    <span style={{ color: user.isActive ? '#10b981' : '#ef4444' }}>{user.isActive ? 'Ativo' : 'Inativo'}</span>
+                                                    <span style={{ color: user.is_active_user ? '#10b981' : '#ef4444' }}>{user.is_active_user ? 'Ativo' : 'Inativo'}</span>
                                                 </div>
                                                 <div className="stat-divider" />
                                                 <div className="stat-item">
                                                     <strong>Membro Desde</strong>
-                                                    <span>{new Date(user.createdAt || '').toLocaleDateString('pt-BR')}</span>
+                                                    <span>{new Date(user.created_at_user || '').toLocaleDateString('pt-BR')}</span>
                                                 </div>
                                             </div>
                                             <div className="user-card-actions">
@@ -454,7 +459,7 @@ const SettingsManager: React.FC = () => {
 
             {/* Advanced Role/Permissions Modal (Zoho Style) */}
             <AnimatePresence>
-                {editingUser && (
+                {editingUserId && (
                     <motion.div
                         className="permissions-modal-overlay"
                         initial={{ opacity: 0 }}
@@ -469,57 +474,38 @@ const SettingsManager: React.FC = () => {
                         >
                             <header>
                                 <div style={{ flex: 1, textAlign: 'left' }}>
-                                    <h3 style={{ margin: 0 }}>Gestão de Credenciais: {editingUser.fullName}</h3>
+                                    <h3 style={{ margin: 0 }}>Gestão de Credenciais</h3>
                                     <p style={{ margin: 0, opacity: 0.6 }}>Configuração granular de permissões e chaves operacionais.</p>
                                 </div>
-                                <button className="close-modal" onClick={() => setEditingUser(null)}>×</button>
+                                <button className="close-modal" onClick={() => setEditingUserId('')}>×</button>
                             </header>
 
                             <div className="modal-scroll-area">
-                                <div className="role-selector-box">
-                                    <label><Fingerprint size={18} /> Perfil de Acesso Principal</label>
-                                    <div className="role-options">
-                                        {[
-                                            { role: 'ADMIN', desc: 'Acesso total ao sistema' },
-                                            { role: 'VENDEDOR', desc: 'Foco em CRM e Vendas' },
-                                            { role: 'TECNICO', desc: 'Gestão de Rede e OS' },
-                                            { role: 'SUPORTE', desc: 'Atendimento e Ocorrências' }
-                                        ].map(opt => (
-                                            <button
-                                                key={opt.role}
-                                                className={`role-opt-card ${editingUser.role === opt.role ? 'selected' : ''}`}
-                                                onClick={() => setEditingUser({ ...editingUser, role: opt.role as UserRole })}
-                                            >
-                                                <strong>{opt.role}</strong>
-                                                <span>{opt.desc}</span>
-                                            </button>
-                                        ))}
-                                    </div>
-                                </div>
-
-                                {(profile?.role === 'SUPER_ADMIN' || profile?.role === 'ADMIN') && (
+                                {(profile?.role_user === 'SUPER_ADMIN' || profile?.role_user === 'ADMIN') && editingUserId && (
                                     <div className="security-info-box">
                                         <label><LockKey size={18} /> Dados de Auditoria</label>
                                         <div className="audit-data-grid">
                                             <div className="audit-item">
                                                 <strong>UUID do Perfil</strong>
-                                                <code>{editingUser.id}</code>
+                                                <code>{editingUserId}</code>
                                             </div>
                                             <div className="audit-item">
                                                 <strong>ID do Tenant</strong>
-                                                <code>{editingUser.tenantId}</code>
+                                                <code>{tenantId}</code>
                                             </div>
                                         </div>
                                     </div>
+                                )}
                             </div>
 
                             <div className="modal-footer">
-                                <button className="btn-titan-secondary" onClick={() => setEditingUser(null)}>CANCELAR</button>
+                                <button className="btn-titan-secondary" onClick={() => setEditingUserId('')}>CANCELAR</button>
                                 <button className="btn-titan-primary" onClick={() => {
-                                    if (editingUser.id) {
+                                    const editingUser = users.find(u => u.id === editingUserId);
+                                    if (editingUser) {
                                         updateUserProfile(editingUser.id, editingUser).then(() => {
                                             showToast('Perfil atualizado!', 'success');
-                                            setEditingUser(null);
+                                            setEditingUserId('');
                                             loadSettings();
                                         });
                                     }

@@ -10,8 +10,27 @@ import * as remoteAccessService from './services/remoteAccessService';
 import * as kraService from './services/kraService';
 import * as ipService from './services/ipService';
 
-const App: React.FC = () => {
-  const { user, profile, signOut } = useAuth();
+import { Routes, Route, Navigate, useParams, useNavigate } from 'react-router-dom';
+
+const Layout: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const { profile, signOut } = useAuth();
+  return (
+    <div className="tech-dashboard">
+      <header>
+        <h1>Dashboard de Engenharia (TITÃ V2)</h1>
+        <div className="user-blob">
+          <span>{profile?.full_name_user} ({profile?.role_user})</span>
+          <button onClick={signOut}>Sair</button>
+        </div>
+      </header>
+      {children}
+    </div>
+  );
+};
+
+const MainDashboard: React.FC = () => {
+  const { profile } = useAuth();
+  const { tenantId } = useParams();
   const [result, setResult] = useState<any>(null);
   const [loading, setLoading] = useState(false);
   const [currentIp, setCurrentIp] = useState<string>('Detectando...');
@@ -23,7 +42,7 @@ const App: React.FC = () => {
   const runAction = async (name: string, fn: () => Promise<any>) => {
     setLoading(true);
     try {
-      console.log(`Executando: ${name}`);
+      console.log(`Executando [Tenant: ${tenantId}]: ${name}`);
       const res = await fn();
       setResult(res || { success: true });
     } catch (err: any) {
@@ -34,97 +53,36 @@ const App: React.FC = () => {
     }
   };
 
-  if (!user) {
-    return (
-      <div className="tech-dashboard">
-        <h1>Painel Técnico JMNet (Autenticação Necessária)</h1>
-        <p>Use o formulário de login padrão ou convite.</p>
-      </div>
-    );
-  }
-
   return (
-    <div className="tech-dashboard">
-      <header>
-        <h1>Dashboard de Engenharia</h1>
-        <div className="user-blob">
-          <span>{profile?.full_name_user} ({profile?.role_user})</span>
-          <button onClick={signOut}>Sair</button>
+    <div className="grid">
+      {/* SEÇÕES ORIGINAIS ADAPTADAS PARA O CONTEXTO DE ROTA */}
+      <section className="card">
+        <h2>Segurança & Prisma (Contexto: {tenantId})</h2>
+        <p>IP Atual: <strong>{currentIp}</strong></p>
+        <div className="actions">
+          <button onClick={() => runAction('List Invitations', () => invitationService.getInvitations())}>Puxar Convites</button>
+          <button onClick={() => runAction('List Allowed IPs', () => remoteAccessService.getAllowedIPs())}>Listar IPs</button>
         </div>
-      </header>
+      </section>
 
-      <div className="grid">
-        {/* 1. SEÇÃO DE SEGURANÇA (ZONA DE PRODUÇÃO) */}
-        <section className="card">
-          <h2>Segurança & Prisma de Vinculação (Real)</h2>
-          <p>IP Atual: <strong>{currentIp}</strong></p>
-          <div className="actions">
-            <div className="group">
-              <h3>Gestão de Convites + Contas</h3>
-              <button onClick={() => runAction('List Invitations', () => invitationService.getInvitations())}>Puxar Convites</button>
-              <button onClick={() => {
-                const email = prompt('E-mail do novo usuário:');
-                const password = prompt('Senha temporária para o usuário:');
-                if (email && password && profile?.tenant_id_user) {
-                  runAction('Create User & Invite (Prisma Bind)',
-                    () => invitationService.createInvitationWithUser(email, password, 'ADMIN', profile.tenant_id_user!)
-                  );
-                }
-              }}>Criar Conta & Convite</button>
-              <button onClick={() => {
-                const id = prompt('ID do convite:');
-                if (id) runAction('Reset Prisma', () => invitationService.resetInvitation(id));
-              }}>Resetar Vínculo (ID)</button>
-              <button onClick={() => {
-                const id = prompt('ID do convite:');
-                if (id) runAction('Cancel (Delete)', () => invitationService.cancelInvitation(id));
-              }}>Excluir Permanente (ID)</button>
-            </div>
+      <section className="card">
+        <h2>Auditoria Forense</h2>
+        <div className="actions">
+          <button onClick={() => runAction('Get Audit Logs', () => auditService.getGlobalAuditLogs(40))}>Puxar 40 Eventos</button>
+        </div>
+      </section>
 
-            <div className="group">
-              <h3>Whitelist de Produção</h3>
-              <button onClick={() => runAction('List Allowed IPs', () => remoteAccessService.getAllowedIPs())}>Listar IPs</button>
-              <button onClick={() => runAction('Add Current', () => remoteAccessService.addAllowedIP(currentIp, 'Suporte Manual', 24))}>Liberar 24h</button>
-              <button onClick={() => {
-                const id = prompt('ID do IP:');
-                if (id) runAction('Remove IP', () => remoteAccessService.removeAllowedIP(id));
-              }}>Remover Acesso (ID)</button>
-            </div>
-
-            <div className="group">
-              <h3>KRA / CVA Support (Zero Simulation)</h3>
-              <button onClick={() => {
-                const code = prompt('Código CVA:');
-                if (code) runAction('Validate & Auto-Lock', () => kraService.validateCVA(code, currentIp));
-              }}>Validar CVA & Liberar IP</button>
-              <button onClick={() => runAction('Generate CVA Key', () => remoteAccessService.generateRemoteAccessKey(1))}>Gerar Chave KRA (1h)</button>
-              <button onClick={() => runAction('List All Keys', () => remoteAccessService.listRemoteAccessKeys())}>Ver Chaves CVA</button>
-            </div>
-          </div>
-        </section>
-
-        {/* 2. LOGS & AUDITORIA */}
-        <section className="card">
-          <h2>Auditoria Forense (Logs Reais)</h2>
-          <div className="actions">
-            <button onClick={() => runAction('Get Audit Logs', () => auditService.getGlobalAuditLogs(40))}>Puxar 40 Eventos</button>
-          </div>
-        </section>
-
-        {/* 3. CORE DATA */}
-        <section className="card">
-          <h2>Lógica de Negócio (Stretched)</h2>
-          <div className="actions">
-            <button onClick={() => runAction('Get CRM Leads', () => leadService.getLeads())}>CRM Leads</button>
-            <button onClick={() => runAction('Get Chat Conversations', () => chatService.getConversations())}>Conversas</button>
-            <button onClick={() => runAction('Get OS', () => osService.getServiceOrders())}>OS Operacional</button>
-          </div>
-        </section>
-      </div>
+      <section className="card">
+        <h2>Lógica de Negócio (Macro)</h2>
+        <div className="actions">
+          <button onClick={() => runAction('Get CRM Leads', () => leadService.getLeads())}>CRM Leads</button>
+          <button onClick={() => runAction('Get OS', () => osService.getServiceOrders())}>OS Operacional</button>
+        </div>
+      </section>
 
       <div className="result-viewer">
         <div className="viewer-header">
-          <h3>Production Console</h3>
+          <h3>Production Console [{tenantId}]</h3>
           <button onClick={() => setResult(null)}>Limpar</button>
         </div>
         <pre>
@@ -134,5 +92,30 @@ const App: React.FC = () => {
     </div>
   );
 };
+
+const App: React.FC = () => {
+  const { user, profile, loading: authLoading } = useAuth();
+
+  if (authLoading) return <div className="tech-dashboard"><h1>Autenticando no TITÃ...</h1></div>;
+
+  if (!user) {
+    return (
+      <div className="tech-dashboard">
+        <h1>Painel Técnico JMNet (Autenticação Necessária)</h1>
+        <p>Redirecionando para login...</p>
+      </div>
+    );
+  }
+
+  return (
+    <Routes>
+      <Route path="/" element={<Navigate to={`/${profile?.tenant_id_user || 'master'}/dashboard`} replace />} />
+      <Route path="/:tenantId/dashboard" element={<Layout><MainDashboard /></Layout>} />
+      {/* Futuras rotas dinâmicas como /:tenantId/config/... serão adicionadas aqui */}
+    </Routes>
+  );
+};
+
+export default App;
 
 export default App;

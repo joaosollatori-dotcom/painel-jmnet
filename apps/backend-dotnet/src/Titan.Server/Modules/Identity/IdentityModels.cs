@@ -5,7 +5,8 @@ namespace Titan.Server.Modules.Identity;
 public class ApplicationUser : IdentityUser
 {
     public string? TenantId { get; set; }
-    // Adicione propriedades personalizadas aqui se necessário
+    public string? FullName { get; set; }
+    public bool IsActive { get; set; } = true;
 }
 
 public class ApplicationRole : IdentityRole
