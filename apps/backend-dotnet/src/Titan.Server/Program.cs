@@ -84,8 +84,13 @@ using (var scope = app.Services.CreateScope())
     var dbContext = scope.ServiceProvider.GetRequiredService<TitanDbContext>();
     var userManager = scope.ServiceProvider.GetRequiredService<UserManager<ApplicationUser>>();
     
+    // Injeta manualmente o contexto de Tenant para o Seeder (visto que não há HttpContext aqui)
+    var tenantInfo = new TitanTenantInfo { Id = "master", Identifier = "master", Name = "Master Tenant" };
+    var accessor = scope.ServiceProvider.GetRequiredService<IMultiTenantContextAccessor<TitanTenantInfo>>();
+    accessor.MultiTenantContext = new MultiTenantContext<TitanTenantInfo> { TenantInfo = tenantInfo };
+
     // 1. Admin User
-    if (!dbContext.Users.Any())
+    if (!dbContext.Users.IgnoreQueryFilters().Any())
     {
         var adminUser = new ApplicationUser
         {
@@ -100,7 +105,7 @@ using (var scope = app.Services.CreateScope())
     }
 
     // 2. Dados de Teste Financeiro (Nano/Micro Validação)
-    if (!dbContext.FinancialMovements.Any())
+    if (!dbContext.FinancialMovements.IgnoreQueryFilters().Any())
     {
         dbContext.FinancialMovements.AddRange(
             new FinancialMovement { Description = "Assinatura Internet - João", Amount = 150.00m, Type = FinancialType.Income, Date = DateTime.UtcNow.AddDays(-1), TenantId = "master", Category = "Receita" },

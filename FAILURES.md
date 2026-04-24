@@ -19,6 +19,11 @@ Este documento serve como um registro imutável de falhas de implementação, de
    - **Resultado**: Erro `23502: null value in column "TenantId" violates not-null constraint`. Como as tabelas de Identidade foram configuradas como Multi-tenant, o ID do cliente é obrigatório.
    - **Lição**: Dados inseridos manualmente em sistemas multi-tenant devem sempre especificar o `TenantId` alvo, mesmo para dados administrativos iniciais.
 
+11. **Falha: NullReferenceException no UserManager.CreateAsync (Contexto Multi-tenant)**
+   - **O que aconteceu**: Mesmo usando `IgnoreQueryFilters()` para o check inicial, o método `CreateAsync` do Identity realiza validações internas que tentam resolver o tenant através do interceptor do Finbuckle.
+   - **Resultado**: Erro de execução no startup.
+   - **Lição**: Quando as entidades do Identity são multi-tenant, o `UserManager` exige um contexto de tenant resolvido no escopo da requisição (ou injetado manualmente em tarefas de background) para realizar qualquer operação de escrita ou busca.
+
 4. **Falha: Omissão de Colunas Obrigatórias sem Default no DB**
    - **O que aconteceu**: Inseri dados na tabela `TenantInfo` sem especificar a coluna `IsActive`.
    - **Resultado**: Erro `23502: null value in column "IsActive" violates not-null constraint`. O EF Core criou a coluna como `NOT NULL` (por ser um `bool` não-anulável no C#), mas o banco não tinha um valor padrão definido via SQL.
