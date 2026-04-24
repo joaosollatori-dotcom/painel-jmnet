@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Titan.Server.Modules.Identity;
+using Titan.Server.Modules.Audit;
+using Titan.Server.Modules.Finance;
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
 using Finbuckle.MultiTenant.EntityFrameworkCore;
@@ -14,11 +16,15 @@ public class TitanDbContext : MultiTenantIdentityDbContext<ApplicationUser, Appl
     {
     }
 
-    public DbSet<Titan.Server.Modules.Audit.AuditLog> AuditLogs { get; set; } = null!;
+    public DbSet<AuditLog> AuditLogs => Set<AuditLog>();
+    public DbSet<FinancialMovement> FinancialMovements => Set<FinancialMovement>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
         base.OnModelCreating(builder);
+        
+        builder.Entity<AuditLog>().IsMultiTenant();
+        builder.Entity<FinancialMovement>().IsMultiTenant();
         
         // Configura as tabelas do Identity para serem multi-tenant
         builder.Entity<ApplicationUser>().IsMultiTenant();

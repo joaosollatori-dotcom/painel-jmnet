@@ -1,6 +1,8 @@
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Titan.Server.Infrastructure;
+using Titan.Server.Modules.Audit;
+using Titan.Server.Modules.Finance;
 using Titan.Server.Modules.Identity;
 using Finbuckle.MultiTenant;
 using Finbuckle.MultiTenant.Abstractions;
@@ -32,6 +34,7 @@ builder.Services.AddIdentity<ApplicationUser, ApplicationRole>()
     .AddDefaultTokenProviders();
 
 // 4. Configuração do OpenIddict (Servidor de Identidade)
+builder.Services.AddHttpClient<CerebrasService>();
 builder.Services.AddOpenIddict()
     .AddCore(options =>
     {
@@ -102,6 +105,7 @@ app.UseAuthorization();
 
 // Registro de Endpoints dos Módulos
 app.MapIdentityEndpoints();
+app.MapFinanceEndpoints();
 
 // Exemplo de Endpoint Protegido e com Escopo de Tenant
 app.MapGet("/", (ITenantInfo tenantInfo) => 
